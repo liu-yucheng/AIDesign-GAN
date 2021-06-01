@@ -9,6 +9,8 @@ import torch.utils.data as data
 import torchvision.transforms as transforms
 import matplotlib.pyplot as pyplot
 import numpy
+import os
+import shutil
 import torchvision.utils as vision_utils
 import torch.nn as nn
 import torch.optim as optim
@@ -50,11 +52,12 @@ class Vars:
     z_size = None
     fixed_noise = None
 
-    generated_images = None
+    generated_images_path = None
     # g_losses: generator losses
     g_losses = None
     # d_losses: discriminator losses
     d_losses = None
+    latest_generated_images = None
 
 
 class Funcs:
@@ -93,10 +96,18 @@ class Funcs:
         print("____ set_random_seeds ____")
 
         manual_seed = Vars.model_config.items["training"]["manual_seed"]
-        print("Random seed: {}".format(manual_seed))
-
-        random.seed(manual_seed)
-        torch.manual_seed(manual_seed)
+        if manual_seed is not None:
+            print("Random seed (manual): {}".format(manual_seed))
+            random.seed(manual_seed)
+            torch.manual_seed(manual_seed)
+        else:
+            random.seed(None)
+            seed = random.randint(
+                -0x8000_0000_0000_0000, 0xffff_ffff_ffff_ffff
+            )
+            print("Random seed (auto): {}".format(seed))
+            random.seed(seed)
+            torch.manual_seed(seed)
         print("Completed setting random seeds")
 
         print()
@@ -313,6 +324,24 @@ class Funcs:
         print()
 
     @classmethod
+    def _init_generated_images_folder(cls):
+        """Initializes the generated images folder.
+
+        Initializes the folder to an empty folder.
+        """
+        pyplot.figure(figsize=(8, 8))
+        pyplot.axis("off")
+        Vars.generated_images_path = str(
+            pathlib.Path(Vars.result_path + "/Generated-Images").absolute()
+        )
+
+        if os.path.exists(Vars.generated_images_path):
+            shutil.rmtree(Vars.generated_images_path)
+
+        pathlib.Path(Vars.generated_images_path).mkdir(exist_ok=True)
+        print("Generated images path: {}".format(Vars.generated_images_path))
+
+    @classmethod
     def _train_neural_networks(cls, real_batch):
         """Returns: (d_loss, g_loss, d_x, d_g_z1, d_g_z2)"""
         d = Vars.d
@@ -406,13 +435,28 @@ class Funcs:
         print(stats)
 
     @classmethod
-    def _record_generated_images(cls, g):
-        """Params: g: generator"""
+    def _save_generated_images(cls, g, epoch, index):
+        """Params:
+            g: generator
+            epoch: epoch number (0-indexed)
+            index: index number (0-indexed)
+        """
         with torch.no_grad():
-            fake_images = g(Vars.fixed_noise).detach().cpu()
-        Vars.generated_images.append(vision_utils.make_grid(
-            fake_images, padding=2, normalize=True
-        ))
+            images = g(Vars.fixed_noise).detach().cpu()
+        images = vision_utils.make_grid(
+            images, padding=2, normalize=True
+        )
+        Vars.latest_generated_images = images
+        pyplot.imshow(numpy.transpose(images, (1, 2, 0)), animated=True)
+        plot_location = str(
+            pathlib.Path(
+                Vars.generated_images_path + "/epoch-{}_batch-{}.jpg".format(
+                    epoch + 1, index + 1
+                )
+            ).absolute()
+        )
+        pyplot.savefig(plot_location)
+        print("Saved generated images")
 
     @classmethod
     def start_training(cls):
@@ -431,7 +475,7 @@ class Funcs:
         data_loader = Vars.data_loader
         batch_count = Vars.model_config.items["training_set"]["batch_count"]
 
-        Vars.generated_images = []
+        Funcs._init_generated_images_folder()
         Vars.g_losses = []
         Vars.d_losses = []
 
@@ -457,11 +501,11 @@ class Funcs:
                 # Record the generator and discriminator losses
                 Vars.g_losses.append(g_loss.item())
                 Vars.d_losses.append(d_loss.item())
-                # Record the generated images
-                if curr_iter == 0 or (curr_iter + 1) % 500 == 0 or (
-                    epoch == epoch_count - 1 and index == len(data_loader) - 1
+                # Save the generated images
+                if (curr_iter == 0 or (curr_iter + 1) % 300 == 0) or (
+                    index == batch_count - 1
                 ):
-                    Funcs._record_generated_images(g)
+                    Funcs._save_generated_images(g, epoch, index)
                 curr_iter += 1
             Funcs._save_model(g, g_file_name)
             Funcs._save_model(d, d_file_name)
@@ -489,29 +533,6 @@ class Funcs:
         print()
 
     @classmethod
-    def plot_generated_images(cls):
-        print("____ plot_generated_images ____")
-
-        pyplot.figure(figsize=(8, 8))
-        pyplot.axis("off")
-        generated_images_path = str(
-            pathlib.Path(Vars.result_path + "/Generated-Images").absolute()
-        )
-        pathlib.Path(generated_images_path).mkdir(exist_ok=True)
-        for index, image in enumerate(Vars.generated_images):
-            pyplot.imshow(numpy.transpose(image, (1, 2, 0)), animated=True)
-            plot_location = str(
-                pathlib.Path(
-                    generated_images_path + "/generated-image_" +
-                    str(index + 1) + ".jpg"
-                ).absolute()
-            )
-            pyplot.savefig(plot_location)
-        print("Generated images path: {}".format(generated_images_path))
-
-        print()
-
-    @classmethod
     def plot_real_and_fake(cls):
         print("____ plot_real_and_fake ____")
 
@@ -535,7 +556,9 @@ class Funcs:
         pyplot.subplot(1, 2, 2)
         pyplot.axis("off")
         pyplot.title("Fake (Generated) Images")
-        pyplot.imshow(numpy.transpose(Vars.generated_images[-1], (1, 2, 0)))
+        pyplot.imshow(
+            numpy.transpose(Vars.latest_generated_images, (1, 2, 0))
+        )
 
         plot_location = str(
             pathlib.Path(Vars.result_path + "/real-and-fake.jpg").absolute()

@@ -96,10 +96,18 @@ class Funcs:
         print("____ set_random_seeds ____")
 
         manual_seed = Vars.model_config.items["training"]["manual_seed"]
-        print("Random seed: {}".format(manual_seed))
-
-        random.seed(manual_seed)
-        torch.manual_seed(manual_seed)
+        if manual_seed is not None:
+            print("Random seed (manual): {}".format(manual_seed))
+            random.seed(manual_seed)
+            torch.manual_seed(manual_seed)
+        else:
+            random.seed(None)
+            seed = random.randint(
+                -0x8000_0000_0000_0000, 0xffff_ffff_ffff_ffff
+            )
+            print("Random seed (auto): {}".format(seed))
+            random.seed(seed)
+            torch.manual_seed(seed)
         print("Completed setting random seeds")
 
         print()
@@ -495,7 +503,7 @@ class Funcs:
                 Vars.d_losses.append(d_loss.item())
                 # Save the generated images
                 if (curr_iter == 0 or (curr_iter + 1) % 300 == 0) or (
-                    index == len(data_loader) - 1
+                    index == batch_count - 1
                 ):
                     Funcs._save_generated_images(g, epoch, index)
                 curr_iter += 1

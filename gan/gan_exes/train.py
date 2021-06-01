@@ -16,7 +16,6 @@ def main():
     Funcs.start_training()
 
     Funcs.plot_losses()
-    Funcs.plot_generated_images()
     Funcs.plot_real_and_fake()
 
 

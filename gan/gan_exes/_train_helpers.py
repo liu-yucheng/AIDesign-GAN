@@ -30,7 +30,7 @@ class Vars:
     gpu_count = None
     device = None
 
-    result_path = None
+    results_path = None
 
     # g_file_name: generator file name
     g_file_name = None
@@ -153,7 +153,7 @@ class Funcs:
         print("____ detect_device ____")
 
         Vars.gpu_count = Vars.model_config.items["training"]["gpu_count"]
-        print("GPU Count: {}".format(Vars.gpu_count))
+        print("GPU count: {}".format(Vars.gpu_count))
 
         if torch.cuda.is_available() and Vars.gpu_count > 0:
             device_name = "cuda:0"
@@ -165,18 +165,18 @@ class Funcs:
         print()
 
     @classmethod
-    def init_result_folder(cls):
+    def init_results_folder(cls):
         """Initializes the training result folder."""
         print("____ init_result_folder ____")
 
-        Vars.result_path = str(
+        Vars.results_path = str(
             pathlib.Path(
                 Vars.train_config.items["model_path"] + "/Training-Results"
             ).absolute()
         )
-        pathlib.Path(Vars.result_path).mkdir(exist_ok=True)
-        Vars.result_path = str(pathlib.Path(Vars.result_path).resolve())
-        print("Result folder: {}".format(Vars.result_path))
+        pathlib.Path(Vars.results_path).mkdir(exist_ok=True)
+        Vars.results_path = str(pathlib.Path(Vars.results_path).resolve())
+        print("Result folder: {}".format(Vars.results_path))
 
         print()
 
@@ -201,7 +201,7 @@ class Funcs:
 
         plot_location = str(
             pathlib.Path(
-                Vars.result_path + "/training_images.jpg"
+                Vars.results_path + "/training_images.jpg"
             ).absolute()
         )
         pyplot.savefig(plot_location)
@@ -332,14 +332,14 @@ class Funcs:
         pyplot.figure(figsize=(8, 8))
         pyplot.axis("off")
         Vars.generated_images_path = str(
-            pathlib.Path(Vars.result_path + "/Generated-Images").absolute()
+            pathlib.Path(Vars.results_path + "/Generated-Images").absolute()
         )
 
         if os.path.exists(Vars.generated_images_path):
             shutil.rmtree(Vars.generated_images_path)
 
         pathlib.Path(Vars.generated_images_path).mkdir(exist_ok=True)
-        print("Generated images path: {}".format(Vars.generated_images_path))
+        print("Generated images folder: {}".format(Vars.generated_images_path))
 
     @classmethod
     def _train_neural_networks(cls, real_batch):
@@ -525,7 +525,7 @@ class Funcs:
         pyplot.ylabel("Loss")
         pyplot.legend()
         plot_location = str(
-            pathlib.Path(Vars.result_path + "/losses-plot.jpg").absolute()
+            pathlib.Path(Vars.results_path + "/losses-plot.jpg").absolute()
         )
         pyplot.savefig(plot_location)
         print("Loss plot location: {}".format(plot_location))
@@ -561,7 +561,7 @@ class Funcs:
         )
 
         plot_location = str(
-            pathlib.Path(Vars.result_path + "/real-and-fake.jpg").absolute()
+            pathlib.Path(Vars.results_path + "/real-and-fake.jpg").absolute()
         )
         pyplot.savefig(plot_location)
         print("Real and fake plot location: {}".format(plot_location))

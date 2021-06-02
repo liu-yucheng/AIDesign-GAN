@@ -8,7 +8,7 @@ def main():
     Funcs.set_random_seeds()
     Funcs.init_data_loader()
     Funcs.detect_device()
-    Funcs.init_result_folder()
+    Funcs.init_results_folder()
 
     Funcs.plot_training_images()
 

@@ -502,7 +502,7 @@ class Funcs:
                 Vars.g_losses.append(g_loss.item())
                 Vars.d_losses.append(d_loss.item())
                 # Save the generated images
-                if (curr_iter == 0 or (curr_iter + 1) % 300 == 0) or (
+                if (curr_iter == 0 or (curr_iter + 1) % 500 == 0) or (
                     index == batch_count - 1
                 ):
                     Funcs._save_generated_images(g, epoch, index)

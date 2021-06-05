@@ -205,6 +205,7 @@ class Funcs:
             ).absolute()
         )
         pyplot.savefig(plot_location)
+        pyplot.close()
         print("Plotted training images")
         print("Plot location: {}".format(plot_location))
 
@@ -329,8 +330,6 @@ class Funcs:
 
         Initializes the folder to an empty folder.
         """
-        pyplot.figure(figsize=(8, 8))
-        pyplot.axis("off")
         Vars.generated_images_path = str(
             pathlib.Path(Vars.results_path + "/Generated-Images").absolute()
         )
@@ -441,6 +440,8 @@ class Funcs:
             epoch: epoch number (0-indexed)
             index: index number (0-indexed)
         """
+        pyplot.figure(figsize=(8, 8))
+        pyplot.axis("off")
         with torch.no_grad():
             images = g(Vars.fixed_noise).detach().cpu()
         images = vision_utils.make_grid(
@@ -456,7 +457,59 @@ class Funcs:
             ).absolute()
         )
         pyplot.savefig(plot_location)
+        pyplot.close()
         print("Saved generated images")
+
+    @classmethod
+    def _save_losses_plot(cls):
+        pyplot.figure(figsize=(10, 5))
+        pyplot.title("Generator and Discriminator Training Losses")
+        pyplot.plot(Vars.g_losses, label="Generator")
+        pyplot.plot(Vars.d_losses, label="Discriminator")
+        pyplot.xlabel("Iteration No.")
+        pyplot.ylabel("Loss")
+        pyplot.legend()
+        plot_location = str(
+            pathlib.Path(Vars.results_path + "/losses-plot.jpg").absolute()
+        )
+        pyplot.savefig(plot_location)
+        pyplot.close()
+        print("Saved losses plot")
+
+    @classmethod
+    def _save_real_vs_fake_plot(cls):
+        first_batch = next(iter(Vars.data_loader))
+
+        # Plot the real (training) images
+        pyplot.figure(figsize=(15, 15))
+        pyplot.subplot(1, 2, 1)
+        pyplot.axis("off")
+        pyplot.title("Real (Training) Images")
+        pyplot.imshow(numpy.transpose(
+            vision_utils.make_grid(
+                first_batch[0].to(Vars.device)[:64],
+                padding=5,
+                normalize=True
+            ).cpu(),
+            (1, 2, 0)
+        ))
+
+        # Plot the fake (generated) images from the last epoch
+        pyplot.subplot(1, 2, 2)
+        pyplot.axis("off")
+        pyplot.title("Fake (Generated) Images")
+        pyplot.imshow(
+            numpy.transpose(Vars.latest_generated_images, (1, 2, 0))
+        )
+
+        plot_location = str(
+            pathlib.Path(
+                Vars.results_path + "/real-vs-fake-plot.jpg"
+            ).absolute()
+        )
+        pyplot.savefig(plot_location)
+        pyplot.close()
+        print("Saved real vs fake plot")
 
     @classmethod
     def start_training(cls):
@@ -507,63 +560,10 @@ class Funcs:
                 ):
                     Funcs._save_generated_images(g, epoch, index)
                 curr_iter += 1
+            Funcs._save_losses_plot()
+            Funcs._save_real_vs_fake_plot()
             Funcs._save_model(g, g_file_name)
             Funcs._save_model(d, d_file_name)
 
         print("^^^^ start_training ^^^^")
-        print()
-
-    @classmethod
-    def plot_losses(cls):
-        print("____ plot_losses ____")
-
-        pyplot.figure(figsize=(10, 5))
-        pyplot.title("Generator and Discriminator Training Losses")
-        pyplot.plot(Vars.g_losses, label="Generator")
-        pyplot.plot(Vars.d_losses, label="Discriminator")
-        pyplot.xlabel("Iteration No.")
-        pyplot.ylabel("Loss")
-        pyplot.legend()
-        plot_location = str(
-            pathlib.Path(Vars.results_path + "/losses-plot.jpg").absolute()
-        )
-        pyplot.savefig(plot_location)
-        print("Loss plot location: {}".format(plot_location))
-
-        print()
-
-    @classmethod
-    def plot_real_and_fake(cls):
-        print("____ plot_real_and_fake ____")
-
-        first_batch = next(iter(Vars.data_loader))
-
-        # Plot the real (training) images
-        pyplot.figure(figsize=(15, 15))
-        pyplot.subplot(1, 2, 1)
-        pyplot.axis("off")
-        pyplot.title("Real (Training) Images")
-        pyplot.imshow(numpy.transpose(
-            vision_utils.make_grid(
-                first_batch[0].to(Vars.device)[:64],
-                padding=5,
-                normalize=True
-            ).cpu(),
-            (1, 2, 0)
-        ))
-
-        # Plot the fake (generated) images from the last epoch
-        pyplot.subplot(1, 2, 2)
-        pyplot.axis("off")
-        pyplot.title("Fake (Generated) Images")
-        pyplot.imshow(
-            numpy.transpose(Vars.latest_generated_images, (1, 2, 0))
-        )
-
-        plot_location = str(
-            pathlib.Path(Vars.results_path + "/real-and-fake.jpg").absolute()
-        )
-        pyplot.savefig(plot_location)
-        print("Real and fake plot location: {}".format(plot_location))
-
         print()

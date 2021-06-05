@@ -15,9 +15,6 @@ def main():
     Funcs.setup_training()
     Funcs.start_training()
 
-    Funcs.plot_losses()
-    Funcs.plot_real_and_fake()
-
 
 if __name__ == "__main__":
     main()

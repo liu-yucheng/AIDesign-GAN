@@ -564,6 +564,7 @@ class Funcs:
             Funcs._save_real_vs_fake_plot()
             Funcs._save_model(g, g_file_name)
             Funcs._save_model(d, d_file_name)
+            print()
 
         print("^^^^ start_training ^^^^")
         print()

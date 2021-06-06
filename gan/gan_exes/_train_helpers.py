@@ -488,7 +488,7 @@ class Funcs:
         pyplot.imshow(numpy.transpose(
             vision_utils.make_grid(
                 first_batch[0].to(Vars.device)[:64],
-                padding=5,
+                padding=2,
                 normalize=True
             ).cpu(),
             (1, 2, 0)

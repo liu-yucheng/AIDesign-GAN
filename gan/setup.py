@@ -9,7 +9,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='gan',
-    version='0.2.1',
+    version='0.3.0',
     description='AI Design GAN modeling application.',
     author='AI Design Team',
     packages=find_packages(),

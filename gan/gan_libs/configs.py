@@ -208,7 +208,12 @@ class GenerateConfig:
         self.items = {
             "image_count": 64,
             "manual_seed": None,
-            "model_path": _Helpers.default_model_path
+            "model_path": _Helpers.default_model_path,
+            "grid_mode": {
+                "enabled": False,
+                "padding": 2,
+                "images_per_grid": 64
+            }
         }
 
     def load(self):

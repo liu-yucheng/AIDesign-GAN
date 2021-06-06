@@ -8,6 +8,7 @@ import os
 import shutil
 import torch.nn as nn
 import torchvision.utils as vision_utils
+import math
 
 # import custom modules
 import gan_libs.configs as configs
@@ -168,7 +169,31 @@ class Funcs:
         noise = torch.randn(image_count, z_size, 1, 1, device=Vars.device)
         with torch.no_grad():
             Vars.generated_images = Vars.g(noise).detach().cpu()
-        print("Generated {} images".format(image_count))
+
+        grid_mode = Vars.generate_config.items["grid_mode"]
+        if grid_mode["enabled"]:
+            image_count = len(Vars.generated_images)
+            images_per_grid = grid_mode["images_per_grid"]
+            start_index = 0
+            grids = []
+            while start_index < image_count:
+                end_index = start_index + images_per_grid
+                grid = vision_utils.make_grid(
+                    Vars.generated_images[start_index: end_index],
+                    nrow=math.ceil(images_per_grid ** 0.5),
+                    padding=grid_mode["padding"],
+                    normalize=True
+                )
+                grids.append(grid)
+                start_index = end_index
+            Vars.generated_images = grids
+            print(
+                "Generated {} grids (with {} images per grid)".format(
+                    len(grids), images_per_grid
+                )
+            )
+        else:
+            print("Generated {} images".format(image_count))
 
         print()
 

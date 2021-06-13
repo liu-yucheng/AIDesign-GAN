@@ -534,7 +534,6 @@ class Funcs:
 
         # curr_iter: current iteration
         curr_iter = 0
-
         for epoch in range(epoch_count):
             print("==== Epoch {} of {} ====".format(epoch + 1, epoch_count))
             Funcs._load_model(g_file_name, g)
@@ -560,6 +559,7 @@ class Funcs:
                 ):
                     Funcs._save_generated_images(g, epoch, index)
                 curr_iter += 1
+
             Funcs._save_losses_plot()
             Funcs._save_real_vs_fake_plot()
             Funcs._save_model(g, g_file_name)

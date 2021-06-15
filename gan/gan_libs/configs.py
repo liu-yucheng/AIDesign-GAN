@@ -177,6 +177,13 @@ class TrainConfig:
             "model_path": _Helpers.default_model_path
         }
 
+    def __getitem__(self, item):
+        """Returns the item corresponding to the given subscript.
+
+        Makes self[item] a shorthand for self.items[item].
+        """
+        return self.items[item]
+
     def load(self):
         """Loads the config from a JSON file.
 
@@ -215,6 +222,13 @@ class GenerateConfig:
                 "images_per_grid": 64
             }
         }
+
+    def __getitem__(self, item):
+        """Returns the item corresponding to the given subscript.
+
+        Makes self[item] a shorthand for self.items[item].
+        """
+        return self.items[item]
 
     def load(self):
         """Loads the config from a JSON file.
@@ -278,6 +292,13 @@ class ModelConfig:
             "discriminator_structure_location":
             _Helpers.default_discriminator_structure_location
         }
+
+    def __getitem__(self, item):
+        """Returns the item corresponding to the given subscript.
+
+        Makes self[item] a shorthand for self.items[item].
+        """
+        return self.items[item]
 
     def load(self):
         """Loads the config from a JSON file.

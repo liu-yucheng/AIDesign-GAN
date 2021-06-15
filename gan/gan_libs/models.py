@@ -11,8 +11,6 @@ import gan_libs.configs as configs
 class _Helpers:
     """Helpers for classes in the models module."""
 
-    default_model_path = configs.TrainConfig().items["model_path"]
-
     @classmethod
     def save_model(cls, model, loc):
         """Saves the state dict of a model to a json file.
@@ -44,7 +42,7 @@ class TrainingModel:
     needed to train a GAN model.
     """
 
-    def __init__(self, model_path=None):
+    def __init__(self, train_config=None):
         """Initializes a training model.
 
         Params: model_path

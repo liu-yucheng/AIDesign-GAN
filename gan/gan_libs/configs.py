@@ -248,15 +248,18 @@ class ModelConfig:
             "training": {
                 "mode": "new",
                 "manual_seed": 0,
-                "epoch_count": 10,
+                "iteration_count": 5,
+                "epochs_per_iteration": 2,
                 "gpu_count": 1,
             },
-            "training_set": {
-                "loader_worker_count": 0,
-                "images_per_batch": 16,
+            "data_sets": {
+                "loader_worker_count": None,
                 "batch_count": 565,
+                "images_per_batch": 16,
                 "image_resolution": 64,
                 "image_channel_count": 3,
+                "training_set_weight": 8,
+                "validation_set_weight": 2
             },
             "model": {
                 "generator_input_size": 100,
@@ -264,7 +267,7 @@ class ModelConfig:
                 "discriminator_feature_map_size": 64,
             },
             "adam_optimizer": {
-                "learning_rate": 0.0002,
+                "initial_learning_rate": 0.0002,
                 "beta1": 0.5,
                 "beta2": 0.999
             },

@@ -267,8 +267,8 @@ class ModelConfig:
                 "gpu_count": 1,
             },
             "data_sets": {
-                "loader_worker_count": None,
-                "batch_count": 565,
+                "loader_worker_count": 0,
+                "percentage_to_use": 100,
                 "images_per_batch": 16,
                 "image_resolution": 64,
                 "image_channel_count": 3,

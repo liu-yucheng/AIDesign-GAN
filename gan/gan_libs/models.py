@@ -68,10 +68,18 @@ class _Helpers:
             config["training_set_weight"], config["validation_set_weight"]
         ])
         subset_ratio = subset_ratio / subset_ratio.sum()
-        print("Data subset ratio: {}".format(subset_ratio))
+        print("Subset ratio: {}; ".format(subset_ratio), end="")
 
-        t_start, t_end = 0, int(subset_ratio[0] * total_size)
-        v_start, v_end = t_end, total_size
+        prop_to_use = config["percentage_to_use"] / 100
+        if prop_to_use < 0:
+            prop_to_use = 0
+        if prop_to_use > 1:
+            prop_to_use = 1
+        print("Proportion to use: {}/1".format(prop_to_use))
+
+        total_to_use = int(prop_to_use * total_size)
+        t_start, t_end = 0, int(subset_ratio[0] * total_to_use)
+        v_start, v_end = t_end, total_to_use
         t_indices = list(range(t_start, t_end))
         v_indices = list(range(v_start, v_end))
         t_set = data.Subset(data_set, t_indices)
@@ -80,8 +88,6 @@ class _Helpers:
         print("Validation set size: {}".format(len(v_set)))
 
         worker_count = config["loader_worker_count"]
-        if worker_count is None:
-            worker_count = 0
         images_per_batch = config["images_per_batch"]
         t_loader = data.DataLoader(
             t_set,

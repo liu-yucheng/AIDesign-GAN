@@ -1,19 +1,19 @@
 """Executable for model training."""
 
-from gan_exes._train_helpers import Funcs
+import gan_libs.configs as configs
+import gan_libs.models as models
 
 
 def main():
-    Funcs.load_configs()
-    Funcs.set_random_seeds()
-    Funcs.init_data_loader()
-    Funcs.detect_device()
-    Funcs.init_results_folder()
+    train_config = configs.TrainConfig()
+    train_config.load()
+    print("Loaded train_config from {}".format(train_config.location))
+    print()
 
-    Funcs.plot_training_images()
-
-    Funcs.setup_training()
-    Funcs.start_training()
+    training_model = models.TrainingModel(
+        train_config["data_path"], train_config["model_path"]
+    )
+    training_model.setup_context()
 
 
 if __name__ == "__main__":

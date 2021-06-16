@@ -3,36 +3,102 @@
 # import system and third party modules
 import numpy
 import pathlib
+import random
 import torch
+import torch.utils.data as data
+import torchvision.datasets as datasets
+import torchvision.transforms as transforms
 # import custom modules
 import gan_libs.configs as configs
 
 
 class _Helpers:
-    """Helpers for classes in the models module."""
+    """Helpers for the model classes."""
 
     @classmethod
-    def save_model(cls, model, loc):
-        """Saves the state dict of a model to a json file.
-
-        Params:
-        model: the model to save
-        loc: the location of the json file
-        """
-        file = open(loc, "w+")
-        torch.save(model.state_dict(), loc)
-        file.close()
+    def make_model_config(cls, path):
+        """Makes a model config from a path."""
+        model_config = configs.ModelConfig()
+        model_config.location = str(
+            pathlib.Path(path + "/model_config.json").resolve()
+        )
+        model_config.load()
+        print("Loaded model_config from {}".format(model_config.location))
+        return model_config
 
     @classmethod
-    def load_model(cls, loc, model):
-        """Loads the state dict from a json file to a model.
+    def set_random_seeds(cls, value):
+        """Sets the random seeds with the given value.
 
-        Params:
-        loc: the location of the json file
-        model: the model to load
+        Sets the seeds for the numpy, random, and torch modules.
         """
-        model.load_state_dict(torch.load(loc))
-        model.eval()
+        if value is not None:
+            print("Random seed (manual): {}".format(value))
+        else:
+            random.seed(None)
+            value = random.randint(0, 2 ** 32 - 1)
+            print("Random seed (auto): {}".format(value))
+        numpy.random.seed(value)
+        random.seed(value)
+        torch.manual_seed(value)
+
+    @classmethod
+    def make_data_loaders(cls, path, config):
+        """Makes the data loaders given a path and a data sets config.
+
+        Makes the training set and validation set loaders based on the weights
+        provided in the data sets config (a subset of a model config).
+
+        Returns: the training set loader, and the validation set loader
+        """
+        image_res = config["image_resolution"]
+        data_set = datasets.ImageFolder(
+            root=path,
+            transform=transforms.Compose([
+                transforms.Resize(image_res),
+                transforms.CenterCrop(image_res),
+                transforms.ToTensor(),
+                transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+            ])
+        )
+        total_size = len(data_set)
+        print("Data set total size: {}; ".format(total_size), end="")
+
+        subset_ratio = numpy.array([
+            config["training_set_weight"], config["validation_set_weight"]
+        ])
+        subset_ratio = subset_ratio / subset_ratio.sum()
+        print("Data subset ratio: {}".format(subset_ratio))
+
+        t_start, t_end = 0, int(subset_ratio[0] * total_size)
+        v_start, v_end = t_end, total_size
+        t_indices = list(range(t_start, t_end))
+        v_indices = list(range(v_start, v_end))
+        t_set = data.Subset(data_set, t_indices)
+        v_set = data.Subset(data_set, v_indices)
+        print("Training set size: {}; ".format(len(t_set)), end="")
+        print("Validation set size: {}".format(len(v_set)))
+
+        worker_count = config["loader_worker_count"]
+        if worker_count is None:
+            worker_count = 0
+        images_per_batch = config["images_per_batch"]
+        t_loader = data.DataLoader(
+            t_set,
+            batch_size=images_per_batch,
+            shuffle=True,
+            num_workers=worker_count
+        )
+        v_loader = data.DataLoader(
+            v_set,
+            batch_size=images_per_batch,
+            shuffle=True,
+            num_workers=worker_count
+        )
+        print("Training batch count: {}; ".format(len(t_loader)), end="")
+        print("Validation batch count: {}".format(len(v_loader)))
+
+        return t_loader, v_loader
 
 
 class TrainingModel:
@@ -42,50 +108,69 @@ class TrainingModel:
     needed to train a GAN model.
     """
 
-    def __init__(self, train_config=None):
+    def __init__(self, data_path, model_path):
         """Initializes a training model.
 
-        Params: model_path
+        Params: data_path, model_path
         """
+        if data_path is None:
+            raise ValueError("data_path cannot be None")
         if model_path is None:
-            self.model_path = _Helpers.default_model_path
-        else:
-            self.model_path = model_path
+            raise ValueError("model_path cannot be None")
+
+        self.data_path = data_path
+        self.model_path = model_path
+        self.completed_context_setup = False
+
+    def setup_context(self):
+        """Sets up the internal states of the model.
+
+        Gets ready to start the training.
+        """
+        print("[ Started training model context setup ]")
+        self.model_config = _Helpers.make_model_config(self.model_path)
+        _Helpers.set_random_seeds(self.model_config["training"]["manual_seed"])
+        self.t_loader, self.v_loader = _Helpers.make_data_loaders(
+            self.data_path, self.model_config["data_sets"]
+        )
+        self.completed_context_setup = True
+        print("[ Completed training model context setup ]")
+        print()
 
     def train_d(self):
         """Trains the discriminator with the training set."""
-        self.t_batch_index = 0
-        while self.t_batch_index < self.t_batch_count:
+        self.t_batch = 0
+        while self.t_batch < self.t_batch_count:
             self.train_d_with_curr_batch()
             self.print_train_d_stats_if_needed()
-            self.t_batch_index += 1
+            self.t_batch += 1
 
     def train_g(self):
         """Trains the generator with the training set."""
-        self.t_batch_index = 0
-        while self.t_batch_index < self.t_batch_count:
+        self.t_batch = 0
+        while self.t_batch < self.t_batch_count:
             self.train_g_with_curr_batch()
             self.print_train_g_stats_if_needed()
-            self.t_batch_index += 1
+            self.t_batch += 1
 
     def validate_d(self):
         """Validate the discriminator with the validation set."""
-        self.v_batch_index = 0
-        while self.v_batch_index < self.v_batch_count:
+        self.v_batch = 0
+        while self.v_batch < self.v_batch_count:
             self.d_v_batch_errs = numpy.array()
             self.validate_d_with_curr_batch()
             self.print_validate_d_stats_if_needed()
-            self.v_batch_index += 1
+            self.v_batch += 1
         self.d_v_errs.append(self.d_v_batch_errs.mean())
 
     def validate_g(self):
         """Validate the generator with the validation set."""
-        self.v_batch_index = 0
-        while self.v_batch_index < self.v_batch_count:
+        self.v_batch = 0
+        while self.v_batch < self.v_batch_count:
             self.g_v_batch_errs = numpy.array()
             self.validate_g_with_curr_batch()
             self.print_validate_g_stats_if_needed()
-            self.v_batch_index += 1
+            self.v_batch += 1
         self.g_v_errs.append(self.g_v_batch_errs.mean())
 
     def run_epoch(self):

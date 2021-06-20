@@ -22,20 +22,61 @@ class _Helpers:
             this_path + "/../../../AIDesign_Models/Default-Model"
         ).resolve()
     )
+    default_discriminator_structure_location = str(
+        pathlib.Path(
+            default_model_path + "/discriminator_structure.py"
+        ).resolve()
+    )
+
+    # fmt: off
+    default_discriminator_structure = r"""
+# Convolutional Neural Network
+
+# import torch.nn as nn
+
+ic_count = self.model_config["data_sets"]["image_channel_count"]
+dfm_size = self.model_config["discriminator"]["feature_map_size"]
+
+self.nn_module = nn.Sequential(
+    # (Layer) 0. in_channels=ic_count, out_channels=dfm_size, kernel_size=4
+    #            input state count: ic_count * (64 ** 2)
+    nn.Conv2d(ic_count, dfm_size, 4, stride=2, padding=1, bias=False),
+    nn.LeakyReLU(0.2, inplace=True),
+    # 1. input state count: dfm_size * (32 ** 2)
+    nn.Conv2d(dfm_size, 2 * dfm_size, 4, stride=2, padding=1, bias=False),
+    nn.BatchNorm2d(2 * dfm_size),
+    nn.LeakyReLU(0.2, inplace=True),
+    # 2. input state count: (2 * dfm_size) * (16 ** 2)
+    nn.Conv2d(2 * dfm_size, 4 * dfm_size, 4, stride=2, padding=1, bias=False),
+    nn.BatchNorm2d(4 * dfm_size),
+    nn.LeakyReLU(0.2, inplace=True),
+    # 3. input state count: (4 * dfm_size) * (8 ** 2)
+    nn.Conv2d(4 * dfm_size, 8 * dfm_size, 4, stride=2, padding=1, bias=False),
+    nn.BatchNorm2d(8 * dfm_size),
+    nn.LeakyReLU(0.2, inplace=True),
+    # 4. input state count: (8 * dfm_size) * (4 ** 2)
+    #    output state count: 1
+    nn.Conv2d(8 * dfm_size, 1, 4, stride=1, padding=0, bias=False),
+    nn.Sigmoid()
+)
+"""
+
     default_generator_structure_location = str(
         pathlib.Path(
             default_model_path + "/generator_structure.py"
         ).resolve()
     )
+
     default_generator_structure = r"""
 # Convolutional Neural Network with Transposed Layers
 
 # import torch.nn as nn
 
-# z_size = generator_input_size
-# gfm_size = generator_feature_map_size
-# ic_count = image_channel_count
-nn.Sequential(
+z_size = self.model_config["generator"]["input_size"]
+gfm_size = self.model_config["generator"]["feature_map_size"]
+ic_count = self.model_config["data_sets"]["image_channel_count"]
+
+self.nn_module = nn.Sequential(
     # (Layer) 0. in_channels=z_size, out_channels=8 * gfm_size, kernel_size=4
     nn.ConvTranspose2d(
         z_size, 8 * gfm_size, 4, stride=1, padding=0, bias=False
@@ -64,43 +105,6 @@ nn.Sequential(
     #    output state count: ic_count * (64 ** 2)
     nn.ConvTranspose2d(gfm_size, ic_count, 4, stride=2, padding=1, bias=False),
     nn.Tanh()
-)
-"""
-
-    default_discriminator_structure_location = str(
-        pathlib.Path(
-            default_model_path + "/discriminator_structure.py"
-        ).resolve()
-    )
-    # fmt: off
-    default_discriminator_structure = r"""
-# Convolutional Neural Network
-
-# import torch.nn as nn
-
-# dfm_size = discriminator_feature_map_size
-# ic_count = image_channel_count
-nn.Sequential(
-    # (Layer) 0. in_channels=ic_count, out_channels=dfm_size, kernel_size=4
-    #            input state count: ic_count * (64 ** 2)
-    nn.Conv2d(ic_count, dfm_size, 4, stride=2, padding=1, bias=False),
-    nn.LeakyReLU(0.2, inplace=True),
-    # 1. input state count: dfm_size * (32 ** 2)
-    nn.Conv2d(dfm_size, 2 * dfm_size, 4, stride=2, padding=1, bias=False),
-    nn.BatchNorm2d(2 * dfm_size),
-    nn.LeakyReLU(0.2, inplace=True),
-    # 2. input state count: (2 * dfm_size) * (16 ** 2)
-    nn.Conv2d(2 * dfm_size, 4 * dfm_size, 4, stride=2, padding=1, bias=False),
-    nn.BatchNorm2d(4 * dfm_size),
-    nn.LeakyReLU(0.2, inplace=True),
-    # 3. input state count: (4 * dfm_size) * (8 ** 2)
-    nn.Conv2d(4 * dfm_size, 8 * dfm_size, 4, stride=2, padding=1, bias=False),
-    nn.BatchNorm2d(8 * dfm_size),
-    nn.LeakyReLU(0.2, inplace=True),
-    # 4. input state count: (8 * dfm_size) * (4 ** 2)
-    #    output state count: 1
-    nn.Conv2d(8 * dfm_size, 1, 4, stride=1, padding=0, bias=False),
-    nn.Sigmoid()
 )
 """
 
@@ -213,14 +217,7 @@ class GenerateConfig:
         self.location = GenerateConfig.default_location
 
         self.items = {
-            "image_count": 64,
-            "manual_seed": None,
-            "model_path": _Helpers.default_model_path,
-            "grid_mode": {
-                "enabled": False,
-                "padding": 2,
-                "images_per_grid": 64
-            }
+            "model_path": _Helpers.default_model_path
         }
 
     def __getitem__(self, item):
@@ -266,6 +263,15 @@ class ModelConfig:
                 "epochs_per_iteration": 2,
                 "gpu_count": 1,
             },
+            "generation": {
+                "image_count": 64,
+                "manual_seed": None,
+                "grid_mode": {
+                    "enabled": True,
+                    "padding": 2,
+                    "images_per_grid": 64
+                }
+            },
             "data_sets": {
                 "loader_worker_count": 0,
                 "percentage_to_use": 100,
@@ -275,22 +281,31 @@ class ModelConfig:
                 "training_set_weight": 8,
                 "validation_set_weight": 2
             },
-            "model": {
-                "generator_input_size": 100,
-                "generator_feature_map_size": 64,
-                "discriminator_feature_map_size": 64,
-            },
-            "adam_optimizer": {
-                "initial_learning_rate": 0.0002,
-                "beta1": 0.5,
-                "beta2": 0.999
-            },
+            "discriminator": {
+                "feature_map_size": 64,
 
-            "generator_structure_location":
-            _Helpers.default_generator_structure_location,
+                "structure_location":
+                _Helpers.default_discriminator_structure_location,
 
-            "discriminator_structure_location":
-            _Helpers.default_discriminator_structure_location
+                "adam_optimizer": {
+                    "learning_rate": 0.0002,
+                    "beta1": 0.5,
+                    "beta2": 0.999
+                }
+            },
+            "generator": {
+                "input_size": 100,
+                "feature_map_size": 64,
+
+                "structure_location":
+                _Helpers.default_generator_structure_location,
+
+                "adam_optimizer": {
+                    "learning_rate": 0.0002,
+                    "beta1": 0.5,
+                    "beta2": 0.999
+                }
+            }
         }
 
     def __getitem__(self, item):
@@ -315,15 +330,15 @@ class ModelConfig:
         _Helpers.save_json(self.items, self.location)
 
 
-class GeneratorStructure:
-    """Structure of a generator."""
+class DiscriminatorStructure:
+    """Structure of a discriminator."""
 
-    default_location = _Helpers.default_generator_structure_location
+    default_location = _Helpers.default_discriminator_structure_location
 
     def __init__(self):
-        """Initializes a GeneratorStructure with the defaults."""
-        self.location = GeneratorStructure.default_location
-        self.definition = _Helpers.default_generator_structure
+        """Initializes a DiscriminatorStructure with the defaults."""
+        self.location = DiscriminatorStructure.default_location
+        self.definition = _Helpers.default_discriminator_structure
 
     def load(self):
         """Loads the structure from a text file.
@@ -340,15 +355,15 @@ class GeneratorStructure:
         _Helpers.save_text_file(self.definition, self.location)
 
 
-class DiscriminatorStructure:
-    """Structure of a discriminator."""
+class GeneratorStructure:
+    """Structure of a generator."""
 
-    default_location = _Helpers.default_discriminator_structure_location
+    default_location = _Helpers.default_generator_structure_location
 
     def __init__(self):
-        """Initializes a DiscriminatorStructure with the defaults."""
-        self.location = DiscriminatorStructure.default_location
-        self.definition = _Helpers.default_discriminator_structure
+        """Initializes a GeneratorStructure with the defaults."""
+        self.location = GeneratorStructure.default_location
+        self.definition = _Helpers.default_generator_structure
 
     def load(self):
         """Loads the structure from a text file.

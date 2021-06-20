@@ -107,15 +107,15 @@ class _Helpers:
         return t_loader, v_loader
 
 
-class TrainingModel:
-    """Training model.
+class Trainer:
+    """Trainer (training coordinator).
 
     A coordinator class that handles the actions involving the components
     needed to train a GAN model.
     """
 
     def __init__(self, data_path, model_path):
-        """Initializes a training model.
+        """Initializes a trainer.
 
         Params: data_path, model_path
         """
@@ -129,7 +129,7 @@ class TrainingModel:
         self.completed_context_setup = False
 
     def setup_context(self):
-        """Sets up the internal states of the model.
+        """Sets up the internal states of the trainer.
 
         Gets ready to start the training.
         """

@@ -1,28 +1,28 @@
-"""Module of the model classes."""
+"""Module of the models."""
 
 import torch.nn as nn
 import gan_libs.configs as configs
 
 
 class Utils:
-    """Utilities for neural network setups."""
+    """Utilities for the models."""
 
     @classmethod
     def init_weights(cls, module):
-        """Initializes the weights of the nodes in the neural network.
+        """Initializes the weights inside a neural network module.
 
         Params: module: the neural network module
         """
         class_name = module.__class__.__name__
-        if class_name.find('Conv') != -1:
+        if class_name.find("Conv") != -1:
             nn.init.normal_(module.weight.data, 0.0, 0.02)
-        elif class_name.find('BatchNorm') != -1:
+        elif class_name.find("BatchNorm") != -1:
             nn.init.normal_(module.weight.data, 1.0, 0.02)
             nn.init.constant_(module.bias.data, 0)
 
 
-class Generator(nn.Module):
-    """Generator convolutional neural network."""
+class Generator:
+    """Generator CNN model."""
 
     def __init__(self, model_config_location=None):
         super(Generator, self).__init__()
@@ -59,7 +59,7 @@ class Generator(nn.Module):
 
 
 class Discriminator(nn.Module):
-    """Discriminator convolutional neural network."""
+    """Discriminator CNN model."""
 
     def __init__(self, model_config_location=None):
         super(Discriminator, self).__init__()

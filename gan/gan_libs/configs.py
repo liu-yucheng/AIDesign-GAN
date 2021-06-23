@@ -1,112 +1,13 @@
-"""A module that includes the config (configuration) classes.
-
-The config classes are used to set up the executables and training/generating
-models.
-"""
+"""Module of the config (configuration) classes."""
 
 import json
 import pathlib
 
+import gan_libs.defaults as defaults
+
 
 class _Helpers:
-    """Helpers for classes in the configs module."""
-
-    this_path = str(pathlib.Path(__file__).parent.resolve())
-    default_data_path = str(
-        pathlib.Path(
-            this_path + "/../../../AIDesign_Data/Default-Data"
-        ).resolve()
-    )
-    default_model_path = str(
-        pathlib.Path(
-            this_path + "/../../../AIDesign_Models/Default-Model"
-        ).resolve()
-    )
-    default_discriminator_structure_location = str(
-        pathlib.Path(
-            default_model_path + "/discriminator_structure.py"
-        ).resolve()
-    )
-
-    # fmt: off
-    default_discriminator_structure = r"""
-# Convolutional Neural Network
-
-# import torch.nn as nn
-
-ic_count = self.model_config["data_sets"]["image_channel_count"]
-dfm_size = self.model_config["discriminator"]["feature_map_size"]
-
-self.nn_module = nn.Sequential(
-    # (Layer) 0. in_channels=ic_count, out_channels=dfm_size, kernel_size=4
-    #            input state count: ic_count * (64 ** 2)
-    nn.Conv2d(ic_count, dfm_size, 4, stride=2, padding=1, bias=False),
-    nn.LeakyReLU(0.2, inplace=True),
-    # 1. input state count: dfm_size * (32 ** 2)
-    nn.Conv2d(dfm_size, 2 * dfm_size, 4, stride=2, padding=1, bias=False),
-    nn.BatchNorm2d(2 * dfm_size),
-    nn.LeakyReLU(0.2, inplace=True),
-    # 2. input state count: (2 * dfm_size) * (16 ** 2)
-    nn.Conv2d(2 * dfm_size, 4 * dfm_size, 4, stride=2, padding=1, bias=False),
-    nn.BatchNorm2d(4 * dfm_size),
-    nn.LeakyReLU(0.2, inplace=True),
-    # 3. input state count: (4 * dfm_size) * (8 ** 2)
-    nn.Conv2d(4 * dfm_size, 8 * dfm_size, 4, stride=2, padding=1, bias=False),
-    nn.BatchNorm2d(8 * dfm_size),
-    nn.LeakyReLU(0.2, inplace=True),
-    # 4. input state count: (8 * dfm_size) * (4 ** 2)
-    #    output state count: 1
-    nn.Conv2d(8 * dfm_size, 1, 4, stride=1, padding=0, bias=False),
-    nn.Sigmoid()
-)
-"""
-
-    default_generator_structure_location = str(
-        pathlib.Path(
-            default_model_path + "/generator_structure.py"
-        ).resolve()
-    )
-
-    default_generator_structure = r"""
-# Convolutional Neural Network with Transposed Layers
-
-# import torch.nn as nn
-
-z_size = self.model_config["generator"]["input_size"]
-gfm_size = self.model_config["generator"]["feature_map_size"]
-ic_count = self.model_config["data_sets"]["image_channel_count"]
-
-self.nn_module = nn.Sequential(
-    # (Layer) 0. in_channels=z_size, out_channels=8 * gfm_size, kernel_size=4
-    nn.ConvTranspose2d(
-        z_size, 8 * gfm_size, 4, stride=1, padding=0, bias=False
-    ),
-    nn.BatchNorm2d(8 * gfm_size),
-    nn.ReLU(True),
-    # 1. input state count: (8 * gfm_size) * (4 ** 2)
-    nn.ConvTranspose2d(
-        8 * gfm_size, 4 * gfm_size, 4, stride=2, padding=1, bias=False
-    ),
-    nn.BatchNorm2d(4 * gfm_size),
-    nn.ReLU(True),
-    # 2. input state count: (4 * gfm_size) * (8 ** 2)
-    nn.ConvTranspose2d(
-        4 * gfm_size, 2 * gfm_size, 4, stride=2, padding=1, bias=False
-    ),
-    nn.BatchNorm2d(2 * gfm_size),
-    nn.ReLU(True),
-    # 3. input state count: (2 * gfm_size) * (16 ** 2)
-    nn.ConvTranspose2d(
-        2 * gfm_size, gfm_size, 4, stride=2, padding=1, bias=False
-    ),
-    nn.BatchNorm2d(gfm_size),
-    nn.ReLU(True),
-    # 4. input state count: gfm_size * (32 ** 2)
-    #    output state count: ic_count * (64 ** 2)
-    nn.ConvTranspose2d(gfm_size, ic_count, 4, stride=2, padding=1, bias=False),
-    nn.Tanh()
-)
-"""
+    """Helpers for classes in the module."""
 
     @classmethod
     def load_json(cls, from_file, to_dict):
@@ -137,62 +38,43 @@ self.nn_module = nn.Sequential(
         json.dump(from_dict, file, indent=4)
         file.close()
 
-    @classmethod
-    def load_text_file(cls, from_file):
-        """Loads the data from a file.
 
-        Args: from_file: text file location
-
-        Returns: the file contents
-        """
-        file = open(from_file, "r")
-        contents = file.read()
-        file.close()
-        return contents
+class _Config:
+    """Super class of the configs."""
 
     @classmethod
-    def save_text_file(cls, from_str, to_file):
-        """Saves the data from a string to a file.
+    def find_in_path(cls, name, path):
+        """Finds the location of the config with a given name in a given path.
 
         Args:
-            from_str:   string to save
-            to_file:    text file location
+            fname:  the given config file name
+            path:   the given path
+
+        Returns: the location of the config file
         """
-        file = open(to_file, "w+")
-        file.write(from_str)
-        file.close()
-
-
-class TrainConfig:
-    """Config of the gan/train.py executable."""
-
-    default_location = str(
-        pathlib.Path(
-            _Helpers.this_path + "/../gan_exes/train_config.json"
-        ).resolve()
-    )
+        loc = str(pathlib.Path(path + "/" + name).resolve())
+        return loc
 
     def __init__(self):
-        """Initializes a TrainConfig with the defaults."""
-        self.location = TrainConfig.default_location
-
-        self.items = {
-            "data_path": _Helpers.default_data_path,
-            "model_path": _Helpers.default_model_path
-        }
+        """Initializes an object with the defaults."""
+        self.location = None
+        self.items = {}
 
     def __getitem__(self, item):
-        """Returns the item corresponding to the given subscript.
+        """Finds the item corresponding to the given subscript.
 
-        Makes self[item] a shorthand for self.items[item].
+        Makes config[item] a shorthand of config.items[item].
         """
         return self.items[item]
 
     def load(self):
-        """Loads the config from a JSON file.
+        """Loads the config items from a JSON file.
 
-        If the file does not exist, save the current config at the location.
+        Saves the config items at the location if the file does not exist.
         """
+        if self.location is None:
+            raise ValueError("config.location cannot be None")
+
         try:
             _Helpers.load_json(self.location, self.items)
         except FileNotFoundError:
@@ -200,60 +82,50 @@ class TrainConfig:
 
     def save(self):
         """Saves the config to a JSON file."""
+        if self.location is None:
+            raise ValueError("config.location cannot be None")
+
         _Helpers.save_json(self.items, self.location)
 
 
-class GenerateConfig:
-    """Config of the gan/generate.py executable."""
-
-    default_location = str(
-        pathlib.Path(
-            _Helpers.this_path + "/../gan_exes/generate_config.json"
-        ).resolve()
-    )
+class TrainConfig(_Config):
+    """Config of the train.py executable."""
 
     def __init__(self):
-        """Initializes a GenerateConfig with the defaults"""
-        self.location = GenerateConfig.default_location
+        super().__init__()
+
+        self.location = defaults.train_config_location
 
         self.items = {
-            "model_path": _Helpers.default_model_path
+            "data_path": defaults.data_path,
+            "model_path": defaults.model_path
         }
 
-    def __getitem__(self, item):
-        """Returns the item corresponding to the given subscript.
 
-        Makes self[item] a shorthand for self.items[item].
-        """
-        return self.items[item]
-
-    def load(self):
-        """Loads the config from a JSON file.
-
-        If the file does not exist, save the current config at the location.
-        """
-        try:
-            _Helpers.load_json(self.location, self.items)
-        except FileNotFoundError:
-            self.save()
-
-    def save(self):
-        """Saves the config to a JSON file."""
-        _Helpers.save_json(self.items, self.location)
-
-
-class ModelConfig:
-    """Config of a GAN model."""
-
-    default_location = str(
-        pathlib.Path(
-            _Helpers.default_model_path + "/model_config.json"
-        ).resolve()
-    )
+class GenerateConfig(_Config):
+    """Config of the generate.py executable."""
 
     def __init__(self):
-        """Initializes a ModelConfig with the defaults"""
-        self.location = ModelConfig.default_location
+        super().__init__()
+
+        self.location = defaults.generate_config_location
+
+        self.items = {
+            "model_path": defaults.model_path
+        }
+
+
+class CoordsConfig(_Config):
+    """Config of the training/generation coordinators."""
+
+    @classmethod
+    def find_in_path(cls, path):
+        return super().find_in_path("coords_config.json", path)
+
+    def __init__(self):
+        super().__init__()
+
+        self.location = defaults.coords_config_location
 
         self.items = {
             "training": {
@@ -262,31 +134,46 @@ class ModelConfig:
                 "iteration_count": 5,
                 "epochs_per_iteration": 2,
                 "gpu_count": 1,
+                "data_sets": {
+                    "loader_worker_count": 0,
+                    "percentage_to_use": 100,
+                    "images_per_batch": 16,
+                    "image_resolution": 64,
+                    "training_set_weight": 8,
+                    "validation_set_weight": 2
+                }
             },
             "generation": {
                 "image_count": 64,
                 "manual_seed": None,
+                "gpu_count": 1,
                 "grid_mode": {
                     "enabled": True,
                     "padding": 2,
                     "images_per_grid": 64
                 }
-            },
-            "data_sets": {
-                "loader_worker_count": 0,
-                "percentage_to_use": 100,
-                "images_per_batch": 16,
-                "image_resolution": 64,
-                "image_channel_count": 3,
-                "training_set_weight": 8,
-                "validation_set_weight": 2
-            },
+            }
+        }
+
+
+class ModelersConfig(_Config):
+    """Config of the discriminator/generator modelers."""
+
+    @classmethod
+    def find_in_path(cls, path):
+        return super().find_in_path("modelers_config.json", path)
+
+    def __init__(self):
+        super().__init__()
+
+        self.location = defaults.modelers_config_location
+
+        self.items = {
             "discriminator": {
+                "image_channel_count": 3,
                 "feature_map_size": 64,
-
-                "structure_location":
-                _Helpers.default_discriminator_structure_location,
-
+                "struct_location": defaults.discriminator_struct_location,
+                "state_location": defaults.discriminator_state_location,
                 "adam_optimizer": {
                     "learning_rate": 0.0002,
                     "beta1": 0.5,
@@ -296,10 +183,9 @@ class ModelConfig:
             "generator": {
                 "input_size": 100,
                 "feature_map_size": 64,
-
-                "structure_location":
-                _Helpers.default_generator_structure_location,
-
+                "image_channel_count": 3,
+                "struct_location": defaults.generator_struct_location,
+                "state_location": defaults.generator_state_location,
                 "adam_optimizer": {
                     "learning_rate": 0.0002,
                     "beta1": 0.5,
@@ -307,74 +193,3 @@ class ModelConfig:
                 }
             }
         }
-
-    def __getitem__(self, item):
-        """Returns the item corresponding to the given subscript.
-
-        Makes self[item] a shorthand for self.items[item].
-        """
-        return self.items[item]
-
-    def load(self):
-        """Loads the config from a JSON file.
-
-        If the file does not exist, save the current config at the location.
-        """
-        try:
-            _Helpers.load_json(self.location, self.items)
-        except FileNotFoundError:
-            self.save()
-
-    def save(self):
-        """Saves the config to a JSON file."""
-        _Helpers.save_json(self.items, self.location)
-
-
-class DiscriminatorStructure:
-    """Structure of a discriminator."""
-
-    default_location = _Helpers.default_discriminator_structure_location
-
-    def __init__(self):
-        """Initializes a DiscriminatorStructure with the defaults."""
-        self.location = DiscriminatorStructure.default_location
-        self.definition = _Helpers.default_discriminator_structure
-
-    def load(self):
-        """Loads the structure from a text file.
-
-        If the file does not exist, save the current config at the location.
-        """
-        try:
-            self.definition = _Helpers.load_text_file(self.location)
-        except FileNotFoundError:
-            self.save()
-
-    def save(self):
-        """Saves the structure to a text file."""
-        _Helpers.save_text_file(self.definition, self.location)
-
-
-class GeneratorStructure:
-    """Structure of a generator."""
-
-    default_location = _Helpers.default_generator_structure_location
-
-    def __init__(self):
-        """Initializes a GeneratorStructure with the defaults."""
-        self.location = GeneratorStructure.default_location
-        self.definition = _Helpers.default_generator_structure
-
-    def load(self):
-        """Loads the structure from a text file.
-
-        If the file does not exist, save the current config at the location.
-        """
-        try:
-            self.definition = _Helpers.load_text_file(self.location)
-        except FileNotFoundError:
-            self.save()
-
-    def save(self):
-        """Saves the structure to a text file."""
-        _Helpers.save_text_file(self.definition, self.location)

@@ -7,13 +7,14 @@ import gan_libs.coords as coords
 def main():
     train_config = configs.TrainConfig()
     train_config.load()
-    print("Loaded train_config from {}".format(train_config.location))
+    print("Training config: {}".format(train_config.location))
     print()
 
-    trainer = coords.Trainer(
+    trainer = coords.TrainingCoord(
         train_config["data_path"], train_config["model_path"]
     )
     trainer.setup_context()
+    trainer.start_training()
 
 
 if __name__ == "__main__":

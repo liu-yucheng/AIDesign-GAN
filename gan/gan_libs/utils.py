@@ -1,10 +1,60 @@
-"""Module of the util (utility) functions."""
+"""Module of the util (utility) classes and functions."""
 
 import json
 import pathlib
 import torch
 from torch import nn
 from torch import optim
+
+
+class AttrDict:
+    """Attribute dictionary.
+
+    A dictionary whose items are accessed as attributes.
+    """
+
+    def __getattr__(self, name):
+        return self.get_attr(name)
+
+    def __setattr__(self, name, value):
+        return self.set_attr(name, value)
+
+    def __repr__(self):
+        """Finds the string representation of self.
+
+        Returns:
+            the string representation of self.__dict__
+        """
+        return repr(self.__dict__)
+
+    def get_attr(self, name):
+        """Gets an attribute of self.
+
+        Args:
+            name: the name of the attribute
+
+        Returns:
+            attr: the value of the attribute; or, a new AttrDict object,
+                if the attribute does not exist
+        """
+        attr = None
+        if name not in self.__dict__:
+            self.__dict__[name] = AttrDict()
+        attr = self.__dict__[name]
+        return attr
+
+    def set_attr(self, name, value):
+        """Sets an attribute of self.
+
+        Args:
+            name: the name of the attribute
+            value: the value of the attribute
+
+        Returns:
+            value: the value of the attribute
+        """
+        self.__dict__[name] = value
+        return value
 
 
 def load_json(from_file, to_dict):

@@ -1,132 +1,99 @@
 """Module of the config (configuration) classes."""
 
-import json
-import pathlib
-
-import gan_libs.defaults as defaults
+from gan_libs import defaults
+from gan_libs import utils
 
 
-class _Helpers:
-    """Helpers for classes in the module."""
+class Config:
+    """Super class of the config classes.
 
-    @classmethod
-    def load_json(cls, from_file, to_dict):
-        """Loads the data from a json file to a dict.
-
-        Only loads the contents with keys that can be found in the key set of
-        the the dictionary.
-
-        Args:
-            from_file:   json file location
-            to_dict:     dict object
-        """
-        file = open(from_file, "r")
-        contents = json.load(file)
-        for key in to_dict.keys():
-            to_dict[key] = contents[key]
-        file.close()
-
-    @classmethod
-    def save_json(cls, from_dict, to_file):
-        """Saves the data from a dict to a json file.
-
-        Args:
-            from_dict:   dict object
-            to_file:     json file location
-        """
-        file = open(to_file, "w+")
-        json.dump(from_dict, file, indent=4)
-        file.close()
-
-
-class _Config:
-    """Super class of the configs."""
-
-    @classmethod
-    def find_in_path(cls, name, path):
-        """Finds the location of the config with a given name in a given path.
-
-        Args:
-            fname:  the given config file name
-            path:   the given path
-
-        Returns: the location of the config file
-        """
-        loc = str(pathlib.Path(path + "/" + name).resolve())
-        return loc
+    Attributes:
+        location: the config file location
+        items: the config items, the settings
+    """
 
     def __init__(self):
-        """Initializes an object with the defaults."""
+        """Inits self."""
         self.location = None
         self.items = {}
 
-    def __getitem__(self, item):
+    def __getitem__(self, sub):
         """Finds the item corresponding to the given subscript.
 
-        Makes config[item] a shorthand of config.items[item].
+        The function makes config[sub] a shorthand of config.items[sub].
+
+        Args:
+            sub: the subscript of the item
+
+        Returns:
+            the corresponding item
         """
-        return self.items[item]
+        return self.items[sub]
 
     def load(self):
         """Loads the config items from a JSON file.
 
-        Saves the config items at the location if the file does not exist.
+        If the file does not exist, the function saves the current config at
+        the location.
+
+        Raises:
+            ValueError: if self.location is None
         """
         if self.location is None:
-            raise ValueError("config.location cannot be None")
-
+            raise ValueError("self.location cannot be None")
         try:
-            _Helpers.load_json(self.location, self.items)
+            utils.load_json(self.location, self.items)
         except FileNotFoundError:
             self.save()
 
     def save(self):
-        """Saves the config to a JSON file."""
+        """Saves the config to a JSON file.
+
+        Raises:
+            ValueError: if self.location is None
+        """
         if self.location is None:
-            raise ValueError("config.location cannot be None")
+            raise ValueError("self.location cannot be None")
+        utils.save_json(self.items, self.location)
 
-        _Helpers.save_json(self.items, self.location)
 
-
-class TrainConfig(_Config):
+class TrainConfig(Config):
     """Config of the train.py executable."""
 
     def __init__(self):
         super().__init__()
-
         self.location = defaults.train_config_location
-
         self.items = {
             "data_path": defaults.data_path,
             "model_path": defaults.model_path
         }
 
 
-class GenerateConfig(_Config):
+class GenerateConfig(Config):
     """Config of the generate.py executable."""
 
     def __init__(self):
         super().__init__()
-
         self.location = defaults.generate_config_location
-
         self.items = {
             "model_path": defaults.model_path
         }
 
 
-class CoordsConfig(_Config):
+class CoordsConfig(Config):
     """Config of the training/generation coordinators."""
 
-    @classmethod
-    def find_in_path(cls, path):
-        return super().find_in_path("coords_config.json", path)
+    def __init__(self, model_path=None):
+        """Inits self with the given args.
 
-    def __init__(self):
+        Args:
+            model_path: the model path
+        """
         super().__init__()
-
-        self.location = defaults.coords_config_location
-
+        if model_path is None:
+            model_path = defaults.model_path
+        self.location = utils.\
+            find_in_path(defaults.coords_config_name, model_path)
         self.items = {
             "training": {
                 "mode": "new",
@@ -156,24 +123,28 @@ class CoordsConfig(_Config):
         }
 
 
-class ModelersConfig(_Config):
+class ModelersConfig(Config):
     """Config of the discriminator/generator modelers."""
 
-    @classmethod
-    def find_in_path(cls, path):
-        return super().find_in_path("modelers_config.json", path)
+    def __init__(self, model_path=None):
+        """Inits self with the given args.
 
-    def __init__(self):
+        Args:
+            model_path: the model path
+        """
         super().__init__()
-
-        self.location = defaults.modelers_config_location
-
+        if model_path is None:
+            model_path = defaults.model_path
+        self.location = utils.\
+            find_in_path(defaults.modelers_config_name, model_path)
         self.items = {
             "discriminator": {
                 "image_channel_count": 3,
                 "feature_map_size": 64,
-                "struct_location": defaults.discriminator_struct_location,
-                "state_location": defaults.discriminator_state_location,
+                "struct_location": utils.find_in_path(
+                    defaults.discriminator_struct_name, model_path),
+                "state_location": utils.find_in_path(
+                    defaults.discriminator_state_name, model_path),
                 "adam_optimizer": {
                     "learning_rate": 0.0002,
                     "beta1": 0.5,
@@ -184,8 +155,10 @@ class ModelersConfig(_Config):
                 "input_size": 100,
                 "feature_map_size": 64,
                 "image_channel_count": 3,
-                "struct_location": defaults.generator_struct_location,
-                "state_location": defaults.generator_state_location,
+                "struct_location": utils.find_in_path(
+                    defaults.generator_struct_name, model_path),
+                "state_location": utils.find_in_path(
+                    defaults.generator_state_name, model_path),
                 "adam_optimizer": {
                     "learning_rate": 0.0002,
                     "beta1": 0.5,

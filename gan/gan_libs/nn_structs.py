@@ -1,75 +1,64 @@
-"""Module of the nn struct (neural network structure) classes."""
+"""Module of the NN struct (neural network structure) classes."""
 
-import gan_libs.defaults as defaults
-
-
-class _Helpers:
-    """Helpers for classes in the module."""
-
-    @classmethod
-    def load_text_file(cls, from_file):
-        """Loads the data from a file.
-
-        Args: from_file: text file location
-
-        Returns: the file contents
-        """
-        file = open(from_file, "r")
-        contents = file.read()
-        file.close()
-        return contents
-
-    @classmethod
-    def save_text_file(cls, from_str, to_file):
-        """Saves the data from a string to a file.
-
-        Args:
-            from_str:   string to save
-            to_file:    text file location
-        """
-        file = open(to_file, "w+")
-        file.write(from_str)
-        file.close()
+from gan_libs import defaults
+from gan_libs import utils
 
 
-class _NNStruct:
-    """Super class of the nn structs."""
+class NNStruct:
+    """Super class of the NN struct classes.
+
+    Attributes:
+        location: the structure file location
+        definition: the structure definition
+    """
 
     def __init__(self):
-        """Initializes a struct."""
+        """Inits self."""
         self.location = None
         self.definition = ""
 
     def load(self):
-        """Loads the struct definition from the struct file.
+        """Loads the struct definition.
 
-        Saves the current struct definition if the file does not exist.
+        If the file does not exist, the function saves the current stuct at the
+        location.
+
+        Raises:
+            ValueError: if self.location is None
         """
         if self.location is None:
-            raise ValueError("struct.location cannot be None")
-
+            raise ValueError("self.location cannot be None")
         try:
-            self.definition = _Helpers.load_text_file(self.location)
+            self.definition = utils.load_text_file(self.location)
         except FileNotFoundError:
             self.save()
 
     def save(self):
-        """Saves the struct definition to a text file."""
+        """Saves the struct definition.
+
+        Raises:
+            ValueError: if self.location is None
+        """
         if self.location is None:
             raise ValueError("struct.location cannot be None")
 
-        _Helpers.save_text_file(self.definition, self.location)
+        utils.save_text_file(self.definition, self.location)
 
 
-class DStruct(_NNStruct):
+class DStruct(NNStruct):
     """Discriminator structure."""
 
-    def __init__(self):
-        """Initializes a discriminator structure with the defaults."""
+    def __init__(self, model_path=None):
+        """Inits self with the given args.
+
+        Args:
+            model_path: the model path
+        """
         super().__init__()
-
-        self.location = defaults.discriminator_struct_location
-
+        if model_path is None:
+            model_path = defaults.model_path
+        self.location = utils.\
+            find_in_path(defaults.discriminator_struct_name, model_path)
         # fmt: off
         self.definition = r"""
 # Convolutional Neural Network
@@ -105,15 +94,20 @@ self.model = nn.Sequential(
         # fmt: on
 
 
-class GStruct(_NNStruct):
+class GStruct(NNStruct):
     """Generator structure."""
 
-    def __init__(self):
-        """Initializes a generator structure with the defaults."""
+    def __init__(self, model_path=None):
+        """Inits self with the given args.
+
+        Args:
+            model_path: the model path
+        """
         super().__init__()
-
-        self.location = defaults.generator_struct_location
-
+        if model_path is None:
+            model_path = defaults.model_path
+        self.location = utils.\
+            find_in_path(defaults.generator_struct_name, model_path)
         # fmt: off
         self.definition = r"""
 # Convolutional Neural Network with Transposed Layers

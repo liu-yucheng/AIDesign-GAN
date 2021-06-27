@@ -417,7 +417,7 @@ class TrainingCoord:
             print("Saved D")
         else:
             self.d.rollback()
-            print("Rollbacked (count: {}) D".format(self.d.rollback_count))
+            print("Rollbacked (count: {}) D".format(self.d.rollbacks))
 
         if self.g_iter_best_loss < self.g_best_loss:
             self.g.save()
@@ -425,7 +425,7 @@ class TrainingCoord:
             print("Saved G")
         else:
             self.g.rollback()
-            print("Rollbacked (count: {}) G".format(self.g.rollback_count))
+            print("Rollbacked (count: {}) G".format(self.g.rollbacks))
 
         print()
 

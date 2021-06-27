@@ -1,53 +1,31 @@
-"""Module of the defaults."""
+"""Module of the default variables."""
 
 import pathlib
 
 _this_path = str(pathlib.Path(__file__).parent.resolve())
-
-data_path = str(
-    pathlib.Path(
-        _this_path + "/../../../AIDesign_Data/Default-Data"
-    ).resolve()
-)
-
-model_path = str(
-    pathlib.Path(
-        _this_path + "/../../../AIDesign_Models/Default-Model"
-    ).resolve()
-)
-
 train_config_location = str(
     pathlib.Path(
         _this_path + "/../gan_exes/train_config.json"
     ).resolve()
 )
-
 generate_config_location = str(
     pathlib.Path(
         _this_path + "/../gan_exes/generate_config.json"
     ).resolve()
 )
-
-coords_config_location = str(
-    pathlib.Path(model_path + "/coords_config.json").absolute()
+data_path = str(
+    pathlib.Path(
+        _this_path + "/../../../AIDesign_Data/Default-Data"
+    ).resolve()
 )
-
-modelers_config_location = str(
-    pathlib.Path(model_path + "/modelers_config.json").absolute()
+model_path = str(
+    pathlib.Path(
+        _this_path + "/../../../AIDesign_Models/Default-Model"
+    ).resolve()
 )
-
-discriminator_struct_location = str(
-    pathlib.Path(model_path + "/discriminator_struct.py").absolute()
-)
-
-generator_struct_location = str(
-    pathlib.Path(model_path + "/generator_struct.py").absolute()
-)
-
-discriminator_state_location = str(
-    pathlib.Path(model_path + "/discriminator.pt").absolute()
-)
-
-generator_state_location = str(
-    pathlib.Path(model_path + "/generator.pt").absolute()
-)
+coords_config_name = "coords_config.json"
+modelers_config_name = "modelers_config.json"
+discriminator_struct_name = "discriminator_struct.py"
+discriminator_state_name = "discriminator.pt"
+generator_struct_name = "generator_struct.py"
+generator_state_name = "generator.pt"

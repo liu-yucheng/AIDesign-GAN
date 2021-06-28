@@ -63,7 +63,7 @@ class DStruct(NNStruct):
         self.definition = r"""
 # Convolutional Neural Network
 
-# import torch.nn as nn
+from torch import nn
 
 ic_count = self.config["image_channel_count"]
 dfm_size = self.config["feature_map_size"]
@@ -112,7 +112,7 @@ class GStruct(NNStruct):
         self.definition = r"""
 # Convolutional Neural Network with Transposed Layers
 
-# import torch.nn as nn
+from torch import nn
 
 z_size = self.config["input_size"]
 gfm_size = self.config["feature_map_size"]

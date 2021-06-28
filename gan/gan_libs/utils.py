@@ -1,7 +1,9 @@
 """Module of the util (utility) classes and functions."""
 
 import json
+import os
 import pathlib
+import shutil
 import torch
 from torch import nn
 from torch import optim
@@ -23,9 +25,12 @@ class AttrDict:
         """Finds the string representation of self.
 
         Returns:
-            the string representation of self.__dict__
+            result: the string representation of self.__dict__
         """
-        return repr(self.__dict__)
+        result = self.__dict__
+        if len(self.__dict__) == 0:
+            result = "{ Empty AttrDict }"
+        return result
 
     def get_attr(self, name):
         """Gets an attribute of self.
@@ -69,7 +74,7 @@ def load_json(from_file, to_dict):
     """
     file = open(from_file, "r")
     contents = json.load(file)
-    for key, _ in to_dict:
+    for key in to_dict:
         to_dict[key] = contents[key]
     file.close()
 
@@ -223,3 +228,54 @@ def setup_adam(model, config, rollbacks=0):
         model.parameters(), lr=config["learning_rate"] / (2 ** rollbacks),
         betas=(config["beta1"], config["beta2"]))
     return adam
+
+
+def bound_num(num, bound1, bound2):
+    """Bounds a number with the given args.
+
+    Args:
+        num: the number
+        bound1: the 1st bound
+        bound2: the 2nd bound
+
+    Returns:
+        result: the number, if the number is bounded by the 2 bounds;
+            or, the upper bound, if the number is greater than the bounds;
+            or, the lower bound, if the number is less than the bounds
+    """
+    result = num
+    lower = bound1
+    upper = bound2
+    if upper < lower:
+        lower, upper = upper, lower
+    if result < lower:
+        result = lower
+    if result > upper:
+        result = upper
+    return result
+
+
+def concat_paths(path1, path2):
+    """Concatenates 2 paths together.
+
+    Args:
+        path1: the 1st path
+        path2: the 2nd path
+
+    Returns:
+        path: the concatenated path
+    """
+    path = str(pathlib.Path(path1 + "/" + path2).absolute())
+    return path
+
+
+def init_folder(path, clean=False):
+    """Initializes a folder given a path.
+
+    Args:
+        path: the path to the folder
+        clean: whether to clean up the folder
+    """
+    if clean and os.path.exists(path):
+        shutil.rmtree(path)
+    pathlib.Path(path).mkdir(exist_ok=True)

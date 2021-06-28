@@ -5,16 +5,14 @@ import gan_libs.coords as coords
 
 
 def main():
-    train_config = configs.TrainConfig()
-    train_config.load()
-    print("Training config: {}".format(train_config.location))
-    print()
-
-    trainer = coords.TrainingCoord(
-        train_config["data_path"], train_config["model_path"]
-    )
-    trainer.setup_context()
-    trainer.start_training()
+    config = configs.TrainConfig()
+    config.load()
+    print(f"Training config: {config.location}")
+    d_path = config["data_path"]
+    m_path = config["model_path"]
+    coord = coords.TCoord(d_path, m_path)
+    coord.setup_results()
+    coord.setup_context()
 
 
 if __name__ == "__main__":

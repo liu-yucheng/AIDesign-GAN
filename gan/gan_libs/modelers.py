@@ -12,29 +12,29 @@ class Modeler:
     Attributes:
         config: the config
         device: the device to use
-        gpu_count: the number of GPUs to use
-        loss_func: the loss function
+        gpu_cnt: the number of GPUs to use
+        loss_fn: the loss function
         model: the model, a pytorch nn module
         optim: the optimizer
-        rollbacks: the number of times the model rollbacks
+        rb_cnt: the rollback count
     """
 
-    def __init__(self, config, device, gpu_count, loss_func):
+    def __init__(self, config, device, gpu_cnt, loss_fn):
         """Inits self with the given args.
 
         Args:
             config: the config
             device: the device to use
-            gpu_count: the number of GPUs to use
+            gpu_cnt: the number of GPUs to use
             loss_func: the loss function
         """
         self.config = config
         self.device = device
-        self.gpu_count = gpu_count
-        self.loss_func = loss_func
+        self.gpu_cnt = gpu_cnt
+        self.loss_fn = loss_fn
         self.model = None
         self.optim = None
-        self.rollbacks = 0
+        self.rb_cnt = 0
 
     def load(self):
         """Loads the states of the model."""
@@ -60,27 +60,27 @@ class Modeler:
             raise ValueError("self.model cannot be None")
         if self.optim is None:
             raise ValueError("self.optim cannot be None")
-        self.rollbacks += 1
+        self.rb_cnt += 1
         self.model.zero_grad()
         self.load()
-        self.optim = utils.setup_adam(
-            self.model, self.config["adam_optimizer"], self.rollbacks)
+        self.optim = utils.\
+            setup_adam(self.model, self.config["adam_optimizer"], self.rb_cnt)
 
 
 class DModeler(Modeler):
     """Discriminator modeler."""
 
-    def __init__(self, config, device, gpu_count, loss_func, training=True):
+    def __init__(self, config, device, gpu_cnt, loss_fn, training=True):
         """Inits self with the given args.
 
         Args:
             config: the config
             device: the device to use
-            gpu_count: the number of GPUs to use
-            loss_func: the loss function
+            gpu_cnt: the number of GPUs to use
+            loss_fn: the loss function
             training: whether to setup the optimizer
         """
-        super().__init__(config, device, gpu_count, loss_func)
+        super().__init__(config, device, gpu_cnt, loss_fn)
         # Init self.model
         struct = nn_structs.DStruct()
         struct.location = self.config["struct_location"]
@@ -88,7 +88,7 @@ class DModeler(Modeler):
         exec(struct.definition)
         self.model = self.model.to(self.device)
         self.model = utils.\
-            parallelize_model(self.model, self.device, self.gpu_count)
+            parallelize_model(self.model, self.device, self.gpu_cnt)
         self.model.apply(utils.init_model_weights)
         # Init self.optim
         if training:
@@ -119,7 +119,7 @@ class DModeler(Modeler):
         batch, labels = utils.prep_batch_and_labels(batch, label, self.device)
         output = self.model(batch).view(-1)
         out_mean = output.mean().item()
-        loss = self.loss_func(output, labels)
+        loss = self.loss_fn(output, labels)
         loss.backward()
         self.optim.step()
         return out_mean, loss
@@ -141,7 +141,7 @@ class DModeler(Modeler):
         with torch.no_grad():
             output = self.model(batch).detach().view(-1)
         out_mean = output.mean().item()
-        loss = self.loss_func(output, labels)
+        loss = self.loss_fn(output, labels)
         return out_mean, loss
 
     def test(self, batch):
@@ -164,17 +164,17 @@ class DModeler(Modeler):
 class GModeler(Modeler):
     """Generator modeler."""
 
-    def __init__(self, config, device, gpu_count, loss_func, training=True):
+    def __init__(self, config, device, gpu_cnt, loss_fn, training=True):
         """Inits self with the given args.
 
         Args:
             config: the config
             device: the device to use
-            gpu_count: the number of GPUs to use
-            loss_func: the loss function
+            gpu_cnt: the number of GPUs to use
+            loss_fn: the loss function
             training: whether to setup the optimizer
         """
-        super().__init__(config, device, gpu_count, loss_func)
+        super().__init__(config, device, gpu_cnt, loss_fn)
         # Init self.model
         struct = nn_structs.GStruct()
         struct.location = self.config["struct_location"]
@@ -182,24 +182,24 @@ class GModeler(Modeler):
         exec(struct.definition)
         self.model = self.model.to(self.device)
         self.model = utils.\
-            parallelize_model(self.model, self.device, self.gpu_count)
+            parallelize_model(self.model, self.device, self.gpu_cnt)
         self.model.apply(utils.init_model_weights)
         # Init self.optim
         if training:
             self.optim = utils.\
                 setup_adam(self.model, self.config["adam_optimizer"])
 
-    def gen_noises(self, count):
+    def gen_noises(self, cnt):
         """Generates a set of input noises for the model.
 
         Args:
-            count: the number of input noises
+            cnt: the number of input noises
 
         Returns:
             noises: the generated set of noises
         """
         noises = torch.\
-            randn(count, self.config["input_size"], 1, 1, device=self.device)
+            randn(cnt, self.config["input_size"], 1, 1, device=self.device)
         return noises
 
     def train(self, d_model, batch_size, label):
@@ -230,16 +230,18 @@ class GModeler(Modeler):
         batch, labels = utils.prep_batch_and_labels(batch, label, self.device)
         output = d_model(batch).view(-1)
         out_mean = output.mean().item()
-        loss = self.loss_func(output, labels)
+        loss = self.loss_fn(output, labels)
         loss.backward()
         self.optim.step()
         return out_mean, loss
 
-    def validate(self, d_model, batch_size, label):
+    def validate(self, d_model, batch_size, label, noises=None):
         """Validates the model with the given parameters.
 
         Generates a validation batch of the specified size. Forward passes the
-        batch to the discriminator model. Finds the loss.
+        batch to the discriminator model. Finds the loss. If there is a
+        specified set of noises, the size of noises will override the batch
+        size.
 
         Args:
             d_model: the discriminator model
@@ -250,7 +252,8 @@ class GModeler(Modeler):
             out_mean: Mean(D(G(noises))), the average output of d_model
             loss: Loss(D(G(noises)), label), the loss of the model
         """
-        noises = self.gen_noises(batch_size)
+        if noises is None:
+            noises = self.gen_noises(batch_size)
         with torch.no_grad():
             batch = self.model(noises).detach()
         batch, labels = utils.\
@@ -258,21 +261,25 @@ class GModeler(Modeler):
         with torch.no_grad():
             output = d_model(batch).detach().view(-1)
         out_mean = output.mean().item()
-        loss = self.loss_func(output, labels)
+        loss = self.loss_fn(output, labels)
         return out_mean, loss
 
-    def test(self, batch_size):
+    def test(self, batch_size, noises=None):
         """Test/Use the model with the specified batch size.
 
-        Generates a batch of images.
+        Generates a batch of images with the specified batch size. If there is
+        a specified set of noises, the size of noises will override the batch
+        size.
 
         Args:
-            batch_size: number of the images to generate
+            batch_size: the number of images to generate
+            noises: the specific set of input
 
         Returns:
             output: G(noises): the output of the model
         """
-        noises = self.gen_noises(batch_size)
+        if noises is None:
+            noises = self.gen_noises(batch_size)
         with torch.no_grad():
             output = self.model(noises).detach()
         return output

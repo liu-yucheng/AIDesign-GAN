@@ -1,5 +1,7 @@
 """Module of the context classes."""
 
+from gan_libs import modelers
+from gan_libs import utils
 from torch import nn
 from torch.utils import data
 from torchvision import datasets
@@ -9,20 +11,17 @@ import random
 import sys
 import torch
 
-from gan_libs import modelers
-from gan_libs import utils
-
 
 class Context:
     """Super class of the context classes.
 
     Attributes:
-        hw: the hardware attr dict
-        hw.dev: the torch device to be used
-        hw.gpu_cnt: the number of GPUs to be used
-        rand: the random number generators attr dict
-        rand.mode: the mode of the random seed
-        rand.seed: the value of the random seed
+        rand: the random number generators attr dict  \n
+            `rand.mode`: the mode of the random seed \n
+            `rand.seed`: the value of the random seed \n
+        hw: the hardware attr dict \n
+            `hw.dev`: the torch device to be used \n
+            `hw.gpu_cnt`: the number of GPUs to be used \n
     """
 
     def __init__(self):
@@ -73,46 +72,53 @@ class TContext(Context):
     """Training context.
 
     Attributes:
-        data: the data attr dict
-        data.tdl: the training dataloader
-        data.vdl: the validation dataloader
-        data.total_size: the dataset's total size
-        data.size_to_use: the size of the portion to be used
-        data.t_size: the training set's total size
-        data.v_size: the validation set's total size
-        data.batch_size: the size of each batch
-        data.t_batch_cnt: the number of training batches
-        data.v_batch_cnt: the number of validation batches
-        mods: the modelers attr dict
-        mods.d: the discriminator modeler
-        mods.d_str: the discriminator model structure string
-        mods.g: the generator modeler
-        mods.g_str: the generator model structure string
-        mods.loss_fn: the loss function
-        mode: the training mode string
-        labels: the labels attr dict
-        labels.r: the real label
-        labels.f: the fake label
-        loops: the loop control variables attr dict
-        loops.iter_cnt: the total number of iterations
-        loops.epoch_cnt: the total number of epochs
-        loops.iter: the current iteration number
-        loops.epoch: the current epoch number
-        loops.t_idx: the current training batch index
-        loops.v_idx: the current validation batch index
-        outs: the latest output attr dict
-        outs.dx: the latest average D(X)
-        outs.dgz: the latest average D(G(Z))
-        losses: the losses attr dict
-        losses.td: discriminator's training losses
-        losses.tg: generator's training losses
-        losses.vd: discriminator's validation losses
-        losses.vg: generator's validation losses
-        bests: the best losses attr dict
-        bests.d: the best discriminator loss overall
-        bests.g: the best generator loss overall
-        bests.iter_d: the best discriminator loss for the current iter
-        bests.iter_g: the best generator loss for the current iter
+        data: the data attr dict \n
+            `data.tdl`: the training dataloader \n
+            `data.vdl`: the validation dataloader \n
+            `data.total_size`: the dataset's total size \n
+            `data.size_to_use`: the size of the portion to be used \n
+            `data.t_size`: the training set's total size \n
+            `data.v_size`: the validation set's total size \n
+            `data.batch_size`: the size of each batch \n
+            `data.t_batch_cnt`: the number of training batches \n
+            `data.v_batch_cnt`: the number of validation batches \n
+        mods: the modelers attr dict \n
+            `mods.d`: the discriminator modeler \n
+            `mods.d_str`: the discriminator model structure string \n
+            `mods.g`: the generator modeler \n
+            `mods.g_str`: the generator model structure string \n
+            `mods.loss_fn`: the loss function \n
+            `mods.z_size`: the generator input size \n
+        mode: the training mode string \n
+        labels: the labels attr dict \n
+            `labels.r`: the real label \n
+            `labels.f`: the fake label \n
+        loops: the loop control variables attr dict \n
+            `loops.iter_cnt`: the total number of iterations \n
+            `loops.iter_num`: the current iteration number \n
+            `loops.epoch_cnt`: the total number of epochs \n
+            `loops.epoch_num`: the current epoch number \n
+            `loops.t_idx`: the current training batch index \n
+            `loops.v_idx`: the current validation batch index \n
+        outs: the latest output attr dict \n
+            `outs.dx`: the latest average D(X) \n
+            `outs.dgz`: the latest average D(G(Z)) \n
+            `outs.dgz2`: the latest average D(G(Z)) \n
+            `outs.ld`: the latest discriminator loss, L(D) \n
+            `outs.lg`: the latest generator loss, L(G) \n
+        losses: the losses attr dict \n
+            `losses.td`: discriminator's training losses \n
+            `losses.tg`: generator's training losses \n
+            `losses.vd`: discriminator's validation losses \n
+            `losses.vg`: generator's validation losses \n
+        bests: the best losses attr dict \n
+            `bests.d`: the best discriminator loss overall \n
+            `bests.g`: the best generator loss overall \n
+            `bests.iter_d`: the best discriminator loss for the current iter \n
+            `bests.iter_g`: the best generator loss for the current iter \n
+        noises: the fixed generator inputs attr dict \n
+            `noises.vbs`: the validation batches of generator inputs \n
+            `noises.b64`: a batch of 64 generator inputs \n
     """
 
     def __init__(self):
@@ -196,6 +202,7 @@ class TContext(Context):
             raise ValueError("self.hw cannot be None")
         d_config = config["discriminator"]
         g_config = config["generator"]
+        z_size = g_config["input_size"]
         loss_fn = nn.BCELoss()
         d = modelers.\
             DModeler(d_config, self.hw.dev, self.hw.gpu_cnt, loss_fn)
@@ -207,6 +214,7 @@ class TContext(Context):
         self.mods.g = g
         self.mods.g_str = str(g.model)
         self.mods.loss_fn = loss_fn
+        self.mods.z_size = z_size
 
     def setup_mode(self, config):
         """Sets up the training mode with the given args.
@@ -215,9 +223,8 @@ class TContext(Context):
             config: the training coords config subset
 
         Raises:
-            ValueError: if self.mods is None;
-                or, if the training mode is unknown (other than "new" and
-                "resume")
+            ValueError: if self.mods is None; or, if the training mode is
+                unknown (other than "new" and "resume")
         """
         if self.mods is None:
             raise ValueError("self.mods cannot be None")
@@ -248,9 +255,9 @@ class TContext(Context):
         epoch_cnt = config["epochs_per_iteration"]
         self.loops = utils.AttrDict()
         self.loops.iter_cnt = iter_cnt
+        self.loops.iter_num = 0
         self.loops.epoch_cnt = epoch_cnt
-        self.loops.iter = 0
-        self.loops.epoch = 0
+        self.loops.epoch_num = 0
         self.loops.t_idx = 0
         self.loops.v_idx = 0
 
@@ -262,6 +269,9 @@ class TContext(Context):
         self.outs = utils.AttrDict()
         self.outs.dx = None
         self.outs.dgz = None
+        self.outs.dgz2 = None
+        self.outs.ld = None
+        self.outs.lg = None
         self.losses = utils.AttrDict()
         self.losses.td = []
         self.losses.tg = []
@@ -272,3 +282,22 @@ class TContext(Context):
         self.bests.g = sys.maxsize
         self.bests.iter_d = sys.maxsize
         self.bests.iter_g = sys.maxsize
+
+    def setup_noises(self):
+        """Sets up the noises.
+
+        Raises:
+            ValueError: if self.data of self.mods is None
+        """
+        if self.data is None:
+            raise ValueError("self.data cannot be None")
+        if self.mods is None:
+            raise ValueError("self.mods cannot be None")
+        vbs = []
+        for _ in range(self.data.v_batch_cnt):
+            noises = self.mods.g.gen_noises(self.data.batch_size)
+            vbs.append(noises)
+        b64 = self.mods.g.gen_noises(64)
+        self.noises = utils.AttrDict()
+        self.noises.vbs = vbs
+        self.noises.b64 = b64

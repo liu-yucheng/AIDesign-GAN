@@ -1,7 +1,8 @@
 """Executable for model training."""
 
-import gan_libs.configs as configs
-import gan_libs.coords as coords
+from gan_libs import configs
+from gan_libs import coords
+import sys
 
 
 def main():
@@ -10,9 +11,11 @@ def main():
     print(f"Training config: {config.location}")
     d_path = config["data_path"]
     m_path = config["model_path"]
-    coord = coords.TCoord(d_path, m_path)
+    log = sys.stdout
+    coord = coords.TCoord(d_path, m_path, log)
     coord.setup_results()
     coord.setup_context()
+    coord.start_training()
 
 
 if __name__ == "__main__":

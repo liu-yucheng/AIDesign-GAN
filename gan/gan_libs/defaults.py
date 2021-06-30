@@ -1,4 +1,17 @@
-"""Module of the default variables."""
+"""Module of the default variables.
+
+Attributes:
+    train_config_location: the train config location
+    generate_config_location: the generate config location
+    data_path: the data path
+    model_path: the model path
+    coords_config_name: the coords config file name
+    modelers_config_name: the modelers config file name
+    discriminator_struct_name: the discriminator struct file name
+    discriminator_state_name: the discriminator state file name
+    generator_struct_name: the generator struct file name
+    generator_state_name: the generator state file name
+"""
 
 import pathlib
 

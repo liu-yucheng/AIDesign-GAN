@@ -2,8 +2,8 @@
 
 import torch
 
-from gan_libs import nn_structs
-from gan_libs import utils
+from gan.libs import nnstructs
+from gan.libs import utils
 
 
 class Modeler:
@@ -50,8 +50,8 @@ class Modeler:
     def rollback(self):
         """Rollbacks the model.
 
-        Clear the model gradients. Loads the previous best model states. Resets
-        the optimizer and halves the optimizer learning rate.
+        Clear the model gradients. Load the previous best model states. Reset the optimizer and halves the optimizer
+        learning rate.
 
         Raises:
             ValueError: if self.model or self.optim is None
@@ -63,8 +63,7 @@ class Modeler:
         self.rb_cnt += 1
         self.model.zero_grad()
         self.load()
-        self.optim = utils.\
-            setup_adam(self.model, self.config["adam_optimizer"], self.rb_cnt)
+        self.optim = utils.setup_adam(self.model, self.config["adam_optimizer"], self.rb_cnt)
 
 
 class DModeler(Modeler):
@@ -82,25 +81,22 @@ class DModeler(Modeler):
         """
         super().__init__(config, device, gpu_cnt, loss_fn)
         # Init self.model
-        struct = nn_structs.DStruct()
+        struct = nnstructs.DStruct()
         struct.location = self.config["struct_location"]
         struct.load()
         exec(struct.definition)
         self.model = self.model.to(self.device)
-        self.model = utils.\
-            parallelize_model(self.model, self.device, self.gpu_cnt)
+        self.model = utils.parallelize_model(self.model, self.device, self.gpu_cnt)
         self.model.apply(utils.init_model_weights)
         # Init self.optim
         if training:
-            self.optim = utils.\
-                setup_adam(self.model, self.config["adam_optimizer"])
+            self.optim = utils.setup_adam(self.model, self.config["adam_optimizer"])
 
     def train(self, batch, label):
         """Trains the model with a batch of data and a target label.
 
-        Clear the model gradients. Forward passes the batch. Finds the loss.
-        Finds the gradients through a backward pass. Optimizes/Updates the
-        model.
+        Clear the model gradients. Forward pass the batch. Find the loss. Find the gradients through a backward pass.
+        Optimize/Update the model. Return the average output and loss value.
 
         Args:
             batch: the batch of data
@@ -108,7 +104,7 @@ class DModeler(Modeler):
 
         Returns:
             out_mean: Mean(D(batch)), the average output of D
-            loss: Loss(D(batch), label), the loss of D on the batch
+            loss_val: Loss(D(batch), label), the loss of D on the batch
 
         Raises:
             ValueError: if self.optim is None
@@ -118,16 +114,17 @@ class DModeler(Modeler):
         self.model.zero_grad()
         batch, labels = utils.prep_batch_and_labels(batch, label, self.device)
         output = self.model(batch).view(-1)
-        out_mean = output.mean().item()
         loss = self.loss_fn(output, labels)
         loss.backward()
         self.optim.step()
-        return out_mean, loss
+        out_mean = output.mean().item()
+        loss_val = loss.detach().cpu()
+        return out_mean, loss_val
 
     def validate(self, batch, label):
         """Validates the model with a batch of data and a target label.
 
-        Forward passes the batch. Finds the loss.
+        Forward pass the batch. Find the loss. Return the average output and loss value.
 
         Args:
             batch: the batch of data
@@ -135,19 +132,20 @@ class DModeler(Modeler):
 
         Returns:
             out_mean: Mean(D(batch)), the average output of D
-            loss: Loss(D(batch), label), the loss of D on the batch
+            loss_val: Loss(D(batch), label), the loss of D on the batch
         """
         batch, labels = utils.prep_batch_and_labels(batch, label, self.device)
         with torch.no_grad():
             output = self.model(batch).detach().view(-1)
-        out_mean = output.mean().item()
         loss = self.loss_fn(output, labels)
-        return out_mean, loss
+        out_mean = output.mean().item()
+        loss_val = loss.detach().cpu()
+        return out_mean, loss_val
 
     def test(self, batch):
-        """Test/Use the model with a batch of data.
+        """Tests/Uses the model with a batch of data.
 
-        Forward passes the batch.
+        Forward pass the batch. Return the output.
 
         Args:
             batch: the batch of data
@@ -176,20 +174,18 @@ class GModeler(Modeler):
         """
         super().__init__(config, device, gpu_cnt, loss_fn)
         # Init self.model
-        struct = nn_structs.GStruct()
+        struct = nnstructs.GStruct()
         struct.location = self.config["struct_location"]
         struct.load()
         exec(struct.definition)
         self.model = self.model.to(self.device)
-        self.model = utils.\
-            parallelize_model(self.model, self.device, self.gpu_cnt)
+        self.model = utils.parallelize_model(self.model, self.device, self.gpu_cnt)
         self.model.apply(utils.init_model_weights)
         # Init self.optim
         if training:
-            self.optim = utils.\
-                setup_adam(self.model, self.config["adam_optimizer"])
+            self.optim = utils.setup_adam(self.model, self.config["adam_optimizer"])
 
-    def gen_noises(self, cnt):
+    def generate_noises(self, cnt):
         """Generates a set of input noises for the model.
 
         Args:
@@ -198,26 +194,24 @@ class GModeler(Modeler):
         Returns:
             noises: the generated set of noises
         """
-        noises = torch.\
-            randn(cnt, self.config["input_size"], 1, 1, device=self.device)
+        noises = torch.randn(cnt, self.config["input_size"], 1, 1, device=self.device)
         return noises
 
-    def train(self, d_model, batch_size, label):
+    def train(self, d_model, noises, label):
         """Trains the model with the given args.
 
-        Clear the model gradients. Generates a training batch of the specified
-        size. Forward passes the batch to the discriminator model. Finds the
-        loss. Finds the gradients with a backward pass. Optimize/Update the
-        model.
+        Clear the model gradients. Generate a training batch with the given noises. Forward pass the batch to the
+        discriminator model. Find the loss. Find the gradients with a backward pass. Optimize/Update the model. Return
+        the average output and the loss value.
 
         Args:
             d_model: the discriminator model
-            batch_size: size of the generated training batch
+            noises: the noises used to generate the training batch
             label: the target label
 
         Returns:
             out_mean: Mean(D(G(noises))), the average output of d_model
-            loss: Loss(D(G(noises)), label), the loss of the model
+            loss_val: Loss(D(G(noises)), label), the loss of the model
 
         Raises:
             ValueError: if self.optim is None
@@ -225,61 +219,52 @@ class GModeler(Modeler):
         if self.optim is None:
             raise ValueError("self.optim cannot be None")
         self.model.zero_grad()
-        noises = self.gen_noises(batch_size)
         batch = self.model(noises)
         batch, labels = utils.prep_batch_and_labels(batch, label, self.device)
         output = d_model(batch).view(-1)
-        out_mean = output.mean().item()
         loss = self.loss_fn(output, labels)
         loss.backward()
         self.optim.step()
-        return out_mean, loss
+        out_mean = output.mean().item()
+        loss_val = loss.detach().cpu()
+        return out_mean, loss_val
 
-    def validate(self, d_model, batch_size, label, noises=None):
-        """Validates the model with the given parameters.
+    def validate(self, d_model, noises, label):
+        """Validates the model with the given args.
 
-        Generates a validation batch of the specified size. Forward passes the
-        batch to the discriminator model. Finds the loss. If there is a
-        specified set of noises, the size of noises will override the batch
-        size.
+        Generate a validation batch with the given noises. Forward pass the batch to the discriminator model. Find the
+        loss. Return the average output and the loss value.
 
         Args:
             d_model: the discriminator model
-            batch_size: size of the generated validation batch
+            noises: the noises used to generate the validation batch
             label: the target label
 
         Returns:
             out_mean: Mean(D(G(noises))), the average output of d_model
-            loss: Loss(D(G(noises)), label), the loss of the model
+            loss_val: Loss(D(G(noises)), label), the loss of the model
         """
-        if noises is None:
-            noises = self.gen_noises(batch_size)
         with torch.no_grad():
             batch = self.model(noises).detach()
-        batch, labels = utils.\
-            prep_batch_and_labels(batch, label, self.device)
+        batch, labels = utils.prep_batch_and_labels(batch, label, self.device)
         with torch.no_grad():
             output = d_model(batch).detach().view(-1)
-        out_mean = output.mean().item()
         loss = self.loss_fn(output, labels)
-        return out_mean, loss
+        out_mean = output.mean().item()
+        loss_val = loss.detach().cpu()
+        return out_mean, loss_val
 
-    def test(self, batch_size, noises=None):
-        """Test/Use the model with the specified batch size.
+    def test(self, noises):
+        """Tests/Uses the model with the given args.
 
-        Generates a batch of images with the specified batch size. If there is
-        a specified set of noises, the size of noises will override the batch
-        size.
+        Generate an image batch with the given noises. Return the batch.
 
         Args:
-            batch_size: the number of images to generate
-            noises: the specific set of input
+            noises: the noises used to generate the batch.
 
         Returns:
             output: G(noises): the output of the model
         """
-        if noises is None:
-            noises = self.gen_noises(batch_size)
         with torch.no_grad():
             output = self.model(noises).detach()
         return output

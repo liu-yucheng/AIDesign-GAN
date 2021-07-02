@@ -11,8 +11,6 @@ import torchvision.utils as vision_utils
 import math
 
 # import custom modules
-import gan_libs.configs as configs
-import gan_libs.neural_networks as neural_networks
 
 
 class Vars:

@@ -1,12 +1,12 @@
 """Module of the util (utility) classes and functions."""
 
+from torch import nn
+from torch import optim
 import json
 import os
 import pathlib
 import shutil
 import torch
-from torch import nn
-from torch import optim
 
 
 class AttrDict:
@@ -39,8 +39,7 @@ class AttrDict:
             name: the name of the attribute
 
         Returns:
-            attr: the value of the attribute; or, a new AttrDict object,
-                if the attribute does not exist
+            attr: the value of the attribute; or, a new AttrDict object, if the attribute does not exist
         """
         attr = None
         if name not in self.__dict__:
@@ -63,13 +62,12 @@ class AttrDict:
 
 
 def load_json(from_file, to_dict):
-    """Loads the data from a json file to a dict.
+    """Loads the data from a JSON file to a dict.
 
-    The function only loads the contents with keys in the key set of the
-    given dict.
+    The function only loads the contents with keys in the key set of the given dict.
 
     Args:
-        from_file: the json file location
+        from_file: the JSON file location
         to_dict: the dict object
     """
     file = open(from_file, "r")
@@ -80,11 +78,11 @@ def load_json(from_file, to_dict):
 
 
 def save_json(from_dict, to_file):
-    """Saves the data from a dict to a json file.
+    """Saves the data from a dict to a JSON file.
 
     Args:
         from_dict: the dict object
-        to_file: the json file location
+        to_file: the JSON file location
     """
     file = open(to_file, "w+")
     json.dump(from_dict, file, indent=4)
@@ -94,8 +92,7 @@ def save_json(from_dict, to_file):
 def find_in_path(name, path):
     """Finds the location of a file given its name and path.
 
-    The path needs to be an existing path. But, the file needs not to be an
-    existing file.
+    The path needs to be an existing path. But, the file needs not to be an existing file.
 
     Args:
         name: the given config file name
@@ -128,8 +125,8 @@ def save_text_file(from_str, to_file):
     """Saves a string to a text file.
 
     Args:
-        from_str:   the string to save
-        to_file:    the text file location
+        from_str: the string to save
+        to_file: the text file location
     """
     file = open(to_file, "w+")
     file.write(from_str)
@@ -162,8 +159,7 @@ def load_model(location, model):
 def parallelize_model(model, device, gpu_count):
     """Finds the parallelized model with the given args.
 
-    If the GPU count is 0 or 1, or the GPUs do not support CUDA, the function
-    returns the original model.
+    If the GPU count is 0 or 1, or the GPUs do not support CUDA, the function returns the original model.
 
     Args:
         model: the model, a pytorch nn module
@@ -191,11 +187,7 @@ def prep_batch_and_labels(batch, label, device):
         labels: the prepared labels
     """
     batch = batch.to(device)
-    labels = torch.full(
-        (batch.size(0),),
-        label,
-        dtype=torch.float,
-        device=device)
+    labels = torch.full((batch.size(0),), label, dtype=torch.float, device=device)
     return batch, labels
 
 
@@ -225,8 +217,10 @@ def setup_adam(model, config, rollbacks=0):
         adam: the Adam optimizer
     """
     adam = optim.Adam(
-        model.parameters(), lr=config["learning_rate"] / (2 ** rollbacks),
-        betas=(config["beta1"], config["beta2"]))
+        model.parameters(),
+        lr=config["learning_rate"] / (2 ** rollbacks),
+        betas=(config["beta1"], config["beta2"])
+    )
     return adam
 
 
@@ -239,9 +233,8 @@ def bound_num(num, bound1, bound2):
         bound2: the 2nd bound
 
     Returns:
-        result: the number, if the number is bounded by the 2 bounds;
-            or, the upper bound, if the number is greater than the bounds;
-            or, the lower bound, if the number is less than the bounds
+        result: the number, if the number is bounded by the 2 bounds; or, the upper bound, if the number is greater
+            than the bounds; or, the lower bound, if the number is less than the bounds
     """
     result = num
     lower = bound1

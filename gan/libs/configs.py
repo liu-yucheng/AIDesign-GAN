@@ -1,7 +1,7 @@
 """Module of the config (configuration) classes."""
 
-from gan_libs import defaults
-from gan_libs import utils
+from gan.libs import defaults
+from gan.libs import utils
 
 
 class Config:
@@ -33,8 +33,7 @@ class Config:
     def load(self):
         """Loads the config items from a JSON file.
 
-        If the file does not exist, the function saves the current config at
-        the location.
+        If the file does not exist, the function saves the current config at the location.
 
         Raises:
             ValueError: if self.location is None
@@ -92,8 +91,7 @@ class CoordsConfig(Config):
         super().__init__()
         if model_path is None:
             model_path = defaults.model_path
-        self.location = utils.\
-            find_in_path(defaults.coords_config_name, model_path)
+        self.location = utils.find_in_path(defaults.coords_config_name, model_path)
         self.items = {
             "training": {
                 "mode": "new",
@@ -135,16 +133,13 @@ class ModelersConfig(Config):
         super().__init__()
         if model_path is None:
             model_path = defaults.model_path
-        self.location = utils.\
-            find_in_path(defaults.modelers_config_name, model_path)
+        self.location = utils.find_in_path(defaults.modelers_config_name, model_path)
         self.items = {
             "discriminator": {
                 "image_channel_count": 3,
                 "feature_map_size": 64,
-                "struct_location": utils.find_in_path(
-                    defaults.discriminator_struct_name, model_path),
-                "state_location": utils.find_in_path(
-                    defaults.discriminator_state_name, model_path),
+                "struct_location": utils.find_in_path(defaults.discriminator_struct_name, model_path),
+                "state_location": utils.find_in_path(defaults.discriminator_state_name, model_path),
                 "adam_optimizer": {
                     "learning_rate": 0.0002,
                     "beta1": 0.5,
@@ -155,10 +150,8 @@ class ModelersConfig(Config):
                 "input_size": 100,
                 "feature_map_size": 64,
                 "image_channel_count": 3,
-                "struct_location": utils.find_in_path(
-                    defaults.generator_struct_name, model_path),
-                "state_location": utils.find_in_path(
-                    defaults.generator_state_name, model_path),
+                "struct_location": utils.find_in_path(defaults.generator_struct_name, model_path),
+                "state_location": utils.find_in_path(defaults.generator_state_name, model_path),
                 "adam_optimizer": {
                     "learning_rate": 0.0002,
                     "beta1": 0.5,

@@ -1,10 +1,10 @@
 """Module of the NN struct (neural network structure) classes."""
 
-from gan_libs import defaults
-from gan_libs import utils
+from gan.libs import defaults
+from gan.libs import utils
 
 
-class NNStruct:
+class Struct:
     """Super class of the NN struct classes.
 
     Attributes:
@@ -20,8 +20,7 @@ class NNStruct:
     def load(self):
         """Loads the struct definition.
 
-        If the file does not exist, the function saves the current stuct at the
-        location.
+        If the file does not exist, the function saves the current stuct at the location.
 
         Raises:
             ValueError: if self.location is None
@@ -45,7 +44,7 @@ class NNStruct:
         utils.save_text_file(self.definition, self.location)
 
 
-class DStruct(NNStruct):
+class DStruct(Struct):
     """Discriminator structure."""
 
     def __init__(self, model_path=None):
@@ -94,7 +93,7 @@ self.model = nn.Sequential(
         # fmt: on
 
 
-class GStruct(NNStruct):
+class GStruct(Struct):
     """Generator structure."""
 
     def __init__(self, model_path=None):

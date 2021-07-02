@@ -1,7 +1,5 @@
 """Module of the context classes."""
 
-from gan_libs import modelers
-from gan_libs import utils
 from torch import nn
 from torch.utils import data
 from torchvision import datasets
@@ -10,6 +8,9 @@ import numpy
 import random
 import sys
 import torch
+
+from gan.libs import modelers
+from gan.libs import utils
 
 
 class Context:
@@ -147,14 +148,15 @@ class TContext(Context):
         percents_to_use = config["percentage_to_use"]
         worker_count = config["loader_worker_count"]
         batch_size = config["images_per_batch"]
-
         data_set = datasets.ImageFolder(
-            root=path, transform=transforms.Compose([
+            root=path,
+            transform=transforms.Compose([
                 transforms.Resize(img_res),
                 transforms.CenterCrop(img_res),
                 transforms.ToTensor(),
                 transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
-            ]))
+            ])
+        )
         total_size = len(data_set)
         subset_ratio = numpy.array([t_weight, v_weight])
         subset_ratio = subset_ratio / subset_ratio.sum()
@@ -169,15 +171,10 @@ class TContext(Context):
         v_set = data.Subset(data_set, v_indices)
         t_size = len(t_set)
         v_size = len(v_set)
-        t_loader = data.DataLoader(
-            t_set, batch_size=batch_size, shuffle=True,
-            num_workers=worker_count)
-        v_loader = data.DataLoader(
-            v_set, batch_size=batch_size, shuffle=True,
-            num_workers=worker_count)
+        t_loader = data.DataLoader(t_set, batch_size=batch_size, shuffle=True, num_workers=worker_count)
+        v_loader = data.DataLoader(v_set, batch_size=batch_size, shuffle=True, num_workers=worker_count)
         t_batch_cnt = len(t_loader)
         v_batch_cnt = len(v_loader)
-
         self.data = utils.AttrDict()
         self.data.tdl = t_loader
         self.data.vdl = v_loader
@@ -204,10 +201,8 @@ class TContext(Context):
         g_config = config["generator"]
         z_size = g_config["input_size"]
         loss_fn = nn.BCELoss()
-        d = modelers.\
-            DModeler(d_config, self.hw.dev, self.hw.gpu_cnt, loss_fn)
-        g = modelers.\
-            GModeler(g_config, self.hw.dev, self.hw.gpu_cnt, loss_fn)
+        d = modelers.DModeler(d_config, self.hw.dev, self.hw.gpu_cnt, loss_fn)
+        g = modelers.GModeler(g_config, self.hw.dev, self.hw.gpu_cnt, loss_fn)
         self.mods = utils.AttrDict()
         self.mods.d = d
         self.mods.d_str = str(d.model)
@@ -223,8 +218,7 @@ class TContext(Context):
             config: the training coords config subset
 
         Raises:
-            ValueError: if self.mods is None; or, if the training mode is
-                unknown (other than "new" and "resume")
+            ValueError: if self.mods is None; or, if the training mode is unknown (other than "new" and "resume")
         """
         if self.mods is None:
             raise ValueError("self.mods cannot be None")
@@ -295,9 +289,9 @@ class TContext(Context):
             raise ValueError("self.mods cannot be None")
         vbs = []
         for _ in range(self.data.v_batch_cnt):
-            noises = self.mods.g.gen_noises(self.data.batch_size)
+            noises = self.mods.g.generate_noises(self.data.batch_size)
             vbs.append(noises)
-        b64 = self.mods.g.gen_noises(64)
+        b64 = self.mods.g.generate_noises(64)
         self.noises = utils.AttrDict()
         self.noises.vbs = vbs
         self.noises.b64 = b64

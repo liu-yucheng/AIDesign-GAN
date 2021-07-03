@@ -121,7 +121,7 @@ class DModeler(Modeler):
         loss_val = loss.detach().cpu()
         return out_mean, loss_val
 
-    def validate(self, batch, label):
+    def valid(self, batch, label):
         """Validates the model with a batch of data and a target label.
 
         Forward pass the batch. Find the loss. Return the average output and loss value.
@@ -229,7 +229,7 @@ class GModeler(Modeler):
         loss_val = loss.detach().cpu()
         return out_mean, loss_val
 
-    def validate(self, d_model, noises, label):
+    def valid(self, d_model, noises, label):
         """Validates the model with the given args.
 
         Generate a validation batch with the given noises. Forward pass the batch to the discriminator model. Find the

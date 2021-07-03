@@ -66,11 +66,11 @@ class TrainingCoord:
         self.results.log_rand_seeds()
         self.context.setup_device(config)
         self.results.log_device()
-        self.context.setup_data_loaders(self.data_path, config)
-        self.results.log_data_loaders()
+        self.context.setup_data(self.data_path, config)
+        self.results.log_data()
         config = self.modelers_config
-        self.context.setup_modelers(config)
-        self.results.log_modelers()
+        self.context.setup_mods(config)
+        self.results.log_mods()
         config = self.coords_config["training"]
         self.context.setup_mode(config)
         self.results.log_mode()
@@ -81,37 +81,6 @@ class TrainingCoord:
         self.context_ready = True
         self.results.logln("Completed context setup")
 
-    def save_mods(self):
-        """Saves the models if needed."""
-        r = self.results
-        c = self.context
-        if c.losses.vd[-1] < c.bests.iter_d:
-            c.bests.iter_d = c.losses.vd[-1]
-            r.log_save_d()
-        if c.losses.vg[-1] < c.bests.iter_g:
-            c.bests.iter_g = c.losses.vg[-1]
-            r.log_save_g()
-
-    def save_or_rollback_mods(self):
-        """Saves or rollbacks the models if needed."""
-        r = self.results
-        c = self.context
-        r.log_bests()
-        if True or c.bests.iter_d <= c.bests.d:
-            c.bests.d = c.bests.iter_d
-            c.mods.d.save()
-            r.log_save_d()
-        else:
-            c.mods.d.rollback()
-            r.log_rollback_d()
-        if True or c.bests.iter_g <= c.bests.g:
-            c.bests.g = c.bests.iter_g
-            c.mods.g.save()
-            r.log_save_g()
-        else:
-            c.mods.g.rollback()
-            r.log_rollback_g()
-
     def train_d(self):
         """Trains the discriminator with the training set."""
         r = self.results
@@ -119,29 +88,29 @@ class TrainingCoord:
         r.logln("Started training D")
         losses = []
         r.logln("Started training D on real")
-        c.loops.t_idx = 0
-        for batch in c.data.tdl:
+        c.loops.train_index = 0
+        for batch in c.data.train.loader:
             batch = batch[0]
-            out_mean, loss = c.mods.d.train(batch, c.labels.r)
+            out_mean, loss = c.mods.d.train(batch, c.labels.real)
             losses.append(loss)
-            c.outs.dx = out_mean
-            c.outs.ld = loss
+            c.latest.dx = out_mean
+            c.latest.ld = loss
             r.log_train_dr()
-            c.loops.t_idx += 1
-        c.loops.t_idx = 0
+            c.loops.train_index += 1
+        c.loops.train_index = 0
         r.logln("Started training D on fake")
-        while c.loops.t_idx < c.data.t_batch_cnt:
+        while c.loops.train_index < c.data.train.batch_count:
             noises = c.mods.g.generate_noises(c.data.batch_size)
             batch = c.mods.g.test(noises)
-            out_mean, loss = c.mods.d.train(batch, c.labels.f)
+            out_mean, loss = c.mods.d.train(batch, c.labels.fake)
             losses.append(loss)
-            c.outs.dgz = out_mean
-            c.outs.ld = loss
+            c.latest.dgz = out_mean
+            c.latest.ld = loss
             r.log_train_df()
-            c.loops.t_idx += 1
+            c.loops.train_index += 1
         loss_mean = numpy.array(losses).mean()
-        c.losses.td.append(loss_mean)
-        r.log_td_loss()
+        c.losses.train.d.append(loss_mean)
+        r.log_losses_train_d()
 
     def train_g(self):
         """Trains the generator with the training set."""
@@ -149,114 +118,80 @@ class TrainingCoord:
         c = self.context
         r.logln("Started training G")
         losses = []
-        c.loops.t_idx = 0
-        while c.loops.t_idx < c.data.t_batch_cnt:
+        c.loops.train_index = 0
+        while c.loops.train_index < c.data.train.batch_count:
             noises = c.mods.g.generate_noises(c.data.batch_size)
-            out_mean, loss = c.mods.g.train(c.mods.d.model, noises, c.labels.r)
+            out_mean, loss = c.mods.g.train(c.mods.d.model, noises, c.labels.real)
             losses.append(loss)
-            c.outs.dgz = out_mean
-            c.outs.lg = loss
+            c.latest.dgz = out_mean
+            c.latest.lg = loss
             r.log_train_g()
-            c.loops.t_idx += 1
+            c.loops.train_index += 1
         loss_mean = numpy.array(losses).mean()
-        c.losses.tg.append(loss_mean)
-        r.log_tg_loss()
+        c.losses.train.g.append(loss_mean)
+        r.log_losses_train_g()
 
-    def train_both(self):
-        """Trains d and g togehter at batch level with the training set."""
-        r = self.results
-        c = self.context
-        r.logln("Started training D and G")
-        lds, lgs = [], []
-        c.loops.t_idx = 0
-        for r_batch in c.data.tdl:
-            r_batch = r_batch[0]
-            dx, ldr = c.mods.d.train(r_batch, c.labels.r)
-            noises = c.mods.g.generate_noises(c.data.batch_size)
-            f_batch = c.mods.g.test(noises)
-            dgz, ldf = c.mods.d.train(f_batch, c.labels.f)
-            noises = c.mods.g.generate_noises(c.data.batch_size)
-            dgz2, lg = c.mods.g.train(c.mods.d.model, noises, c.labels.r)
-            ld = ldr + ldf
-            lds.append(ld)
-            lgs.append(lg)
-            c.outs.dx = dx
-            c.outs.dgz = dgz
-            c.outs.dgz2 = dgz2
-            c.outs.ld = ld
-            c.outs.lg = lg
-            r.log_train_both()
-            c.loops.t_idx += 1
-        ld_mean = numpy.array(lds).mean()
-        lg_mean = numpy.array(lgs).mean()
-        c.losses.td.append(ld_mean)
-        c.losses.tg.append(lg_mean)
-        r.log_td_loss()
-        r.log_tg_loss()
-
-    def validate_d(self):
+    def valid_d(self):
         """Validate the discriminator with the validation set."""
         r = self.results
         c = self.context
         r.logln("Started validating D")
         losses = []
         r.logln("Started validating D on real")
-        c.loops.v_idx = 0
-        for batch in c.data.vdl:
+        c.loops.valid_index = 0
+        for batch in c.data.valid.loader:
             batch = batch[0]
-            out_mean, loss = c.mods.d.validate(batch, c.labels.r)
+            out_mean, loss = c.mods.d.valid(batch, c.labels.real)
             losses.append(loss)
-            c.outs.dx = out_mean
-            c.outs.ld = loss
+            c.latest.dx = out_mean
+            c.latest.ld = loss
             r.log_validate_dr()
-            c.loops.v_idx += 1
+            c.loops.valid_index += 1
         r.logln("Started validating D on fake")
-        c.loops.v_idx = 0
-        for noises in c.noises.vbs:
+        c.loops.valid_index = 0
+        for noises in c.noises.valid_set:
             batch = c.mods.g.test(noises)
-            out_mean, loss = c.mods.d.validate(batch, c.labels.f)
+            out_mean, loss = c.mods.d.valid(batch, c.labels.fake)
             losses.append(loss)
-            c.outs.dgz = out_mean
-            c.outs.ld = loss
+            c.latest.dgz = out_mean
+            c.latest.ld = loss
             r.log_validate_df()
-            c.loops.v_idx += 1
+            c.loops.valid_index += 1
         loss_mean = numpy.array(losses).mean()
-        c.losses.vd.append(loss_mean)
-        r.log_vd_loss()
+        c.losses.valid.d.append(loss_mean)
+        r.log_losses_valid_d()
 
-    def validate_g(self):
+    def valid_g(self):
         """Validate the generator with the validation set."""
         r = self.results
         c = self.context
         r.logln("Started validating G")
         losses = []
-        c.loops.v_idx = 0
-        for noises in c.noises.vbs:
-            out_mean, loss = c.mods.g.validate(c.mods.d.model, noises, c.labels.r)
+        c.loops.valid_index = 0
+        for noises in c.noises.valid_set:
+            out_mean, loss = c.mods.g.valid(c.mods.d.model, noises, c.labels.real)
             losses.append(loss)
-            c.outs.dgz = out_mean
-            c.outs.lg = loss
+            c.latest.dgz = out_mean
+            c.latest.lg = loss
             r.log_validate_g()
-            c.loops.v_idx += 1
+            c.loops.valid_index += 1
         loss_mean = numpy.array(losses).mean()
-        c.losses.vg.append(loss_mean)
-        r.log_vg_loss()
+        c.losses.valid.g.append(loss_mean)
+        r.log_losses_valid_g()
 
     def run_epoch(self):
         """Runs an epoch."""
         r = self.results
         c = self.context
         r.log_epoch("Started")
-        # self.train_d()
-        # self.train_g()
-        self.train_both()
-        self.validate_d()
-        self.validate_g()
+        self.train_d()
+        self.train_g()
+        self.valid_d()
+        self.valid_g()
         r.save_generated_images()
-        r.save_d_losses()
-        r.save_g_losses()
+        r.save_losses_d()
+        r.save_losses_g()
         r.save_tvg()
-        self.save_mods()
         r.log_epoch("Completed")
 
     def run_iter(self):
@@ -266,11 +201,10 @@ class TrainingCoord:
         r.log_iter("Started")
         c.bests.iter_d = sys.maxsize
         c.bests.iter_g = sys.maxsize
-        c.loops.epoch_num = 0
-        while c.loops.epoch_num < c.loops.epoch_cnt:
+        c.loops.epoch = 0
+        while c.loops.epoch < c.loops.epoch_count:
             self.run_epoch()
-            self.save_or_rollback_mods()
-            c.loops.epoch_num += 1
+            c.loops.epoch += 1
         r.log_iter("Completed")
 
     def start_training(self):
@@ -284,8 +218,8 @@ class TrainingCoord:
         r.logln("Started training")
         r.save_training_images()
         r.save_validation_images()
-        c.loops.iter_num = 0
-        while c.loops.iter_num < c.loops.iter_cnt:
+        c.loops.iter = 0
+        while c.loops.iter < c.loops.iter_count:
             self.run_iter()
-            c.loops.iter_num += 1
+            c.loops.iter += 1
         r.logln("Completed training")

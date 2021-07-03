@@ -101,7 +101,7 @@ class CoordsConfig(Config):
                 "gpu_count": 1,
                 "data_sets": {
                     "loader_worker_count": 0,
-                    "percentage_to_use": 100,
+                    "percents_to_use": 100,
                     "images_per_batch": 16,
                     "image_resolution": 64,
                     "training_set_weight": 8,

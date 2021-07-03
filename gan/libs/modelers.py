@@ -12,29 +12,29 @@ class Modeler:
     Attributes:
         config: the config
         device: the device to use
-        gpu_cnt: the number of GPUs to use
-        loss_fn: the loss function
+        gpu_count: the number of GPUs to use
+        loss_func: the loss function
         model: the model, a pytorch nn module
         optim: the optimizer
-        rb_cnt: the rollback count
+        rb_count: the rollback count
     """
 
-    def __init__(self, config, device, gpu_cnt, loss_fn):
+    def __init__(self, config, device, gpu_count, loss_func):
         """Inits self with the given args.
 
         Args:
             config: the config
             device: the device to use
-            gpu_cnt: the number of GPUs to use
+            gpu_count: the number of GPUs to use
             loss_func: the loss function
         """
         self.config = config
         self.device = device
-        self.gpu_cnt = gpu_cnt
-        self.loss_fn = loss_fn
+        self.gpu_count = gpu_count
+        self.loss_func = loss_func
         self.model = None
         self.optim = None
-        self.rb_cnt = 0
+        self.rb_count = 0
 
     def load(self):
         """Loads the states of the model."""
@@ -60,33 +60,33 @@ class Modeler:
             raise ValueError("self.model cannot be None")
         if self.optim is None:
             raise ValueError("self.optim cannot be None")
-        self.rb_cnt += 1
+        self.rb_count += 1
         self.model.zero_grad()
         self.load()
-        self.optim = utils.setup_adam(self.model, self.config["adam_optimizer"], self.rb_cnt)
+        self.optim = utils.setup_adam(self.model, self.config["adam_optimizer"], self.rb_count)
 
 
 class DModeler(Modeler):
     """Discriminator modeler."""
 
-    def __init__(self, config, device, gpu_cnt, loss_fn, training=True):
+    def __init__(self, config, device, gpu_count, loss_func, training=True):
         """Inits self with the given args.
 
         Args:
             config: the config
             device: the device to use
-            gpu_cnt: the number of GPUs to use
-            loss_fn: the loss function
+            gpu_count: the number of GPUs to use
+            loss_func: the loss function
             training: whether to setup the optimizer
         """
-        super().__init__(config, device, gpu_cnt, loss_fn)
+        super().__init__(config, device, gpu_count, loss_func)
         # Init self.model
         struct = nnstructs.DStruct()
         struct.location = self.config["struct_location"]
         struct.load()
         exec(struct.definition)
         self.model = self.model.to(self.device)
-        self.model = utils.parallelize_model(self.model, self.device, self.gpu_cnt)
+        self.model = utils.parallelize_model(self.model, self.device, self.gpu_count)
         self.model.apply(utils.init_model_weights)
         # Init self.optim
         if training:
@@ -114,7 +114,7 @@ class DModeler(Modeler):
         self.model.zero_grad()
         batch, labels = utils.prep_batch_and_labels(batch, label, self.device)
         output = self.model(batch).view(-1)
-        loss = self.loss_fn(output, labels)
+        loss = self.loss_func(output, labels)
         loss.backward()
         self.optim.step()
         out_mean = output.mean().item()
@@ -137,7 +137,7 @@ class DModeler(Modeler):
         batch, labels = utils.prep_batch_and_labels(batch, label, self.device)
         with torch.no_grad():
             output = self.model(batch).detach().view(-1)
-        loss = self.loss_fn(output, labels)
+        loss = self.loss_func(output, labels)
         out_mean = output.mean().item()
         loss_val = loss.detach().cpu()
         return out_mean, loss_val
@@ -162,39 +162,39 @@ class DModeler(Modeler):
 class GModeler(Modeler):
     """Generator modeler."""
 
-    def __init__(self, config, device, gpu_cnt, loss_fn, training=True):
+    def __init__(self, config, device, gpu_count, loss_func, training=True):
         """Inits self with the given args.
 
         Args:
             config: the config
             device: the device to use
-            gpu_cnt: the number of GPUs to use
-            loss_fn: the loss function
+            gpu_count: the number of GPUs to use
+            loss_func: the loss function
             training: whether to setup the optimizer
         """
-        super().__init__(config, device, gpu_cnt, loss_fn)
+        super().__init__(config, device, gpu_count, loss_func)
         # Init self.model
         struct = nnstructs.GStruct()
         struct.location = self.config["struct_location"]
         struct.load()
         exec(struct.definition)
         self.model = self.model.to(self.device)
-        self.model = utils.parallelize_model(self.model, self.device, self.gpu_cnt)
+        self.model = utils.parallelize_model(self.model, self.device, self.gpu_count)
         self.model.apply(utils.init_model_weights)
         # Init self.optim
         if training:
             self.optim = utils.setup_adam(self.model, self.config["adam_optimizer"])
 
-    def generate_noises(self, cnt):
+    def generate_noises(self, count):
         """Generates a set of input noises for the model.
 
         Args:
-            cnt: the number of input noises
+            count: the number of input noises
 
         Returns:
             noises: the generated set of noises
         """
-        noises = torch.randn(cnt, self.config["input_size"], 1, 1, device=self.device)
+        noises = torch.randn(count, self.config["input_size"], 1, 1, device=self.device)
         return noises
 
     def train(self, d_model, noises, label):
@@ -222,7 +222,7 @@ class GModeler(Modeler):
         batch = self.model(noises)
         batch, labels = utils.prep_batch_and_labels(batch, label, self.device)
         output = d_model(batch).view(-1)
-        loss = self.loss_fn(output, labels)
+        loss = self.loss_func(output, labels)
         loss.backward()
         self.optim.step()
         out_mean = output.mean().item()
@@ -249,7 +249,7 @@ class GModeler(Modeler):
         batch, labels = utils.prep_batch_and_labels(batch, label, self.device)
         with torch.no_grad():
             output = d_model(batch).detach().view(-1)
-        loss = self.loss_fn(output, labels)
+        loss = self.loss_func(output, labels)
         out_mean = output.mean().item()
         loss_val = loss.detach().cpu()
         return out_mean, loss_val

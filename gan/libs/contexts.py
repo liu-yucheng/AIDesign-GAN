@@ -6,7 +6,6 @@ from torchvision import datasets
 from torchvision import transforms
 import numpy
 import random
-import sys
 import torch
 
 from gan.libs import modelers
@@ -30,7 +29,7 @@ class Context:
         self.hw = None
         self.rand = None
 
-    def set_rand_seeds(self, config):
+    def setup_rand(self, config):
         """Sets the random seeds with the given args.
 
         Set up seeds for numpy, random and torch. Set up self.rand and its attributes.
@@ -51,8 +50,8 @@ class Context:
         self.rand.mode = mode
         self.rand.seed = seed
 
-    def setup_device(self, config):
-        """Sets up the torch device with the given args.
+    def setup_hw(self, config):
+        """Sets up the torch hardware with the given args.
 
         Set up self.hw and its attributes.
 
@@ -97,12 +96,12 @@ class TContext(Context):
             `loops.epoch`: the current epoch number \n
             `loops.train_index`: the current training batch index \n
             `loops.valid_index`: the current validation batch index \n
-            `loops.rb_counts.max`: the maximum rollback count
-            `loops.rb_counts.d`: the discriminator rollback count
-            `loops.rb_counts.g`: the generator rollback count
-            `loops.es_counts.max`: the maximum early stop count
-            `loops.es_counts.d`: the discriminator early stop count
-            `loops.es_counts.g`: the generator early stop count
+            `loops.rb.max`: the maximum rollback count \n
+            `loops.rb.d`: the discriminator rollback count \n
+            `loops.rb.g`: the generator rollback count \n
+            `loops.es.max`: the maximum early stop count \n
+            `loops.es.d`: the discriminator early stop count \n
+            `loops.es.g`: the generator early stop count \n
         latest: the latest output attr dict \n
             `latest.dx`: the latest average D(X) \n
             `latest.dgz`: the latest average D(G(Z)) \n
@@ -116,6 +115,9 @@ class TContext(Context):
         bests: the best losses attr dict \n
             `bests.d`: the best discriminator loss overall \n
             `bests.g`: the best generator loss overall \n
+        rbs: the rollbacks attr dict \n
+            `rbs.d`: the discriminator rollback list \n
+            `rbs.g`: the generator rollback list \n
         noises: the fixed generator inputs attr dict \n
             `noises.valid_set`: the validation batches of generator inputs \n
             `noises.batch_64`: a batch of 64 generator inputs \n
@@ -132,6 +134,7 @@ class TContext(Context):
         self.latest = None
         self.losses = None
         self.bests = None
+        self.rbs = None
         self.noises = None
 
     def setup_data(self, path, config):
@@ -251,12 +254,12 @@ class TContext(Context):
         self.loops.epoch = 0
         self.loops.train_index = 0
         self.loops.valid_index = 0
-        self.loops.rb_counts.max = max_rb
-        self.loops.rb_counts.d = 0
-        self.loops.rb_counts.g = 0
-        self.loops.es_counts.max = max_es
-        self.loops.es_counts.d = 0
-        self.loops.es_counts.g = 0
+        self.loops.rb.max = max_rb
+        self.loops.rb.d = 0
+        self.loops.rb.g = 0
+        self.loops.es.max = max_es
+        self.loops.es.d = 0
+        self.loops.es.g = 0
 
     def setup_stats(self):
         """Sets up the statistics.
@@ -276,6 +279,9 @@ class TContext(Context):
         self.bests = utils.AttrDict()
         self.bests.d = None
         self.bests.g = None
+        self.rbs = utils.AttrDict()
+        self.rbs.d = []
+        self.rbs.g = []
 
     def setup_noises(self):
         """Sets up the noises.

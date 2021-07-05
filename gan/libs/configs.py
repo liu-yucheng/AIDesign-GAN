@@ -100,7 +100,7 @@ class CoordsConfig(Config):
                 "iteration_count": 3,
                 "epochs_per_iteration": 3,
                 "max_rollbacks": 4,
-                "max_early_stops": 3,
+                "max_early_stops": 2,
                 "data_sets": {
                     "loader_worker_count": 0,
                     "percents_to_use": 100,

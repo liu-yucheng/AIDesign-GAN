@@ -7,6 +7,7 @@ from gan.libs import coords
 
 
 def main():
+    """Starts the executable."""
     config = configs.TrainConfig()
     config.load()
     print(f"Training config: {config.location}")

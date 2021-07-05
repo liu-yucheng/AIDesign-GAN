@@ -56,8 +56,7 @@ class DStruct(Struct):
         super().__init__()
         if model_path is None:
             model_path = defaults.model_path
-        self.location = utils.\
-            find_in_path(defaults.discriminator_struct_name, model_path)
+        self.location = utils.find_in_path(defaults.discriminator_struct_name, model_path)
         # fmt: off
         self.definition = r"""
 # Convolutional Neural Network
@@ -105,8 +104,7 @@ class GStruct(Struct):
         super().__init__()
         if model_path is None:
             model_path = defaults.model_path
-        self.location = utils.\
-            find_in_path(defaults.generator_struct_name, model_path)
+        self.location = utils.find_in_path(defaults.generator_struct_name, model_path)
         # fmt: off
         self.definition = r"""
 # Convolutional Neural Network with Transposed Layers

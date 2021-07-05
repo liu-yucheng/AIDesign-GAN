@@ -2,7 +2,7 @@
 
 
 def main():
-    """"""
+    """Starts the executable."""
 
 
 if __name__ == "__main__":

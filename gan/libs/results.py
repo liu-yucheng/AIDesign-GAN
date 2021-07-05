@@ -1,7 +1,7 @@
 """Module of the results classes."""
 
 from matplotlib import pyplot
-from torchvision import utils as visutils
+from torchvision import utils as visionutils
 import numpy
 
 from gan.libs import utils
@@ -118,8 +118,10 @@ class TrainingResults(Results):
         """Logs the modelers info."""
         self.check_context()
         c = self.context
+        self.logln(f"D's size: {c.mods.d.size}")
         self.logln(f"==== D's struct ====")
         self.logln(str(c.mods.d.model))
+        self.logln(f"G's size: {c.mods.g.size}")
         self.logln(f"==== G's struct ====")
         self.logln(str(c.mods.g.model))
 
@@ -167,13 +169,13 @@ class TrainingResults(Results):
         """Logs rollback discriminator info."""
         self.check_context()
         c = self.context
-        self.logln(f"Rollbacked D, count {c.mods.d.rb_cnt}")
+        self.logln(f"Rollbacked D, count {c.loops.rb_counts.d}")
 
     def log_rollback_g(self):
         """Logs rollback generator info."""
         self.check_context()
         c = self.context
-        self.logln(f"Rollbacked G, count {c.mods.g.rb_cnt}")
+        self.logln(f"Rollbacked G, count {c.loops.rb_counts.g}")
 
     def log_train_dr(self):
         """Logs train_d on real stats."""
@@ -313,7 +315,7 @@ class TrainingResults(Results):
         c = self.context
         batch0 = next(iter(c.data.train.loader))
         batch0 = batch0[0].to(c.hw.device)[:64]
-        grid = visutils.make_grid(batch0, padding=2, normalize=True).cpu()
+        grid = visionutils.make_grid(batch0, padding=2, normalize=True).cpu()
         grid = numpy.transpose(grid, (1, 2, 0))
         location = utils.find_in_path("training-images.jpg", self.path)
         pyplot.figure(figsize=(8, 8))
@@ -330,7 +332,7 @@ class TrainingResults(Results):
         c = self.context
         batch0 = next(iter(c.data.valid.loader))
         batch0 = batch0[0].to(c.hw.device)[:64]
-        grid = visutils.make_grid(batch0, padding=2, normalize=True).cpu()
+        grid = visionutils.make_grid(batch0, padding=2, normalize=True).cpu()
         grid = numpy.transpose(grid, (1, 2, 0))
         location = utils.find_in_path("validation-images.jpg", self.path)
         pyplot.figure(figsize=(8, 8))
@@ -348,7 +350,7 @@ class TrainingResults(Results):
         iter = c.loops.iter
         epoch = c.loops.epoch
         batch = c.mods.g.test(c.noises.batch_64)
-        grid = visutils.make_grid(batch, padding=2, normalize=True).cpu()
+        grid = visionutils.make_grid(batch, padding=2, normalize=True).cpu()
         grid = numpy.transpose(grid, (1, 2, 0))
         location = utils.find_in_path(f"iter-{iter + 1}_epoch-{epoch + 1}.jpg", self.generated_images_path)
         pyplot.figure(figsize=(8, 8))
@@ -414,9 +416,9 @@ class TrainingResults(Results):
         v_batch = next(iter(c.data.valid.loader))
         v_batch = v_batch[0].to(c.hw.device)[:64]
         g_batch = c.mods.g.test(c.noises.batch_64)
-        t_grid = visutils.make_grid(t_batch, padding=2, normalize=True).cpu()
-        v_grid = visutils.make_grid(v_batch, padding=2, normalize=True).cpu()
-        g_grid = visutils.make_grid(g_batch, padding=2, normalize=True).cpu()
+        t_grid = visionutils.make_grid(t_batch, padding=2, normalize=True).cpu()
+        v_grid = visionutils.make_grid(v_batch, padding=2, normalize=True).cpu()
+        g_grid = visionutils.make_grid(g_batch, padding=2, normalize=True).cpu()
         t_grid = numpy.transpose(t_grid, (1, 2, 0))
         v_grid = numpy.transpose(v_grid, (1, 2, 0))
         g_grid = numpy.transpose(g_grid, (1, 2, 0))

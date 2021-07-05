@@ -96,9 +96,11 @@ class CoordsConfig(Config):
             "training": {
                 "mode": "new",
                 "manual_seed": 0,
-                "iteration_count": 5,
-                "epochs_per_iteration": 2,
                 "gpu_count": 1,
+                "iteration_count": 3,
+                "epochs_per_iteration": 3,
+                "max_rollbacks": 4,
+                "max_early_stops": 3,
                 "data_sets": {
                     "loader_worker_count": 0,
                     "percents_to_use": 100,

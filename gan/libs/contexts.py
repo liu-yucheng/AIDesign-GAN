@@ -74,15 +74,15 @@ class TContext(Context):
 
     Attributes:
         data: the data attr dict \n
+            `data.size`: the dataset's total size \n
+            `data.size_to_use`: the size of the data portion to use \n
+            `data.batch_size`: the size of each batch \n
             `data.train.loader`: the training data loader \n
             `data.train.size`: the training set's size \n
             `data.train.batch_count`: the number of training batches \n
             `data.valid.loader`: the validation data loader \n
             `data.valid.size`: the validation set's size \n
             `data.valid.batch_count`: the number of validation batches \n
-            `data.size`: the dataset's total size \n
-            `data.size_to_use`: the size of the data portion to use \n
-            `data.batch_size`: the size of each batch \n
         mods: the modelers attr dict \n
             `mods.d`: the discriminator modeler \n
             `mods.g`: the generator modeler \n
@@ -97,6 +97,12 @@ class TContext(Context):
             `loops.epoch`: the current epoch number \n
             `loops.train_index`: the current training batch index \n
             `loops.valid_index`: the current validation batch index \n
+            `loops.rb_counts.max`: the maximum rollback count
+            `loops.rb_counts.d`: the discriminator rollback count
+            `loops.rb_counts.g`: the generator rollback count
+            `loops.es_counts.max`: the maximum early stop count
+            `loops.es_counts.d`: the discriminator early stop count
+            `loops.es_counts.g`: the generator early stop count
         latest: the latest output attr dict \n
             `latest.dx`: the latest average D(X) \n
             `latest.dgz`: the latest average D(G(Z)) \n
@@ -170,15 +176,15 @@ class TContext(Context):
         valid_size = len(valid_set)
         valid_batch_count = len(valid_loader)
         self.data = utils.AttrDict()
+        self.data.size = size
+        self.data.size_to_use = size_to_use
+        self.data.batch_size = batch_size
         self.data.train.loader = train_loader
         self.data.train.size = train_size
         self.data.train.batch_count = train_batch_count
         self.data.valid.loader = valid_loader
         self.data.valid.size = valid_size
         self.data.valid.batch_count = valid_batch_count
-        self.data.size = size
-        self.data.size_to_use = size_to_use
-        self.data.batch_size = batch_size
 
     def setup_mods(self, config):
         """Sets up self.mods and its attributes with the given args.
@@ -236,6 +242,8 @@ class TContext(Context):
         """
         iter_count = config["iteration_count"]
         epoch_count = config["epochs_per_iteration"]
+        max_rb = config["max_rollbacks"]
+        max_es = config["max_early_stops"]
         self.loops = utils.AttrDict()
         self.loops.iter_count = iter_count
         self.loops.iter = 0
@@ -243,6 +251,12 @@ class TContext(Context):
         self.loops.epoch = 0
         self.loops.train_index = 0
         self.loops.valid_index = 0
+        self.loops.rb_counts.max = max_rb
+        self.loops.rb_counts.d = 0
+        self.loops.rb_counts.g = 0
+        self.loops.es_counts.max = max_es
+        self.loops.es_counts.d = 0
+        self.loops.es_counts.g = 0
 
     def setup_stats(self):
         """Sets up the statistics.

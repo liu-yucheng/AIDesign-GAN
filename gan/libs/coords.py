@@ -1,7 +1,6 @@
 """Module of the coord (coordinator) classes."""
 
 import numpy
-import sys
 
 from gan.libs import configs
 from gan.libs import contexts
@@ -81,8 +80,8 @@ class TrainingCoord:
         self.context_ready = True
         self.results.logln("Completed context setup")
 
-    def train_d(self):
-        """Trains the discriminator with the training set."""
+    def train_d_epoch(self):
+        """Trains D for an epoch with the training set."""
         r = self.results
         c = self.context
         r.logln("Started training D")
@@ -112,8 +111,8 @@ class TrainingCoord:
         c.losses.train.d.append(loss_mean)
         r.log_losses_train_d()
 
-    def train_g(self):
-        """Trains the generator with the training set."""
+    def train_g_epoch(self):
+        """Trains G for an epoch with the training set."""
         r = self.results
         c = self.context
         r.logln("Started training G")
@@ -131,8 +130,8 @@ class TrainingCoord:
         c.losses.train.g.append(loss_mean)
         r.log_losses_train_g()
 
-    def valid_d(self):
-        """Validate the discriminator with the validation set."""
+    def valid_d_epoch(self):
+        """Validate D for an epoch with the validation set."""
         r = self.results
         c = self.context
         r.logln("Started validating D")
@@ -161,8 +160,8 @@ class TrainingCoord:
         c.losses.valid.d.append(loss_mean)
         r.log_losses_valid_d()
 
-    def valid_g(self):
-        """Validate the generator with the validation set."""
+    def valid_g_epoch(self):
+        """Validate G for an epoch with the validation set."""
         r = self.results
         c = self.context
         r.logln("Started validating G")
@@ -179,28 +178,11 @@ class TrainingCoord:
         c.losses.valid.g.append(loss_mean)
         r.log_losses_valid_g()
 
-    def run_epoch(self):
-        """Runs an epoch."""
-        r = self.results
-        c = self.context
-        r.log_epoch("Started")
-        self.train_d()
-        self.train_g()
-        self.valid_d()
-        self.valid_g()
-        r.save_generated_images()
-        r.save_losses_d()
-        r.save_losses_g()
-        r.save_tvg()
-        r.log_epoch("Completed")
-
     def run_iter(self):
         """Runs an iter."""
         r = self.results
         c = self.context
         r.log_iter("Started")
-        c.bests.iter_d = sys.maxsize
-        c.bests.iter_g = sys.maxsize
         c.loops.epoch = 0
         while c.loops.epoch < c.loops.epoch_count:
             self.run_epoch()

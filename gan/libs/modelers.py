@@ -15,8 +15,8 @@ class Modeler:
         gpu_count: the number of GPUs to use
         loss_func: the loss function
         model: the model, a pytorch nn module
+        size: the total size of the model
         optim: the optimizer
-        rb_count: the rollback count
     """
 
     def __init__(self, config, device, gpu_count, loss_func):
@@ -33,8 +33,8 @@ class Modeler:
         self.gpu_count = gpu_count
         self.loss_func = loss_func
         self.model = None
+        self.size = None
         self.optim = None
-        self.rb_count = 0
 
     def load(self):
         """Loads the states of the model."""
@@ -47,11 +47,14 @@ class Modeler:
         """Saves the states of the model."""
         utils.save_model(self.model, self.config["state_location"])
 
-    def rollback(self):
+    def rollback(self, count):
         """Rollbacks the model.
 
         Clear the model gradients. Load the previous best model states. Reset the optimizer and halves the optimizer
         learning rate.
+
+        Args:
+            count: the rollback count
 
         Raises:
             ValueError: if self.model or self.optim is None
@@ -60,10 +63,9 @@ class Modeler:
             raise ValueError("self.model cannot be None")
         if self.optim is None:
             raise ValueError("self.optim cannot be None")
-        self.rb_count += 1
         self.model.zero_grad()
         self.load()
-        self.optim = utils.setup_adam(self.model, self.config["adam_optimizer"], self.rb_count)
+        self.optim = utils.setup_adam(self.model, self.config["adam_optimizer"], count)
 
 
 class DModeler(Modeler):
@@ -88,6 +90,14 @@ class DModeler(Modeler):
         self.model = self.model.to(self.device)
         self.model = utils.parallelize_model(self.model, self.device, self.gpu_count)
         self.model.apply(utils.init_model_weights)
+        # Init self.size
+        size = 0
+        for param in self.model.parameters():
+            size_of_param = 1
+            for size_of_dim in param.size():
+                size_of_param *= size_of_dim
+            size += size_of_param
+        self.size = size
         # Init self.optim
         if training:
             self.optim = utils.setup_adam(self.model, self.config["adam_optimizer"])
@@ -181,6 +191,14 @@ class GModeler(Modeler):
         self.model = self.model.to(self.device)
         self.model = utils.parallelize_model(self.model, self.device, self.gpu_count)
         self.model.apply(utils.init_model_weights)
+        # Init self.size
+        size = 0
+        for param in self.model.parameters():
+            size_of_param = 1
+            for size_of_dim in param.size():
+                size_of_param *= size_of_dim
+            size += size_of_param
+        self.size = size
         # Init self.optim
         if training:
             self.optim = utils.setup_adam(self.model, self.config["adam_optimizer"])

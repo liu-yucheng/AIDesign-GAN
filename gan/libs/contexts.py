@@ -68,7 +68,7 @@ class Context:
         self.hw.gpu_count = gpu_count
 
 
-class TContext(Context):
+class TrainingContext(Context):
     """Training context.
 
     Attributes:
@@ -301,3 +301,56 @@ class TContext(Context):
         self.noises = utils.AttrDict()
         self.noises.valid_set = valid_set
         self.noises.batch_64 = batch_64
+
+
+class GenerationContext(Context):
+    """Generation context.
+
+    Attributes:
+        g: the generator modeler
+        images: the images attr dict \n
+            `images.count`: the image count
+            `images.list`: the images to save
+        grids: the grids attr dict \n
+            `grids.enabled`: whether the grid mode is enabled \n
+            `grids.each_size`: the size of each grid \n
+            `grids.padding`: the padding of the grids \n
+        noises: the generator inputs
+    """
+
+    def __init__(self):
+        """Inits self."""
+        super().__init__()
+        self.g = None
+        self.images = None
+        self.grids = None
+        self.noises = None
+
+    def setup_all(self, coords_config, modelers_config):
+        """Sets up the entire context.
+
+        Sets up self.g, self.images, self.grids, and self.noises.
+
+        Args:
+            coords_config: the coords config
+            modelers_config: the modelers config
+
+        Raises:
+            ValueError: if self.hw is None
+        """
+        if self.hw is None:
+            raise ValueError("self.hw cannot be None")
+        config = modelers_config["generator"]
+        loss_func = nn.BCELoss()
+        self.g = modelers.GModeler(config, self.hw.device, self.hw.gpu_count, loss_func, training=False)
+        self.g.load()
+        config = coords_config["generation"]
+        self.images = utils.AttrDict()
+        self.images.count = config["image_count"]
+        self.images.list = None
+        config = config["grid_mode"]
+        self.grids = utils.AttrDict()
+        self.grids.enabled = config["enabled"]
+        self.grids.each_size = config["images_per_grid"]
+        self.grids.padding = config["padding"]
+        self.noises = self.g.generate_noises(self.images.count)

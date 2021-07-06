@@ -111,13 +111,13 @@ class CoordsConfig(Config):
                 }
             },
             "generation": {
-                "image_count": 64,
                 "manual_seed": None,
                 "gpu_count": 1,
+                "image_count": 64,
                 "grid_mode": {
                     "enabled": True,
-                    "padding": 2,
-                    "images_per_grid": 64
+                    "images_per_grid": 64,
+                    "padding": 2
                 }
             }
         }

@@ -10,7 +10,7 @@ def main():
     """Starts the executable."""
     config = configs.TrainConfig()
     config.load()
-    print(f"Training config: {config.location}")
+    print(f"Training executable config: {config.location}")
     data_path = config["data_path"]
     model_path = config["model_path"]
     log = sys.stdout

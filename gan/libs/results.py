@@ -3,6 +3,7 @@ from matplotlib import lines
 from matplotlib import pyplot
 from torchvision import utils as visionutils
 import numpy
+from torchvision.transforms.functional import normalize
 
 from gan.libs import utils
 
@@ -26,6 +27,14 @@ class Results:
         self.path = path
         self.log = log
         self.context = None
+
+    def init_folders(self):
+        """Inits the result folders.
+
+        Raises:
+            NotImplementedError: always
+        """
+        raise NotImplementedError("init_folders not implemented")
 
     def bind_context(self, context):
         """Binds a context to self.
@@ -60,6 +69,28 @@ class Results:
         """
         self.log.write(line + "\n")
 
+    def log_configs(self, coords_config, modelers_config):
+        """Logs the coords and modelers config info.
+
+        Args:
+            coords_config: the coords config
+            modelers_config: the modelers config
+        """
+        self.logln(f"Coords config: {coords_config.location}")
+        self.logln(f"Modelers config: {modelers_config.location}")
+
+    def log_rand(self):
+        """Logs the random info."""
+        self.check_context()
+        c = self.context
+        self.logln(f"Random seed ({c.rand.mode}): {c.rand.seed}")
+
+    def log_hw(self):
+        """Logs the torch hardware info."""
+        self.check_context()
+        c = self.context
+        self.logln(f"Torch device: {c.hw.device}; GPU count: {c.hw.gpu_count}")
+
 
 class TrainingResults(Results):
     """Training results.
@@ -84,28 +115,6 @@ class TrainingResults(Results):
         self.logln(f"Init'd folder: {self.path}")
         utils.init_folder(self.generated_images_path, clean=True)
         self.logln(f"Init'd folder (clean): {self.generated_images_path}")
-
-    def log_configs(self, coords_config, modelers_config):
-        """Logs the coords and modelers config info.
-
-        Args:
-            coords_config: the coords config
-            modelers_config: the modelers config
-        """
-        self.logln(f"Coords config: {coords_config.location}")
-        self.logln(f"Modelers config: {modelers_config.location}")
-
-    def log_rand(self):
-        """Logs the random info."""
-        self.check_context()
-        c = self.context
-        self.logln(f"Random seed ({c.rand.mode}): {c.rand.seed}")
-
-    def log_hw(self):
-        """Logs the torch hardware info."""
-        self.check_context()
-        c = self.context
-        self.logln(f"Torch device: {c.hw.device}; GPU count: {c.hw.gpu_count}")
 
     def log_data(self):
         """Logs the data loaders info."""
@@ -443,4 +452,43 @@ class TrainingResults(Results):
         fig.tight_layout()
         pyplot.savefig(location, dpi=240)
         pyplot.close()
-        print("Saved TVG figure")
+        self.logln("Saved TVG figure")
+
+
+class GenerationResults(Results):
+    """Generation results."""
+
+    def __init__(self, path, log):
+        """Inits self with the given args.
+
+        Args:
+            path: the root path of the results
+            log: the log file
+        """
+        super().__init__(path, log)
+
+    def init_folders(self):
+        """Inits the result folders."""
+        utils.init_folder(self.path, clean=True)
+        self.logln(f"Init'd folder (clean): {self.path}")
+
+    def log_g(self):
+        """Logs the G modelers info."""
+        self.check_context()
+        c = self.context
+        self.logln(f"G's size: {c.g.size}")
+        self.logln(f"==== G's struct ====")
+        self.logln(str(c.g.model))
+
+    def save_generated_images(self):
+        """Saves the generated images."""
+        self.check_context()
+        c = self.context
+        for index, image in enumerate(c.images.list):
+            location = utils.find_in_path(f"image-{index + 1}.jpg", self.path)
+            visionutils.save_image(image, location, "JPEG")
+        count = len(c.images.list)
+        if c.grids.enabled:
+            self.logln(f"Generated {count} grids, each has {c.grids.each_size} images")
+        else:
+            self.logln(f"Generated {count} images")

@@ -1,11 +1,8 @@
 """Module of the coord (coordinator) classes."""
 
-from torchvision import transforms
 from torchvision import utils as visionutils
 import numpy
 import math
-
-from torchvision.transforms.transforms import ToTensor
 
 from gan.libs import configs
 from gan.libs import contexts

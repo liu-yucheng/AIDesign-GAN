@@ -1,3 +1,4 @@
-# AIDesignSource
-AI Design source code.
+# AIDesign_GAN
+
+AI Design GAN (Generative Adversarial Network) application.
 

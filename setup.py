@@ -8,8 +8,8 @@ command.
 import setuptools
 
 setuptools.setup(
-    name="gan",
-    version="0.5.0",
+    name="aidesign-gan",
+    version="0.6.0",
     description="AI Design GAN modeling application.",
     author="AI Design Team",
     packages=setuptools.find_packages(),
@@ -17,7 +17,7 @@ setuptools.setup(
         "console_scripts": [
             "gan-train = gan.exes.train:main",
             "gan-generate = gan.exes.generate:main"
-        ],
-    },
+        ]
+    }
     # test_suite="tests"
 )

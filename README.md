@@ -1,4 +1,4 @@
-# AIDesign_GAN
+# AIDesign_DCGAN
 
-AI Design GAN (Generative Adversarial Network) application.
+AI Design DCGAN (Deep Convolutional Generative Adversarial Network) application.
 

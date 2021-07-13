@@ -2,8 +2,8 @@
 
 import sys
 
-from gan.libs import configs
-from gan.libs import coords
+from dcgan.libs import configs
+from dcgan.libs import coords
 
 
 def main():

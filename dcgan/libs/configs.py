@@ -1,7 +1,7 @@
 """Module of the config (configuration) classes."""
 
-from gan.libs import defaults
-from gan.libs import utils
+from dcgan.libs import defaults
+from dcgan.libs import utils
 
 
 class Config:

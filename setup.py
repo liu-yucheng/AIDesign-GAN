@@ -8,15 +8,15 @@ command.
 import setuptools
 
 setuptools.setup(
-    name="aidesign-gan",
-    version="0.6.0",
-    description="AI Design GAN modeling application.",
+    name="aidesign-dcgan",
+    version="0.6.1",
+    description="AI Design DCGAN Application",
     author="AI Design Team",
     packages=setuptools.find_packages(),
     entry_points={
         "console_scripts": [
-            "gan-train = gan.exes.train:main",
-            "gan-generate = gan.exes.generate:main"
+            "dcgan-train = dcgan.exes.train:main",
+            "dcgan-generate = dcgan.exes.generate:main"
         ]
     }
     # test_suite="tests"

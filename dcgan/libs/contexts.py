@@ -8,8 +8,8 @@ import numpy
 import random
 import torch
 
-from gan.libs import modelers
-from gan.libs import utils
+from dcgan.libs import modelers
+from dcgan.libs import utils
 
 
 class Context:

@@ -1,13 +1,13 @@
 """Module of the coord (coordinator) classes."""
 
-from torchvision import utils as visionutils
+from torchvision import utils as vutils
 import math
 
-from gan.libs import algos
-from gan.libs import configs
-from gan.libs import contexts
-from gan.libs import results
-from gan.libs import utils
+from dcgan.libs import algos
+from dcgan.libs import configs
+from dcgan.libs import contexts
+from dcgan.libs import results
+from dcgan.libs import utils
 
 
 class Coord:
@@ -186,7 +186,7 @@ class GenerationCoord(Coord):
         r = self.results
         c = self.context
         for index in range(len(c.images.list)):
-            c.images.list[index] = visionutils.make_grid(c.images.list[index], normalize=True)
+            c.images.list[index] = vutils.make_grid(c.images.list[index], normalize=True)
         r.logln("Normalized images")
 
     def convert_images_to_grids(self):
@@ -198,7 +198,7 @@ class GenerationCoord(Coord):
         start_index = 0
         while start_index < c.images.count:
             end_index = start_index + c.grids.each_size
-            grid = visionutils.make_grid(
+            grid = vutils.make_grid(
                 orig_list[start_index: end_index],
                 nrow=math.ceil(c.grids.each_size ** 0.5),
                 padding=c.grids.padding

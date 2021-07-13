@@ -2,8 +2,8 @@
 
 import torch
 
-from gan.libs import nnstructs
-from gan.libs import utils
+from dcgan.libs import structs
+from dcgan.libs import utils
 
 
 class Modeler:
@@ -83,7 +83,7 @@ class DModeler(Modeler):
         """
         super().__init__(config, device, gpu_count, loss_func)
         # Init self.model
-        struct = nnstructs.DStruct()
+        struct = structs.DStruct()
         struct.location = self.config["struct_location"]
         struct.load()
         exec(struct.definition)
@@ -184,7 +184,7 @@ class GModeler(Modeler):
         """
         super().__init__(config, device, gpu_count, loss_func)
         # Init self.model
-        struct = nnstructs.GStruct()
+        struct = structs.GStruct()
         struct.location = self.config["struct_location"]
         struct.load()
         exec(struct.definition)

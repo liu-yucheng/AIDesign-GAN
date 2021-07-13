@@ -1,11 +1,10 @@
 """Module of the results classes."""
 from matplotlib import lines
 from matplotlib import pyplot
-from torchvision import utils as visionutils
+from torchvision import utils as vutils
 import numpy
-from torchvision.transforms.functional import normalize
 
-from gan.libs import utils
+from dcgan.libs import utils
 
 
 class Results:
@@ -314,7 +313,7 @@ class TrainingResults(Results):
         c = self.context
         batch = next(iter(c.data.train.loader))
         batch = batch[0].to(c.hw.device)[:64]
-        grid = visionutils.make_grid(batch, padding=2, normalize=True).cpu()
+        grid = vutils.make_grid(batch, padding=2, normalize=True).cpu()
         grid = numpy.transpose(grid, (1, 2, 0))
         location = utils.find_in_path("training-images.jpg", self.path)
         pyplot.figure(figsize=(8, 8))
@@ -331,7 +330,7 @@ class TrainingResults(Results):
         c = self.context
         batch = next(iter(c.data.valid.loader))
         batch = batch[0].to(c.hw.device)[:64]
-        grid = visionutils.make_grid(batch, padding=2, normalize=True).cpu()
+        grid = vutils.make_grid(batch, padding=2, normalize=True).cpu()
         grid = numpy.transpose(grid, (1, 2, 0))
         location = utils.find_in_path("validation-images.jpg", self.path)
         pyplot.figure(figsize=(8, 8))
@@ -347,7 +346,7 @@ class TrainingResults(Results):
         self.check_context()
         c = self.context
         batch = c.mods.g.test(c.noises.batch_64)
-        grid = visionutils.make_grid(batch, padding=2, normalize=True).cpu()
+        grid = vutils.make_grid(batch, padding=2, normalize=True).cpu()
         grid = numpy.transpose(grid, (1, 2, 0))
         file_name = f"iter-{c.loops.iter + 1}_epoch-{c.loops.epoch + 1}.jpg"
         location = utils.find_in_path(file_name, self.generated_images_path)
@@ -430,9 +429,9 @@ class TrainingResults(Results):
         vbatch = next(iter(c.data.valid.loader))
         vbatch = vbatch[0].to(c.hw.device)[:64]
         gbatch = c.mods.g.test(c.noises.batch_64)
-        tgrid = visionutils.make_grid(tbatch, padding=2, normalize=True).cpu()
-        vgrid = visionutils.make_grid(vbatch, padding=2, normalize=True).cpu()
-        ggrid = visionutils.make_grid(gbatch, padding=2, normalize=True).cpu()
+        tgrid = vutils.make_grid(tbatch, padding=2, normalize=True).cpu()
+        vgrid = vutils.make_grid(vbatch, padding=2, normalize=True).cpu()
+        ggrid = vutils.make_grid(gbatch, padding=2, normalize=True).cpu()
         tgrid = numpy.transpose(tgrid, (1, 2, 0))
         vgrid = numpy.transpose(vgrid, (1, 2, 0))
         ggrid = numpy.transpose(ggrid, (1, 2, 0))
@@ -486,7 +485,7 @@ class GenerationResults(Results):
         c = self.context
         for index, image in enumerate(c.images.list):
             location = utils.find_in_path(f"image-{index + 1}.jpg", self.path)
-            visionutils.save_image(image, location, "JPEG")
+            vutils.save_image(image, location, "JPEG")
         count = len(c.images.list)
         if c.grids.enabled:
             self.logln(f"Generated {count} grids, each has {c.grids.each_size} images")

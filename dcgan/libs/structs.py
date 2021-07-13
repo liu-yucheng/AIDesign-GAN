@@ -59,33 +59,38 @@ class DStruct(Struct):
         self.location = utils.find_in_path(defaults.discriminator_struct_name, model_path)
         # fmt: off
         self.definition = r"""
-# Convolutional Neural Network
+# D (Discriminator)
+# CNN (Convolutional Neural Network)
 
 from torch import nn
 
-ic_count = self.config["image_channel_count"]
-dfm_size = self.config["feature_map_size"]
+self = self
+fm = self.config["feature_map_size"]
+ic = self.config["image_channel_count"]
 
 self.model = nn.Sequential(
-    # (Layer) 0. in_channels=ic_count, out_channels=dfm_size, kernel_size=4
-    #            input state count: ic_count * (64 ** 2)
-    nn.Conv2d(ic_count, dfm_size, 4, stride=2, padding=1, bias=False),
+    # (Layer) 0. Input layer
+    #   input: x (the input image 3-dim matrix)
+    #   in_channels=ic, out_channels=fm, kernel_size=4
+    #   input state sizes (width x length, height): 64x64, ic
+    nn.Conv2d(ic, fm, 4, stride=2, padding=1, bias=False),
     nn.LeakyReLU(0.2, inplace=True),
-    # 1. input state count: dfm_size * (32 ** 2)
-    nn.Conv2d(dfm_size, 2 * dfm_size, 4, stride=2, padding=1, bias=False),
-    nn.BatchNorm2d(2 * dfm_size),
+    # 1. input state sizes: 32x32, fm
+    nn.Conv2d(fm, 2 * fm, 4, stride=2, padding=1, bias=False),
+    nn.BatchNorm2d(2 * fm),
     nn.LeakyReLU(0.2, inplace=True),
-    # 2. input state count: (2 * dfm_size) * (16 ** 2)
-    nn.Conv2d(2 * dfm_size, 4 * dfm_size, 4, stride=2, padding=1, bias=False),
-    nn.BatchNorm2d(4 * dfm_size),
+    # 2. input state sizes: 16x16, 2*fm
+    nn.Conv2d(2 * fm, 4 * fm, 4, stride=2, padding=1, bias=False),
+    nn.BatchNorm2d(4 * fm),
     nn.LeakyReLU(0.2, inplace=True),
-    # 3. input state count: (4 * dfm_size) * (8 ** 2)
-    nn.Conv2d(4 * dfm_size, 8 * dfm_size, 4, stride=2, padding=1, bias=False),
-    nn.BatchNorm2d(8 * dfm_size),
+    # 3. input state sizes: 8x8, 4*fm
+    nn.Conv2d(4 * fm, 8 * fm, 4, stride=2, padding=1, bias=False),
+    nn.BatchNorm2d(8 * fm),
     nn.LeakyReLU(0.2, inplace=True),
-    # 4. input state count: (8 * dfm_size) * (4 ** 2)
-    #    output state count: 1
-    nn.Conv2d(8 * dfm_size, 1, 4, stride=1, padding=0, bias=False),
+    # 4. Output layer
+    #   input state sizes: 4x4, 8*fm
+    #   output: D(x), (1 value, the predicted real/fake label)
+    nn.Conv2d(8 * fm, 1, 4, stride=1, padding=0, bias=False),
     nn.Sigmoid()
 )
 """
@@ -107,42 +112,40 @@ class GStruct(Struct):
         self.location = utils.find_in_path(defaults.generator_struct_name, model_path)
         # fmt: off
         self.definition = r"""
-# Convolutional Neural Network with Transposed Layers
+# G (Generator)
+# CNN (Convolutional Neural Network) with Transposed Layers
 
 from torch import nn
 
-z_size = self.config["input_size"]
-gfm_size = self.config["feature_map_size"]
-ic_count = self.config["image_channel_count"]
+self = self
+fm = self.config["feature_map_size"]
+ic = self.config["image_channel_count"]
+z = self.config["input_size"]
 
 self.model = nn.Sequential(
-    # (Layer) 0. in_channels=z_size, out_channels=8 * gfm_size, kernel_size=4
-    nn.ConvTranspose2d(
-        z_size, 8 * gfm_size, 4, stride=1, padding=0, bias=False
-    ),
-    nn.BatchNorm2d(8 * gfm_size),
+    # (Layer) 0. Input layer
+    #   input: z (the input noise vector)
+    #   in_channels=z, out_channels=8 * fm, kernel_size=4
+    #   input state sizes (width x length, height): 1x1, z
+    nn.ConvTranspose2d(z, 8 * fm, 4, stride=1, padding=0, bias=False),
+    nn.BatchNorm2d(8 * fm),
     nn.ReLU(True),
-    # 1. input state count: (8 * gfm_size) * (4 ** 2)
-    nn.ConvTranspose2d(
-        8 * gfm_size, 4 * gfm_size, 4, stride=2, padding=1, bias=False
-    ),
-    nn.BatchNorm2d(4 * gfm_size),
+    # 1. input state sizes: 4x4, 8*fm
+    nn.ConvTranspose2d(8 * fm, 4 * fm, 4, stride=2, padding=1, bias=False),
+    nn.BatchNorm2d(4 * fm),
     nn.ReLU(True),
-    # 2. input state count: (4 * gfm_size) * (8 ** 2)
-    nn.ConvTranspose2d(
-        4 * gfm_size, 2 * gfm_size, 4, stride=2, padding=1, bias=False
-    ),
-    nn.BatchNorm2d(2 * gfm_size),
+    # 2. input state sizes: 8x8, 4*fm
+    nn.ConvTranspose2d(4 * fm, 2 * fm, 4, stride=2, padding=1, bias=False),
+    nn.BatchNorm2d(2 * fm),
     nn.ReLU(True),
-    # 3. input state count: (2 * gfm_size) * (16 ** 2)
-    nn.ConvTranspose2d(
-        2 * gfm_size, gfm_size, 4, stride=2, padding=1, bias=False
-    ),
-    nn.BatchNorm2d(gfm_size),
+    # 3. input state sizes: 16x16, 2*fm
+    nn.ConvTranspose2d(2 * fm, fm, 4, stride=2, padding=1, bias=False),
+    nn.BatchNorm2d(fm),
     nn.ReLU(True),
-    # 4. input state count: gfm_size * (32 ** 2)
-    #    output state count: ic_count * (64 ** 2)
-    nn.ConvTranspose2d(gfm_size, ic_count, 4, stride=2, padding=1, bias=False),
+    # 4. Output layer
+    #   input state sizes: 32x32, fm
+    #   output: G(z), (the output image 3-dim matrix)
+    nn.ConvTranspose2d(fm, ic, 4, stride=2, padding=1, bias=False),
     nn.Tanh()
 )
 """

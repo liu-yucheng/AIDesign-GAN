@@ -146,20 +146,24 @@ class TrainingContext(Context):
         """
         config = config["data_sets"]
         image_resolution = config["image_resolution"]
+        channel_count = config["image_channel_count"]
         train_weight = config["training_set_weight"]
         valid_weight = config["validation_set_weight"]
         percents_to_use = config["percents_to_use"]
         worker_count = config["loader_worker_count"]
         batch_size = config["images_per_batch"]
+
+        norm_list = [0.5 for _ in range(channel_count)]
         data_set = datasets.ImageFolder(
             root=path,
             transform=transforms.Compose([
                 transforms.Resize(image_resolution),
                 transforms.CenterCrop(image_resolution),
                 transforms.ToTensor(),
-                transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+                transforms.Normalize(norm_list, norm_list)
             ])
         )
+
         size = len(data_set)
         subset_ratio = numpy.array([train_weight, valid_weight])
         subset_ratio = subset_ratio / subset_ratio.sum()
@@ -178,6 +182,7 @@ class TrainingContext(Context):
         valid_loader = data.DataLoader(valid_set, batch_size=batch_size, shuffle=True, num_workers=worker_count)
         valid_size = len(valid_set)
         valid_batch_count = len(valid_loader)
+
         self.data = utils.AttrDict()
         self.data.size = size
         self.data.size_to_use = size_to_use

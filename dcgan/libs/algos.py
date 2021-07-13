@@ -206,7 +206,7 @@ class IterLevelAlgo(Algo):
             self.valid_d()
             self.save_best_d()
             r.save_d_losses()
-            r.logln()
+            r.logln("-")
             c.loops.epoch += 1
 
     def run_g_iter(self):
@@ -222,7 +222,7 @@ class IterLevelAlgo(Algo):
             r.save_g_losses()
             r.save_generated_images()
             r.save_tvg()
-            r.logln()
+            r.logln("-")
             c.loops.epoch += 1
 
     def start_training(self):
@@ -230,7 +230,6 @@ class IterLevelAlgo(Algo):
         self.check_context_and_results()
         r = self.results
         c = self.context
-        r.logln("Started training")
         r.save_training_images()
         r.save_validation_images()
         r.logln()
@@ -239,6 +238,5 @@ class IterLevelAlgo(Algo):
             r.log_iter("Started")
             self.run_d_iter()
             self.run_g_iter()
-            r.logln()
+            r.logln("-")
             c.loops.iter += 1
-        r.logln("Completed training")

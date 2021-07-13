@@ -97,15 +97,16 @@ class CoordsConfig(Config):
                 "mode": "new",
                 "manual_seed": 0,
                 "gpu_count": 1,
-                "iteration_count": 3,
-                "epochs_per_iteration": 3,
-                "max_rollbacks": 4,
+                "iteration_count": 2,
+                "epochs_per_iteration": 2,
+                "max_rollbacks": 2,
                 "max_early_stops": 2,
                 "data_sets": {
                     "loader_worker_count": 0,
-                    "percents_to_use": 100,
+                    "percents_to_use": 1,
                     "images_per_batch": 16,
                     "image_resolution": 64,
+                    "image_channel_count": 3,
                     "training_set_weight": 8,
                     "validation_set_weight": 2
                 }
@@ -138,8 +139,8 @@ class ModelersConfig(Config):
         self.location = utils.find_in_path(defaults.modelers_config_name, model_path)
         self.items = {
             "discriminator": {
-                "image_channel_count": 3,
                 "feature_map_size": 64,
+                "image_channel_count": 3,
                 "struct_location": utils.find_in_path(defaults.discriminator_struct_name, model_path),
                 "state_location": utils.find_in_path(defaults.discriminator_state_name, model_path),
                 "adam_optimizer": {
@@ -149,9 +150,9 @@ class ModelersConfig(Config):
                 }
             },
             "generator": {
-                "input_size": 100,
                 "feature_map_size": 64,
                 "image_channel_count": 3,
+                "input_size": 100,
                 "struct_location": utils.find_in_path(defaults.generator_struct_name, model_path),
                 "state_location": utils.find_in_path(defaults.generator_state_name, model_path),
                 "adam_optimizer": {

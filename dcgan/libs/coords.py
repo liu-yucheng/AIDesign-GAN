@@ -137,7 +137,10 @@ class TrainingCoord(Coord):
             self.setup_context()
         if not self.algo_ready:
             self.setup_algo()
+        r = self.results
+        r.logln("Started training")
         self.algo.start_training()
+        r.logln("Completed training")
 
 
 class GenerationCoord(Coord):

@@ -105,6 +105,7 @@ class TrainingContext(Context):
         latest: the latest output attr dict \n
             `latest.dx`: the latest average D(X) \n
             `latest.dgz`: the latest average D(G(Z)) \n
+            `latest.dgz2`: another latest average D(G(Z)) \n
             `latest.ld`: the latest discriminator loss, L(D) \n
             `latest.lg`: the latest generator loss, L(G) \n
         losses: the losses attr dict \n
@@ -274,6 +275,7 @@ class TrainingContext(Context):
         self.latest = utils.AttrDict()
         self.latest.dx = None
         self.latest.dgz = None
+        self.latest.dgz2 = None
         self.latest.ld = None
         self.latest.lg = None
         self.losses = utils.AttrDict()

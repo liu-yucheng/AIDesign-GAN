@@ -156,7 +156,7 @@ class TrainingResults(Results):
 
         Args:
             prefix: the contents to log before the info
-            epoch_type: epoch type (d/g)
+            epoch_type: epoch type (d/g/(empty string))
         """
         self.check_context()
         c = self.context
@@ -192,7 +192,7 @@ class TrainingResults(Results):
         return result
 
     def log_batch(self, epoch_type, batch_type):
-        """Logs the batch info.
+        """Logs the batch info for the iter level algo.
 
         Args:
             epoch_type: epoch type (d/g)
@@ -225,6 +225,46 @@ class TrainingResults(Results):
             self.logstr(f"L(D) = {c.latest.ld:.6f}")
         elif "g" in epoch_type:
             self.logstr(f"D(G(Z)) = {c.latest.dgz:.6f} L(G) = {c.latest.lg:.6f}")
+        self.logstr("\n")
+
+    def log_batch_2(self, batch_type):
+        """Logs the batch info for the batch level algo.
+
+        Args:
+            batch_type: batch type (t/vdr/vdf/vg)
+        """
+        self.check_context()
+        c = self.context
+        needs_log = False
+        if "t" in batch_type:
+            needs_log = self.find_train_needs_log()
+        elif "v" in batch_type:
+            needs_log = self.find_valid_needs_log()
+        if not needs_log:
+            return
+        batch_index = None
+        batch_count = None
+        if "t" in batch_type:
+            batch_index = c.loops.train_index
+            batch_count = c.data.train.batch_count
+        elif "v" in batch_type:
+            batch_index = c.loops.valid_index
+            batch_count = c.data.valid.batch_count
+        self.logstr(f"Batch {c.loops.iter + 1}.{c.loops.epoch + 1}.{batch_type}{batch_index + 1} / ")
+        self.logstr(f"{c.loops.iter_count}.{c.loops.epoch_count}.{batch_type}{batch_count}:")
+        if "t" in batch_type:
+            self.logstr("\n")
+            self.logstr(f"  D: D(X) = {c.latest.dx:.6f} D(G(Z)) = {c.latest.dgz:.6f} L(D) = {c.latest.ld:.6f}\n")
+            self.logstr(f"  G: D(G(Z)) = {c.latest.dgz2:.6f} L(G) = {c.latest.lg:.6f}")
+        elif "v" in batch_type:
+            self.logstr(" ")
+            if "d" in batch_type:
+                if "r" in batch_type:
+                    self.logstr(f"D(X) = {c.latest.dx:.6f} L(D) = {c.latest.ld:.6f}")
+                elif "f" in batch_type:
+                    self.logstr(f"D(G(Z)) = {c.latest.dgz:.6f} L(D) = {c.latest.ld:.6f}")
+            elif "g" in batch_type:
+                self.logstr(f"D(G(Z)): {c.latest.dgz2:.6f} L(G) = {c.latest.lg:.6f}")
         self.logstr("\n")
 
     def log_epoch_loss(self, loss_type):

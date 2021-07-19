@@ -119,12 +119,23 @@ class TrainingCoord(Coord):
         self.results.logln("Completed context setup")
 
     def setup_algo(self):
-        """Sets up self.algo."""
+        """Sets up self.algo.
+
+        Raises:
+            ValueError: if the algo's name is unknown (supported algo names: `iter_level_algo`, `batch_level_algo`)
+        """
         if not self.results_ready:
             self.setup_results()
         if not self.context_ready:
             self.setup_context()
-        self.algo = algos.IterLevelAlgo()
+        algo_name = self.coords_config["training"]["algorithm"]
+        if algo_name == "iter_level_algo":
+            self.algo = algos.IterLevelAlgo()
+        elif algo_name == "batch_level_algo":
+            self.algo = algos.BatchLevelAlgo()
+        else:
+            raise ValueError(f"Unknown algo: {algo_name}")
+        self.results.log_algo(algo_name)
         self.algo.bind_context_and_results(self.context, self.results)
         self.algo_ready = True
         self.results.logln("Completed algo setup")
@@ -139,6 +150,7 @@ class TrainingCoord(Coord):
             self.setup_algo()
         r = self.results
         r.logln("Started training")
+        r.logln("-")
         self.algo.start_training()
         r.logln("Completed training")
 

@@ -95,6 +95,7 @@ class CoordsConfig(Config):
         self.items = {
             "training": {
                 "mode": "new",
+                "algorithm": "batch_level_algo",
                 "manual_seed": 0,
                 "gpu_count": 1,
                 "iteration_count": 2,

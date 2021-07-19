@@ -9,7 +9,7 @@ import setuptools
 
 setuptools.setup(
     name="aidesign-dcgan",
-    version="0.6.1",
+    version="0.6.2",
     description="AI Design DCGAN Application",
     author="AI Design Team",
     packages=setuptools.find_packages(),

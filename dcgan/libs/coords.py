@@ -124,7 +124,7 @@ class TrainingCoord(Coord):
             self.setup_results()
         if not self.context_ready:
             self.setup_context()
-        self.algo = algos.BatchLevelAlgo()
+        self.algo = algos.IterLevelAlgo()
         self.algo.bind_context_and_results(self.context, self.results)
         self.algo_ready = True
         self.results.logln("Completed algo setup")

@@ -225,10 +225,10 @@ class IterLevelAlgo(Algo):
         self.check_context_and_results()
         r = self.results
         c = self.context
-        r.logln("Algo: iter_level")
+        r.logln("Started iter level algorithm")
+        r.logln("-")
         r.save_training_images()
         r.save_validation_images()
-        r.logln("-")
         c.loops.iter = 0
         while c.loops.iter < c.loops.iter_count:
             r.log_iter("Started")
@@ -368,10 +368,10 @@ class BatchLevelAlgo(Algo):
         self.check_context_and_results()
         r = self.results
         c = self.context
-        r.logln("Algo: batch_level")
+        r.logln("Started batch level algorithm")
+        r.logln("-")
         r.save_training_images()
         r.save_validation_images()
-        r.logln("-")
         c.loops.iter = 0
         while c.loops.iter < c.loops.iter_count:
             r.log_iter("Started")

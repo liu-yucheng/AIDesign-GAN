@@ -139,6 +139,14 @@ class TrainingResults(Results):
         c = self.context
         self.logln(f"Training mode: {c.mode}")
 
+    def log_algo(self, algo_name):
+        """Logs the training algorithm.
+
+        Args:
+            algo_name: the name of the algorithm
+        """
+        self.logln(f"Algo: {algo_name}")
+
     def log_iter(self, prefix):
         """Logs the iter info.
 

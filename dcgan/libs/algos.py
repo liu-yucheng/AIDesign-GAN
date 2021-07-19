@@ -58,28 +58,19 @@ class IterLevelAlgo(Algo):
         r = self.results
         c = self.context
         r.logln("Started training D")
-        ldrs = []
+        lds = []
         c.loops.train_index = 0
         for real_batch in c.data.train.loader:
-            real_batch = real_batch[0]
-            dx, ld = c.mods.d.train(real_batch, c.labels.real)
-            c.latest.dx, c.latest.ld = dx, ld
-            ldrs.append(ld)
-            r.log_batch("d", "tr")
-            c.loops.train_index += 1
-        ldfs = []
-        c.loops.train_index = 0
-        while c.loops.train_index < c.data.train.batch_count:
             noises = c.mods.g.generate_noises(c.data.batch_size)
+            real_batch = real_batch[0]
             fake_batch = c.mods.g.test(noises)
-            dgz, ld = c.mods.d.train(fake_batch, c.labels.fake)
-            c.latest.dgz, c.latest.ld = dgz, ld
-            ldfs.append(ld)
-            r.log_batch("d", "tf")
+            dx, ldr = c.mods.d.train(real_batch, c.labels.real)
+            dgz, ldf = c.mods.d.train(fake_batch, c.labels.fake)
+            ld = ldr + ldf
+            c.latest.dx, c.latest.dgz, c.latest.ld = dx, dgz, ld
+            lds.append(ld)
+            r.log_batch("d", "t")
             c.loops.train_index += 1
-        lds = []
-        for index in range(c.data.train.batch_count):
-            lds.append(ldrs[index] + ldfs[index])
         epoch_ld = numpy.array(lds).mean()
         c.losses.train.d.append(epoch_ld)
         r.log_epoch_loss("td")
@@ -122,8 +113,9 @@ class IterLevelAlgo(Algo):
         curr_ld = c.losses.valid.d[-1]
         if c.bests.d is None or curr_ld <= c.bests.d:
             c.bests.d = curr_ld
-            c.mods.d.save()
-            r.log_model_action("save", "d")
+        c.mods.d.save()
+        r.log_model_action("save", "d")
+        """
         elif c.loops.es.d < c.loops.es.max:
             c.loops.es.d += 1
             r.log_model_action("es", "d")
@@ -136,6 +128,7 @@ class IterLevelAlgo(Algo):
         else:
             c.mods.d.load()
             r.log_model_action("load", "d")
+        """
 
     def train_g(self):
         """Trains G with the training set."""
@@ -180,8 +173,9 @@ class IterLevelAlgo(Algo):
         curr_lg = c.losses.valid.g[-1]
         if c.bests.g is None or curr_lg <= c.bests.g:
             c.bests.g = curr_lg
-            c.mods.g.save()
-            r.log_model_action("save", "g")
+        c.mods.g.save()
+        r.log_model_action("save", "g")
+        """
         elif c.loops.es.g < c.loops.es.max:
             c.loops.es.g += 1
             r.log_model_action("es", "g")
@@ -194,6 +188,7 @@ class IterLevelAlgo(Algo):
         else:
             c.mods.g.load()
             r.log_model_action("load", "g")
+        """
 
     def run_d_iter(self):
         """Runs a iter of training, validating, and saving D."""

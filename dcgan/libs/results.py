@@ -174,7 +174,7 @@ class TrainingResults(Results):
         self.check_context()
         c = self.context
         result = c.loops.train_index == 0
-        result = result or (c.loops.train_index + 1) % 50 == 0
+        result = result or (c.loops.train_index + 1) % 30 == 0
         result = result or c.loops.train_index == c.data.train.batch_count - 1
         return result
 
@@ -218,10 +218,13 @@ class TrainingResults(Results):
         self.logstr(f"Batch {c.loops.iter + 1}.{epoch_type}{c.loops.epoch + 1}.{batch_type}{batch_index + 1} / ")
         self.logstr(f"{c.loops.iter_count}.{epoch_type}{c.loops.epoch_count}.{batch_type}{batch_count}: ")
         if "d" in epoch_type:
-            if "r" in batch_type:
-                self.logstr(f"D(X) = {c.latest.dx:.6f} ")
-            elif "f" in batch_type:
-                self.logstr(f"D(G(Z)) = {c.latest.dgz:.6f} ")
+            if "t" in batch_type:
+                self.logstr(f"D(X) = {c.latest.dx:.6f} D(G(Z)) = {c.latest.dgz:.6f} ")
+            elif "v" in batch_type:
+                if "r" in batch_type:
+                    self.logstr(f"D(X) = {c.latest.dx:.6f} ")
+                elif "f" in batch_type:
+                    self.logstr(f"D(G(Z)) = {c.latest.dgz:.6f} ")
             self.logstr(f"L(D) = {c.latest.ld:.6f}")
         elif "g" in epoch_type:
             self.logstr(f"D(G(Z)) = {c.latest.dgz:.6f} L(G) = {c.latest.lg:.6f}")

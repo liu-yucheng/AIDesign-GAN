@@ -61,7 +61,7 @@ class TrainConfig(Config):
 
     def __init__(self):
         super().__init__()
-        self.location = defaults.train_config_location
+        self.location = utils.find_in_path(defaults.train_config_name, defaults.exes_path)
         self.items = {
             "data_path": defaults.data_path,
             "model_path": defaults.model_path
@@ -73,7 +73,7 @@ class GenerateConfig(Config):
 
     def __init__(self):
         super().__init__()
-        self.location = defaults.generate_config_location
+        self.location = utils.find_in_path(defaults.generate_config_name, defaults.exes_path)
         self.items = {
             "model_path": defaults.model_path
         }
@@ -100,8 +100,8 @@ class CoordsConfig(Config):
                 "gpu_count": 1,
                 "iteration_count": 2,
                 "epochs_per_iteration": 2,
-                "max_rollbacks": 2,
-                "max_early_stops": 2,
+                "max_rollbacks": 1,
+                "max_early_stops": 1,
                 "data_sets": {
                     "loader_worker_count": 0,
                     "percents_to_use": 1,

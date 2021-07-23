@@ -28,7 +28,7 @@ class Struct:
         if self.location is None:
             raise ValueError("self.location cannot be None")
         try:
-            self.definition = utils.load_text_file(self.location)
+            self.definition = utils.load_text(self.location)
         except FileNotFoundError:
             self.save()
 
@@ -41,7 +41,7 @@ class Struct:
         if self.location is None:
             raise ValueError("struct.location cannot be None")
 
-        utils.save_text_file(self.definition, self.location)
+        utils.save_text(self.definition, self.location)
 
 
 class DStruct(Struct):

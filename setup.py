@@ -9,7 +9,7 @@ import setuptools
 
 setuptools.setup(
     name="aidesign-dcgan",
-    version="0.7.1",
+    version="0.7.2",
     description="AI Design DCGAN Application",
     author="AI Design Team",
     packages=setuptools.find_packages(),
@@ -21,3 +21,14 @@ setuptools.setup(
     }
     # test_suite="tests"
 )
+
+
+def _setup_exes_configs():
+    from dcgan.libs import configs
+    train_config = configs.TrainConfig()
+    train_config.load()
+    generate_config = configs.GenerateConfig()
+    generate_config.load()
+
+
+_setup_exes_configs()

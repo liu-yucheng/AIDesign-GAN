@@ -106,7 +106,7 @@ def find_in_path(name, path):
     return location
 
 
-def load_text_file(from_file):
+def load_text(from_file):
     """Loads the contents from a text file.
 
     Args:
@@ -121,7 +121,7 @@ def load_text_file(from_file):
     return contents
 
 
-def save_text_file(from_str, to_file):
+def save_text(from_str, to_file):
     """Saves a string to a text file.
 
     Args:

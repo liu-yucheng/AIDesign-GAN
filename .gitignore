@@ -1,3 +1,7 @@
+# Other ignored files
+dcgan/exes/train_config.json
+dcgan/exes/generate_config.json
+
 # Byte-compiled / optimized / DLL files
 **/__pycache__/
 **/*.py[cod]

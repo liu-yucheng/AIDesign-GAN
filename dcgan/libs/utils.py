@@ -1,5 +1,8 @@
 """Module of the util (utility) classes and functions."""
 
+# Initially added by: liu-yucheng
+# Last updated by: liu-yucheng
+
 from torch import nn
 from torch import optim
 import json

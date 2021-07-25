@@ -1,5 +1,8 @@
 """Module of the config (configuration) classes."""
 
+# Initially added by: liu-yucheng
+# Last updated by: liu-yucheng
+
 from dcgan.libs import defaults
 from dcgan.libs import utils
 

@@ -1,5 +1,8 @@
 """Executable for image generation with the trained models."""
 
+# Initially added by: liu-yucheng
+# Last updated by: liu-yucheng
+
 import sys
 
 from dcgan.libs import configs

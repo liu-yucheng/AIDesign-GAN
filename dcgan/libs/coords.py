@@ -1,5 +1,8 @@
 """Module of the coord (coordinator) classes."""
 
+# Initially added by: liu-yucheng
+# Last updated by: liu-yucheng
+
 from torchvision import utils as vutils
 import math
 

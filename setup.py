@@ -5,11 +5,14 @@ entry_points param of the setup function specifies the function to be called whe
 command.
 """
 
+# Initially added by: liu-yucheng
+# Last updated by: liu-yucheng
+
 import setuptools
 
 setuptools.setup(
     name="aidesign-dcgan",
-    version="0.7.2",
+    version="0.7.3",
     description="AI Design DCGAN Application",
     author="AI Design Team",
     packages=setuptools.find_packages(),

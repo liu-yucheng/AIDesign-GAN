@@ -14,6 +14,9 @@ Attributes:
     generator_state_name: the generator state file name
 """
 
+# Initially added by: liu-yucheng
+# Last updated by: liu-yucheng
+
 import pathlib
 
 _curr_path = str(pathlib.Path(__file__).parent.resolve())

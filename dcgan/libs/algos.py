@@ -1,5 +1,8 @@
 """Module of the training algos (algorithms)."""
 
+# Initially added by: liu-yucheng
+# Last updated by: liu-yucheng
+
 import numpy
 
 

@@ -1,5 +1,8 @@
 """Module of the modeler classes."""
 
+# Initially added by: liu-yucheng
+# Last updated by: liu-yucheng
+
 import torch
 
 from dcgan.libs import structs

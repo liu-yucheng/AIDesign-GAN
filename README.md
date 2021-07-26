@@ -1,5 +1,5 @@
-[//]: # (Initially added by: liu-yucheng)
-[//]: # (Last updated by: liu-yucheng)
+[//]: # "Initially added by: liu-yucheng"
+[//]: # "Last updated by: liu-yucheng"
 
 # AIDesign_DCGAN
 
@@ -40,13 +40,13 @@ The versioning of this app is based on the guidelines in Semantic Versioning (<h
 
 ## Versioning Basics
 
-Each version name has the form `v{x}.{y}.{z}`, where `x, y, z` are integers and `x, y, z >= 0`. Note that `x, y, z` can be integers that `>= 10`, which means that `v12.34.56` or `v123.456.789` can possibly be future version names. Also, **`v0.10.0` and `v1.0.0` are not the same** version.
+Each version name has the form `v{x}.{y}.{z}`, where `x, y, z` are integers and `x, y, z >= 0`. Note that `x, y, z` can be integers that `>= 10`, which means that `v12.34.56` or `v123.456.789` are two possible future version names. Also, **note that `v0.10.0` and `v1.0.0` are not the same** version.
 
 The first released version is `v0.1.0`.
 
 **In short**, if the latest version is `v{x}.{y}.{z}`, the versioning of the updates are the following. For the precise definitions, please see below.
 
-1. **API** updates: `v0.{y + n}.{x + n} if x is 0` (where `n` is an integer and `n >= 1`) or `v{x + 1}.0.0 is x >= 1`.
+1. **API** updates: `v0.{y + n}.{x + n} if x == 0` (where `n` is an integer and `n >= 1`) or `v{x + 1}.0.0 if x >= 1`.
 2. **Function** updates: `v{x}.{y + 1}.0`.
 3. **Bug fix** updates: `v{x}.{y}.{z + 1}`.
 

@@ -136,6 +136,16 @@ def save_text(from_str, to_file):
     file.close()
 
 
+def load_model(location, model):
+    """Loads the states from a location into a model.
+
+    Args:
+        location: the model file location
+        model: the model, a pytorch nn module
+    """
+    model.load_state_dict(torch.load(location))
+
+
 def save_model(model, location):
     """Saves the states of a model to a location.
 
@@ -148,15 +158,26 @@ def save_model(model, location):
     file.close()
 
 
-def load_model(location, model):
-    """Loads the states from a location into a model.
+def load_optim(location, optim):
+    """Loads the states from a location into an optimizer.
 
     Args:
-        location: the model file location
-        model: the model, a pytorch nn module
+        location: the optimizer file location
+        optim: the optimizer, a pytorch optimizer
     """
-    model.load_state_dict(torch.load(location))
-    model.eval()
+    optim.load_state_dict(torch.load(location))
+
+
+def save_optim(optim, location):
+    """Saves the states of an optimizer to a location.
+
+    Args:
+        optim: the optimizer, a pytorch optimizer
+        location: the location to save the optimizer
+    """
+    file = open(location, "w+")
+    torch.save(optim.state_dict(), location)
+    file.close()
 
 
 def parallelize_model(model, device, gpu_count):

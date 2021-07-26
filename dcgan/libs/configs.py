@@ -147,6 +147,7 @@ class ModelersConfig(Config):
                 "image_channel_count": 3,
                 "struct_location": utils.find_in_path(defaults.discriminator_struct_name, model_path),
                 "state_location": utils.find_in_path(defaults.discriminator_state_name, model_path),
+                "optim_location": utils.find_in_path(defaults.discriminator_optim_name, model_path),
                 "adam_optimizer": {
                     "learning_rate": 0.0002,
                     "beta1": 0.5,
@@ -159,6 +160,7 @@ class ModelersConfig(Config):
                 "input_size": 100,
                 "struct_location": utils.find_in_path(defaults.generator_struct_name, model_path),
                 "state_location": utils.find_in_path(defaults.generator_state_name, model_path),
+                "optim_location": utils.find_in_path(defaults.generator_optim_name, model_path),
                 "adam_optimizer": {
                     "learning_rate": 0.0002,
                     "beta1": 0.5,

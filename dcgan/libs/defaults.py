@@ -10,8 +10,10 @@ Attributes:
     modelers_config_name: the modelers config file name
     discriminator_struct_name: the discriminator struct file name
     discriminator_state_name: the discriminator state file name
+    discriminator_optim_name: the discriminator optimizer file name
     generator_struct_name: the generator struct file name
     generator_state_name: the generator state file name
+    generator_optim_name: the generator optimizer file name
 """
 
 # Initially added by: liu-yucheng
@@ -33,5 +35,7 @@ coords_config_name = "coords_config.json"
 modelers_config_name = "modelers_config.json"
 discriminator_struct_name = "discriminator_struct.py"
 discriminator_state_name = "discriminator.pt"
+discriminator_optim_name = "discriminator_optim.pt"
 generator_struct_name = "generator_struct.py"
 generator_state_name = "generator.pt"
+generator_optim_name = "generator_optim.pt"

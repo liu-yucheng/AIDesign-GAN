@@ -41,14 +41,23 @@ class Modeler:
 
     def load(self):
         """Loads the states of the model."""
+        state_location = self.config["state_location"]
+        optim_location = self.config["optim_location"]
         try:
-            utils.load_model(self.config["state_location"], self.model)
+            utils.load_model(state_location, self.model)
         except FileNotFoundError:
-            self.save()
+            utils.save_model(self.model, state_location)
+        if self.optim is not None:
+            try:
+                utils.load_optim(optim_location, self.optim)
+            except FileNotFoundError:
+                utils.save_optim(self.optim, optim_location)
 
     def save(self):
         """Saves the states of the model."""
         utils.save_model(self.model, self.config["state_location"])
+        if self.optim is not None:
+            utils.save_optim(self.optim, self.config["optim_location"])
 
     def rollback(self, count):
         """Rollbacks the model.
@@ -108,8 +117,8 @@ class DModeler(Modeler):
     def train(self, batch, label):
         """Trains the model with a batch of data and a target label.
 
-        Clear the model gradients. Forward pass the batch. Find the loss. Find the gradients through a backward pass.
-        Optimize/Update the model. Return the average output and loss value.
+        Set the model to training mode. Clear the model gradients. Forward pass the batch. Find the loss. Find the
+        gradients through a backward pass. Optimize/Update the model. Return the average output and loss value.
 
         Args:
             batch: the batch of data
@@ -124,6 +133,7 @@ class DModeler(Modeler):
         """
         if self.optim is None:
             raise ValueError("self.optim cannot be None")
+        self.model.train(True)
         self.model.zero_grad()
         batch, labels = utils.prep_batch_and_labels(batch, label, self.device)
         output = self.model(batch).view(-1)
@@ -137,7 +147,7 @@ class DModeler(Modeler):
     def valid(self, batch, label):
         """Validates the model with a batch of data and a target label.
 
-        Forward pass the batch. Find the loss. Return the average output and loss value.
+        Set the model to evaluation mode. Forward pass the batch. Find the loss. Return the average output and loss.
 
         Args:
             batch: the batch of data
@@ -147,10 +157,11 @@ class DModeler(Modeler):
             out_mean: Mean(D(batch)), the average output of D
             loss_val: Loss(D(batch), label), the loss of D on the batch
         """
+        self.model.train(False)
         batch, labels = utils.prep_batch_and_labels(batch, label, self.device)
         with torch.no_grad():
             output = self.model(batch).detach().view(-1)
-        loss = self.loss_func(output, labels)
+            loss = self.loss_func(output, labels)
         out_mean = output.mean().item()
         loss_val = loss.detach().cpu()
         return out_mean, loss_val
@@ -158,7 +169,7 @@ class DModeler(Modeler):
     def test(self, batch):
         """Tests/Uses the model with a batch of data.
 
-        Forward pass the batch. Return the output.
+        Set the model to evaluation mode. Forward pass the batch. Return the output.
 
         Args:
             batch: the batch of data
@@ -166,6 +177,7 @@ class DModeler(Modeler):
         Returns:
             output: D(batch), the output of D
         """
+        self.model.train(False)
         batch = batch.to(self.device)
         with torch.no_grad():
             output = self.model(batch).detach().view(-1)
@@ -221,9 +233,9 @@ class GModeler(Modeler):
     def train(self, d_model, noises, label):
         """Trains the model with the given args.
 
-        Clear the model gradients. Generate a training batch with the given noises. Forward pass the batch to the
-        discriminator model. Find the loss. Find the gradients with a backward pass. Optimize/Update the model. Return
-        the average output and the loss value.
+        Set the model to training mode. Clear the model gradients. Generate a training batch with the given noises.
+        Forward pass the batch to the discriminator model. Find the loss. Find the gradients with a backward pass.
+        Optimize/Update the model. Return the average output and the loss value.
 
         Args:
             d_model: the discriminator model
@@ -239,6 +251,7 @@ class GModeler(Modeler):
         """
         if self.optim is None:
             raise ValueError("self.optim cannot be None")
+        self.model.train(True)
         self.model.zero_grad()
         batch = self.model(noises)
         batch, labels = utils.prep_batch_and_labels(batch, label, self.device)
@@ -253,8 +266,8 @@ class GModeler(Modeler):
     def valid(self, d_model, noises, label):
         """Validates the model with the given args.
 
-        Generate a validation batch with the given noises. Forward pass the batch to the discriminator model. Find the
-        loss. Return the average output and the loss value.
+        Set the model to evaluation mode. Generate a validation batch with the given noises. Forward pass the batch to
+        the discriminator model. Find the loss. Return the average output and the loss.
 
         Args:
             d_model: the discriminator model
@@ -265,12 +278,13 @@ class GModeler(Modeler):
             out_mean: Mean(D(G(noises))), the average output of d_model
             loss_val: Loss(D(G(noises)), label), the loss of the model
         """
+        self.model.train(False)
         with torch.no_grad():
             batch = self.model(noises).detach()
         batch, labels = utils.prep_batch_and_labels(batch, label, self.device)
         with torch.no_grad():
             output = d_model(batch).detach().view(-1)
-        loss = self.loss_func(output, labels)
+            loss = self.loss_func(output, labels)
         out_mean = output.mean().item()
         loss_val = loss.detach().cpu()
         return out_mean, loss_val
@@ -278,7 +292,7 @@ class GModeler(Modeler):
     def test(self, noises):
         """Tests/Uses the model with the given args.
 
-        Generate an image batch with the given noises. Return the batch.
+        Set the model to evaluation mode. Generate an image batch with the given noises. Return the batch.
 
         Args:
             noises: the noises used to generate the batch.
@@ -286,6 +300,7 @@ class GModeler(Modeler):
         Returns:
             output: G(noises): the output of the model
         """
+        self.model.train(False)
         with torch.no_grad():
             output = self.model(noises).detach()
         return output

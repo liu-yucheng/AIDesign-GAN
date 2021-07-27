@@ -46,7 +46,7 @@ The first released version is `v0.1.0`.
 
 **In short**, if the latest version is `v{x}.{y}.{z}`, the versioning of the updates is the following. For the precise definitions, please see below.
 
-1. **API** updates: `v0.{y + n}.{x + n} if x == 0` (where `n` is an integer and `n >= 1`) or `v{x + 1}.0.0 if x >= 1`.
+1. **API** updates: `v0.{y + m}.{x + n} if x == 0` (where `m` and `n` are integers and `m, n >= 1`) or `v{x + 1}.0.0 if x >= 1`.
 2. **Function** updates: `v{x}.{y + 1}.0`.
 3. **Bug fix** updates: `v{x}.{y}.{z + 1}`.
 

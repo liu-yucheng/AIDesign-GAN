@@ -421,7 +421,8 @@ class TrainingResults(Results):
         epoch_count, epoch = c.loops.epoch_count, c.loops.epoch
         epoch_list = list(range(1, epoch_count * iter + epoch + 2))
         iter_x_list = [epoch_count * x + 0.5 for x in range(iter + 1)]
-        rb_x_list = [epoch_count * x[0] + x[1] + 1.5 for x in c.rbs.d]
+        rb_x_list = [epoch_count * x[0] + x[1] + 1 + 0.5 for x in c.rbs.d]
+        collapse_x_list = [epoch_count * x[0] + x[1] + 1 for x in c.collapses.epochs]
         location = utils.find_in_path("discriminator-losses.jpg", self.path)
         pyplot.figure(figsize=(10, 5))
         pyplot.title("Discriminator Losses")
@@ -431,15 +432,21 @@ class TrainingResults(Results):
             pyplot.axvline(x, alpha=0.6, color="gray")
         for x in rb_x_list:
             pyplot.axvline(x, alpha=0.6, color="purple")
+        for x in collapse_x_list:
+            pyplot.axvline(x, alpha=0.6, color="orange")
         pyplot.xlabel("Epoch No.")
         pyplot.xticks(epoch_list)
         pyplot.ylabel("Loss")
+        box = pyplot.gca().get_position()
+        pyplot.gca().set_position([box.x0 * 0.825, box.y0, box.width * 0.9, box.height])
         handles, labels = pyplot.gca().get_legend_handles_labels()
         handles.append(lines.Line2D([0], [0], alpha=0.6, color="gray"))
         labels.append("Iteration")
         handles.append(lines.Line2D([0], [0], alpha=0.6, color="purple"))
         labels.append("Rollback")
-        pyplot.legend(handles=handles, labels=labels, loc="upper right")
+        handles.append(lines.Line2D([0], [0], alpha=0.6, color="orange"))
+        labels.append("Training Collapse")
+        pyplot.legend(handles=handles, labels=labels, bbox_to_anchor=(1.125, 0.5), loc="center", fontsize="small")
         pyplot.savefig(location, dpi=160)
         pyplot.close()
         self.logln("Saved D losses plot")
@@ -452,7 +459,8 @@ class TrainingResults(Results):
         epoch_count, epoch = c.loops.epoch_count, c.loops.epoch
         epoch_list = list(range(1, epoch_count * iter + epoch + 2))
         iter_x_list = [epoch_count * x + 0.5 for x in range(iter + 1)]
-        rb_x_list = [epoch_count * x[0] + x[1] + 1.5 for x in c.rbs.g]
+        rb_x_list = [epoch_count * x[0] + x[1] + 1 + 0.5 for x in c.rbs.g]
+        collapse_x_list = [epoch_count * x[0] + x[1] + 1 for x in c.collapses.epochs]
         location = utils.find_in_path("generator-losses.jpg", self.path)
         pyplot.figure(figsize=(10, 5))
         pyplot.title("Generator Losses")
@@ -462,15 +470,21 @@ class TrainingResults(Results):
             pyplot.axvline(x, alpha=0.6, color="gray")
         for x in rb_x_list:
             pyplot.axvline(x, alpha=0.6, color="purple")
+        for x in collapse_x_list:
+            pyplot.axvline(x, alpha=0.6, color="orange")
         pyplot.xlabel("Epoch No.")
         pyplot.xticks(epoch_list)
         pyplot.ylabel("Loss")
+        box = pyplot.gca().get_position()
+        pyplot.gca().set_position([box.x0 * 0.825, box.y0, box.width * 0.9, box.height])
         handles, labels = pyplot.gca().get_legend_handles_labels()
         handles.append(lines.Line2D([0], [0], alpha=0.6, color="gray"))
         labels.append("Iteration")
         handles.append(lines.Line2D([0], [0], alpha=0.6, color="purple"))
         labels.append("Rollback")
-        pyplot.legend(handles=handles, labels=labels, loc="upper right")
+        handles.append(lines.Line2D([0], [0], alpha=0.6, color="orange"))
+        labels.append("Training Collapse")
+        pyplot.legend(handles=handles, labels=labels, bbox_to_anchor=(1.125, 0.5), loc="center", fontsize="small")
         pyplot.savefig(location, dpi=160)
         pyplot.close()
         self.logln("Saved G losses plot")

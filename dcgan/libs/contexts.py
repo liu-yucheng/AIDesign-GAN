@@ -122,6 +122,14 @@ class TrainingContext(Context):
         rbs: the rollbacks attr dict \n
             `rbs.d`: the discriminator rollback list \n
             `rbs.g`: the generator rollback list \n
+        collapses: the training collapses attr dict \n
+            `collapses.epochs`: the collapse epoch list \n
+            `collapses.batch_count`: the collapses batch count in an epoch \n
+            `collapses.max_loss`: the collapses maximum loss for each training batch (in a training batch, if any of
+                the losses is >= collapses.max_loss, the training batch has collapsed) \n
+            `collapses.factor`: the collapse factor (in an epoch, if `collapses.batch_count` is >=
+                `int(collapses.factor * data.train.batch_count)`, the epoch has collapsed) \n
+            `collapses.max_batch_count`: `int(collapses.factor * data.train.batch_count)` \n
         noises: the fixed generator inputs attr dict \n
             `noises.valid_set`: the validation batches of generator inputs \n
             `noises.batch_64`: a batch of 64 generator inputs \n
@@ -140,6 +148,7 @@ class TrainingContext(Context):
         self.bests = None
         self.rbs = None
         self.noises = None
+        self.collapses = None
 
     def setup_data(self, path, config):
         """Sets up self.data and its attributes with the given args.
@@ -273,8 +282,14 @@ class TrainingContext(Context):
     def setup_stats(self):
         """Sets up the statistics.
 
-        The statistics consists of self.latest, self.losses, self.bests, and their attributes.
+        The statistics consists of self.latest, self.losses, self.bests, self.rbs, self.collapses, and their
+        attributes.
+
+        Raises:
+            ValueError: if self.data is None
         """
+        if self.data is None:
+            raise ValueError("self.data cannot be None")
         self.latest = utils.AttrDict()
         self.latest.dx = None
         self.latest.dgz = None
@@ -292,6 +307,12 @@ class TrainingContext(Context):
         self.rbs = utils.AttrDict()
         self.rbs.d = []
         self.rbs.g = []
+        self.collapses = utils.AttrDict()
+        self.collapses.epochs = []
+        self.collapses.batch_count = 0
+        self.collapses.max_loss = 100
+        self.collapses.factor = 0.67
+        self.collapses.max_batch_count = int(self.collapses.factor * self.data.train.batch_count)
 
     def setup_noises(self):
         """Sets up the noises.

@@ -6,8 +6,8 @@
 import datetime
 import sys
 
-from dcgan.libs import configs
-from dcgan.libs import coords
+from aidesign_dcgan.libs import configs
+from aidesign_dcgan.libs import coords
 
 
 def main():

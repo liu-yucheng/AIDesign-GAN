@@ -10,28 +10,32 @@ command.
 
 import setuptools
 
-setuptools.setup(
-    name="aidesign-dcgan",
-    version="0.10.1",
-    description="AI Design DCGAN Application",
-    author="AI Design Team",
-    packages=setuptools.find_packages(),
-    entry_points={
-        "console_scripts": [
-            "dcgan-train = dcgan.exes.train:main",
-            "dcgan-generate = dcgan.exes.generate:main"
-        ]
-    }
-    # test_suite="tests"
-)
-
 
 def _setup_exes_configs():
-    from dcgan.libs import configs
+    from aidesign_dcgan.libs import configs
     train_config = configs.TrainConfig()
     train_config.load()
     generate_config = configs.GenerateConfig()
     generate_config.load()
 
 
-_setup_exes_configs()
+def main():
+    setuptools.setup(
+        name="aidesign-dcgan",
+        version="0.11.0",
+        description="AI Design DCGAN Application",
+        author="AI Design Team",
+        packages=setuptools.find_packages(),
+        entry_points={
+            "console_scripts": [
+                "dcgan-train = aidesign_dcgan.exes.train:main",
+                "dcgan-generate = aidesign_dcgan.exes.generate:main"
+            ]
+        }
+        # test_suite="tests"
+    )
+    _setup_exes_configs()
+
+
+if __name__ == "__main__":
+    main()

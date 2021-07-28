@@ -11,8 +11,8 @@ import numpy
 import random
 import torch
 
-from dcgan.libs import modelers
-from dcgan.libs import utils
+from aidesign_dcgan.libs import modelers
+from aidesign_dcgan.libs import utils
 
 
 class Context:

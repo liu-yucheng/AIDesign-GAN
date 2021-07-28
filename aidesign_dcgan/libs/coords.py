@@ -6,11 +6,11 @@
 from torchvision import utils as vutils
 import math
 
-from dcgan.libs import algos
-from dcgan.libs import configs
-from dcgan.libs import contexts
-from dcgan.libs import results
-from dcgan.libs import utils
+from aidesign_dcgan.libs import algos
+from aidesign_dcgan.libs import configs
+from aidesign_dcgan.libs import contexts
+from aidesign_dcgan.libs import results
+from aidesign_dcgan.libs import utils
 
 
 class Coord:

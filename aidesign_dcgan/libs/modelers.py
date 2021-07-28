@@ -5,8 +5,8 @@
 
 import torch
 
-from dcgan.libs import structs
-from dcgan.libs import utils
+from aidesign_dcgan.libs import structs
+from aidesign_dcgan.libs import utils
 
 
 class Modeler:

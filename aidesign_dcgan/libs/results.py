@@ -8,7 +8,7 @@ from matplotlib import pyplot
 from torchvision import utils as vutils
 import numpy
 
-from dcgan.libs import utils
+from aidesign_dcgan.libs import utils
 
 
 class Results:

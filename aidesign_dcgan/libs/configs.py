@@ -3,8 +3,8 @@
 # Initially added by: liu-yucheng
 # Last updated by: liu-yucheng
 
-from dcgan.libs import defaults
-from dcgan.libs import utils
+from aidesign_dcgan.libs import defaults
+from aidesign_dcgan.libs import utils
 
 
 class Config:

@@ -28,11 +28,11 @@ AI Design DCGAN (Deep Convolutional Generative Adversarial Network) application.
 
 ### `dcgan-train`
 
-`dcgan-train` trains a model with the given data. You can specify the model and data paths in **`dcgan/exes/train_config.json`**.
+`dcgan-train` trains a model with the given data. You can specify the model and data paths in **`aidesign_dcgan/exes/train_config.json`**.
 
 ### `dcgan-generate`
 
-`dcgan-generate` generates a set of images with a trained model. You can specify the model path in **`dcgan/exes/generate_config.json`**.
+`dcgan-generate` generates a set of images with a trained model. You can specify the model path in **`aidesign_dcgan/exes/generate_config.json`**.
 
 # Versioning
 
@@ -49,12 +49,14 @@ The first released version is `v0.1.0`.
 1. **API** updates: `v0.{y + m}.{x + n} if x == 0` (where `m` and `n` are integers and `m, n >= 1`) or `v{x + 1}.0.0 if x >= 1`.
 2. **Function** updates: `v{x}.{y + 1}.0`.
 3. **Bug fix** updates: `v{x}.{y}.{z + 1}`.
+4. **Other** updates not listed in (1), (2), (3): `v{x}.{y}.{z + 1}`, which is the same as in (3).
 
 **In precise definitions**, the versioning of the updates is the following.
 
-1. The **APIs** of this app are the commands and their configs (typically located in `dcgan/exes`). If the latest released version is `v0.{y}.{z}`, the API can change in any future versions before `v1.0.0`. If the latest released version is `v{x}.{y}.{z}` (where `x >= 1`) and the next version contains **any non-bug-fixing changes to the APIs**, the next version will be **`v{x + 1}.0.0`**.
-2. The **functions** of this app are the libraries (typically located in `dcgan/libs`). If the latest released version is `v{x}.{y}.{z}` and the next version contains **any non-bug-fixing changes to the functions** and no changes described in (1), the next version will be **`v{x}.{y + 1}.0`**.
+1. The **APIs** of this app are the commands and their configs (typically located in `aidesign_dcgan/exes`). If the latest released version is `v0.{y}.{z}`, the API can change in any future versions before `v1.0.0`. If the latest released version is `v{x}.{y}.{z}` (where `x >= 1`) and the next version contains **any non-bug-fixing changes to the APIs**, the next version will be **`v{x + 1}.0.0`**.
+2. The **functions** of this app are the libraries (typically located in `aidesign_dcgan/libs`). If the latest released version is `v{x}.{y}.{z}` and the next version contains **any non-bug-fixing changes to the functions** and no changes described in (1), the next version will be **`v{x}.{y + 1}.0`**.
 3. The **bugs** in this app have two definitions. First, the actual program behaviors that are different from the described or designed program behaviors. Second, the actual program behaviors that lead to errors and crashes when the app is used following the usage instructions. The bugs need to be fixed in the future versions. If the latest released version is `v{x}.{y}.{z}` and the next version **fixes any bugs** and contains no changes described in (1) and (2), the next version will be **`v{x}.{y}.{z + 1}`**.
+4. **Other** updates are updates that contain changes other than those described in (1), (2), and (3). If the latest released version is `v{x}.{y}.{z}` and the next version is an "other update," the next version will be **`v{x}.{y}.{z + 1}`**, which the same as in (3).
 
 # References
 

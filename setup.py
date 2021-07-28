@@ -22,7 +22,7 @@ def _setup_exes_configs():
 def main():
     setuptools.setup(
         name="aidesign-dcgan",
-        version="0.11.1",
+        version="0.11.2",
         description="AI Design DCGAN Application",
         author="AI Design Team",
         packages=setuptools.find_packages(),

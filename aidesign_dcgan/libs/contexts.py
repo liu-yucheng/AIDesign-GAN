@@ -221,8 +221,8 @@ class TrainingContext(Context):
         d_config = config["discriminator"]
         g_config = config["generator"]
         loss_func = nn.BCELoss()
-        d = modelers.DModeler(d_config, self.hw.device, self.hw.gpu_count, loss_func)
-        g = modelers.GModeler(g_config, self.hw.device, self.hw.gpu_count, loss_func)
+        d = modelers.DModeler(config.model_path, d_config, self.hw.device, self.hw.gpu_count, loss_func)
+        g = modelers.GModeler(config.model_path, g_config, self.hw.device, self.hw.gpu_count, loss_func)
         self.mods = utils.AttrDict()
         self.mods.d = d
         self.mods.g = g
@@ -371,9 +371,10 @@ class GenerationContext(Context):
         """
         if self.hw is None:
             raise ValueError("self.hw cannot be None")
+        model_path = modelers_config.model_path
         config = modelers_config["generator"]
         loss_func = nn.BCELoss()
-        self.g = modelers.GModeler(config, self.hw.device, self.hw.gpu_count, loss_func, training=False)
+        self.g = modelers.GModeler(model_path, config, self.hw.device, self.hw.gpu_count, loss_func, train=False)
         self.g.load()
         config = coords_config["generation"]
         self.images = utils.AttrDict()

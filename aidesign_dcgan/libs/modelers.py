@@ -13,6 +13,7 @@ class Modeler:
     """Super class of the modeler classes.
 
     Attributes:
+        model_path: the model path
         config: the config
         device: the device to use
         gpu_count: the number of GPUs to use
@@ -22,7 +23,7 @@ class Modeler:
         optim: the optimizer
     """
 
-    def __init__(self, config, device, gpu_count, loss_func):
+    def __init__(self, model_path, config, device, gpu_count, loss_func):
         """Inits self with the given args.
 
         Args:
@@ -31,6 +32,7 @@ class Modeler:
             gpu_count: the number of GPUs to use
             loss_func: the loss function
         """
+        self.model_path = model_path
         self.config = config
         self.device = device
         self.gpu_count = gpu_count
@@ -41,8 +43,8 @@ class Modeler:
 
     def load(self):
         """Loads the states of the model."""
-        state_location = self.config["state_location"]
-        optim_location = self.config["optim_location"]
+        state_location = utils.find_in_path(self.config["state_name"], self.model_path)
+        optim_location = utils.find_in_path(self.config["optim_name"], self.model_path)
         try:
             utils.load_model(state_location, self.model)
         except FileNotFoundError:
@@ -55,9 +57,11 @@ class Modeler:
 
     def save(self):
         """Saves the states of the model."""
-        utils.save_model(self.model, self.config["state_location"])
+        state_location = utils.find_in_path(self.config["state_name"], self.model_path)
+        optim_location = utils.find_in_path(self.config["optim_name"], self.model_path)
+        utils.save_model(self.model, state_location)
         if self.optim is not None:
-            utils.save_optim(self.optim, self.config["optim_location"])
+            utils.save_optim(self.optim, optim_location)
 
     def rollback(self, count):
         """Rollbacks the model.
@@ -83,7 +87,7 @@ class Modeler:
 class DModeler(Modeler):
     """Discriminator modeler."""
 
-    def __init__(self, config, device, gpu_count, loss_func, training=True):
+    def __init__(self, model_path, config, device, gpu_count, loss_func, train=True):
         """Inits self with the given args.
 
         Args:
@@ -91,12 +95,12 @@ class DModeler(Modeler):
             device: the device to use
             gpu_count: the number of GPUs to use
             loss_func: the loss function
-            training: whether to setup the optimizer
+            train: training mode, whether to setup the optimizer
         """
-        super().__init__(config, device, gpu_count, loss_func)
+        super().__init__(model_path, config, device, gpu_count, loss_func)
         # Init self.model
         struct = structs.DStruct()
-        struct.location = self.config["struct_location"]
+        struct.location = utils.find_in_path(self.config["struct_name"], self.model_path)
         struct.load()
         exec(struct.definition)
         self.model = self.model.to(self.device)
@@ -111,7 +115,7 @@ class DModeler(Modeler):
             size += size_of_param
         self.size = size
         # Init self.optim
-        if training:
+        if train:
             self.optim = utils.setup_adam(self.model, self.config["adam_optimizer"])
 
     def train(self, batch, label):
@@ -187,7 +191,7 @@ class DModeler(Modeler):
 class GModeler(Modeler):
     """Generator modeler."""
 
-    def __init__(self, config, device, gpu_count, loss_func, training=True):
+    def __init__(self, model_path, config, device, gpu_count, loss_func, train=True):
         """Inits self with the given args.
 
         Args:
@@ -195,12 +199,12 @@ class GModeler(Modeler):
             device: the device to use
             gpu_count: the number of GPUs to use
             loss_func: the loss function
-            training: whether to setup the optimizer
+            train: training mode, whether to setup the optimizer
         """
-        super().__init__(config, device, gpu_count, loss_func)
+        super().__init__(model_path, config, device, gpu_count, loss_func)
         # Init self.model
         struct = structs.GStruct()
-        struct.location = self.config["struct_location"]
+        struct.location = utils.find_in_path(self.config["struct_name"], self.model_path)
         struct.load()
         exec(struct.definition)
         self.model = self.model.to(self.device)
@@ -215,7 +219,7 @@ class GModeler(Modeler):
             size += size_of_param
         self.size = size
         # Init self.optim
-        if training:
+        if train:
             self.optim = utils.setup_adam(self.model, self.config["adam_optimizer"])
 
     def generate_noises(self, count):

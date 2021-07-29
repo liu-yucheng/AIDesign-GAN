@@ -92,8 +92,9 @@ class CoordsConfig(Config):
             model_path: the model path
         """
         super().__init__()
-        if model_path is None:
-            model_path = defaults.model_path
+        self.model_path = model_path
+        if self.model_path is None:
+            self.model_path = defaults.model_path
         self.location = utils.find_in_path(defaults.coords_config_name, model_path)
         self.items = {
             "training": {
@@ -138,16 +139,17 @@ class ModelersConfig(Config):
             model_path: the model path
         """
         super().__init__()
-        if model_path is None:
-            model_path = defaults.model_path
+        self.model_path = model_path
+        if self.model_path is None:
+            self.model_path = defaults.model_path
         self.location = utils.find_in_path(defaults.modelers_config_name, model_path)
         self.items = {
             "discriminator": {
                 "feature_map_size": 64,
                 "image_channel_count": 3,
-                "struct_location": utils.find_in_path(defaults.discriminator_struct_name, model_path),
-                "state_location": utils.find_in_path(defaults.discriminator_state_name, model_path),
-                "optim_location": utils.find_in_path(defaults.discriminator_optim_name, model_path),
+                "struct_name": defaults.discriminator_struct_name,
+                "state_name": defaults.discriminator_state_name,
+                "optim_name": defaults.discriminator_optim_name,
                 "adam_optimizer": {
                     "learning_rate": 0.0002,
                     "beta1": 0.5,
@@ -158,9 +160,9 @@ class ModelersConfig(Config):
                 "feature_map_size": 64,
                 "image_channel_count": 3,
                 "input_size": 100,
-                "struct_location": utils.find_in_path(defaults.generator_struct_name, model_path),
-                "state_location": utils.find_in_path(defaults.generator_state_name, model_path),
-                "optim_location": utils.find_in_path(defaults.generator_optim_name, model_path),
+                "struct_name": defaults.generator_struct_name,
+                "state_name": defaults.generator_state_name,
+                "optim_name": defaults.generator_optim_name,
                 "adam_optimizer": {
                     "learning_rate": 0.0002,
                     "beta1": 0.5,

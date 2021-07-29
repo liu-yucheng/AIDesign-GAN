@@ -170,7 +170,7 @@ class TrainingContext(Context):
         data_set = datasets.ImageFolder(
             root=path,
             transform=transforms.Compose([
-                transforms.Resize(image_resolution),
+                transforms.Resize(image_resolution, interpolation=transforms.InterpolationMode.BICUBIC),
                 transforms.CenterCrop(image_resolution),
                 transforms.ToTensor(),
                 transforms.Normalize(norm_list, norm_list)

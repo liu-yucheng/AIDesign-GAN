@@ -256,6 +256,8 @@ class GModeler(Modeler):
         if self.optim is None:
             raise ValueError("self.optim cannot be None")
         self.model.train(True)
+        d_model_training = d_model.training
+        d_model.train(True)
         self.model.zero_grad()
         batch = self.model(noises)
         batch, labels = utils.prep_batch_and_labels(batch, label, self.device)
@@ -265,6 +267,8 @@ class GModeler(Modeler):
         self.optim.step()
         out_mean = output.mean().item()
         loss_val = loss.detach().cpu()
+        if not d_model_training:
+            d_model.train(False)
         return out_mean, loss_val
 
     def valid(self, d_model, noises, label):
@@ -283,6 +287,8 @@ class GModeler(Modeler):
             loss_val: Loss(D(G(noises)), label), the loss of the model
         """
         self.model.train(False)
+        d_model_training = d_model.training
+        d_model.train(False)
         with torch.no_grad():
             batch = self.model(noises).detach()
         batch, labels = utils.prep_batch_and_labels(batch, label, self.device)
@@ -291,6 +297,8 @@ class GModeler(Modeler):
             loss = self.loss_func(output, labels)
         out_mean = output.mean().item()
         loss_val = loss.detach().cpu()
+        if d_model_training:
+            d_model.train(True)
         return out_mean, loss_val
 
     def test(self, noises):

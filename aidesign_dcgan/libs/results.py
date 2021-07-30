@@ -396,6 +396,23 @@ class TrainingResults(Results):
         pyplot.close()
         self.logln("Saved validation images")
 
+    def save_images_before_training(self):
+        """Saves the generated images grid before any training."""
+        self.check_context()
+        c = self.context
+        batch = c.mods.g.test(c.noises.batch_64)
+        grid = vutils.make_grid(batch, padding=2, normalize=True).cpu()
+        grid = numpy.transpose(grid, (1, 2, 0))
+        file_name = f"before-training.jpg"
+        location = utils.find_in_path(file_name, self.generated_images_path)
+        pyplot.figure(figsize=(8, 8))
+        pyplot.axis("off")
+        pyplot.title(f"Generated Images Before Any Training")
+        pyplot.imshow(grid)
+        pyplot.savefig(location, dpi=120)
+        pyplot.close()
+        self.logln("Saved images before training")
+
     def save_generated_images(self):
         """Saves the generated images grid."""
         self.check_context()

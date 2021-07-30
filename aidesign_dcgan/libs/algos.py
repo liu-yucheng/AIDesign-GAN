@@ -404,6 +404,7 @@ class BatchLevelAlgo(Algo):
         r.logln("-")
         r.save_training_images()
         r.save_validation_images()
+        r.save_images_before_training()
         c.loops.iter = 0
         while c.loops.iter < c.loops.iter_count:
             r.log_iter("Started")

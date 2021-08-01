@@ -371,12 +371,12 @@ class TrainingResults(Results):
         grid = vutils.make_grid(batch, padding=2, normalize=True).cpu()
         grid = numpy.transpose(grid, (1, 2, 0))
         location = utils.find_in_path("training-images.jpg", self.path)
-        pyplot.figure(figsize=(8, 8))
+        figure = pyplot.figure(figsize=(8, 8))
         pyplot.axis("off")
         pyplot.title("Training Images")
         pyplot.imshow(grid)
         pyplot.savefig(location, dpi=160)
-        pyplot.close()
+        pyplot.close(figure)
         self.logln("Saved training images")
 
     def save_validation_images(self):
@@ -388,12 +388,12 @@ class TrainingResults(Results):
         grid = vutils.make_grid(batch, padding=2, normalize=True).cpu()
         grid = numpy.transpose(grid, (1, 2, 0))
         location = utils.find_in_path("validation-images.jpg", self.path)
-        pyplot.figure(figsize=(8, 8))
+        figure = pyplot.figure(figsize=(8, 8))
         pyplot.axis("off")
         pyplot.title("Validation Images")
         pyplot.imshow(grid)
         pyplot.savefig(location, dpi=160)
-        pyplot.close()
+        pyplot.close(figure)
         self.logln("Saved validation images")
 
     def save_images_before_training(self):
@@ -405,12 +405,12 @@ class TrainingResults(Results):
         grid = numpy.transpose(grid, (1, 2, 0))
         file_name = f"before-training.jpg"
         location = utils.find_in_path(file_name, self.generated_images_path)
-        pyplot.figure(figsize=(8, 8))
+        figure = pyplot.figure(figsize=(8, 8))
         pyplot.axis("off")
         pyplot.title(f"Generated Images Before Any Training")
         pyplot.imshow(grid)
         pyplot.savefig(location, dpi=120)
-        pyplot.close()
+        pyplot.close(figure)
         self.logln("Saved images before training")
 
     def save_generated_images(self):
@@ -422,12 +422,12 @@ class TrainingResults(Results):
         grid = numpy.transpose(grid, (1, 2, 0))
         file_name = f"iter-{c.loops.iter + 1}_epoch-{c.loops.epoch + 1}.jpg"
         location = utils.find_in_path(file_name, self.generated_images_path)
-        pyplot.figure(figsize=(8, 8))
+        figure = pyplot.figure(figsize=(8, 8))
         pyplot.axis("off")
         pyplot.title(f"Iter {c.loops.iter + 1} Epoch {c.loops.epoch + 1} Generated Images")
         pyplot.imshow(grid)
         pyplot.savefig(location, dpi=120)
-        pyplot.close()
+        pyplot.close(figure)
         self.logln("Saved generated images")
 
     def save_d_losses(self):
@@ -441,7 +441,7 @@ class TrainingResults(Results):
         rb_x_list = [epoch_count * x[0] + x[1] + 1 + 0.5 for x in c.rbs.d]
         collapse_x_list = [epoch_count * x[0] + x[1] + 1 for x in c.collapses.epochs]
         location = utils.find_in_path("discriminator-losses.jpg", self.path)
-        pyplot.figure(figsize=(10, 5))
+        figure = pyplot.figure(figsize=(10, 5))
         pyplot.title("Discriminator Losses")
         pyplot.plot(epoch_list, c.losses.train.d, alpha=0.8, color="b", label="Training")
         pyplot.plot(epoch_list, c.losses.valid.d, alpha=0.8, color="r", label="Validation")
@@ -465,7 +465,7 @@ class TrainingResults(Results):
         labels.append("Training Collapse")
         pyplot.legend(handles=handles, labels=labels, bbox_to_anchor=(1.125, 0.5), loc="center", fontsize="small")
         pyplot.savefig(location, dpi=160)
-        pyplot.close()
+        pyplot.close(figure)
         self.logln("Saved D losses plot")
 
     def save_g_losses(self):
@@ -479,7 +479,7 @@ class TrainingResults(Results):
         rb_x_list = [epoch_count * x[0] + x[1] + 1 + 0.5 for x in c.rbs.g]
         collapse_x_list = [epoch_count * x[0] + x[1] + 1 for x in c.collapses.epochs]
         location = utils.find_in_path("generator-losses.jpg", self.path)
-        pyplot.figure(figsize=(10, 5))
+        figure = pyplot.figure(figsize=(10, 5))
         pyplot.title("Generator Losses")
         pyplot.plot(epoch_list, c.losses.train.g, alpha=0.8, color="b", label="Training")
         pyplot.plot(epoch_list, c.losses.valid.g, alpha=0.8, color="r", label="Validation")
@@ -503,7 +503,7 @@ class TrainingResults(Results):
         labels.append("Training Collapse")
         pyplot.legend(handles=handles, labels=labels, bbox_to_anchor=(1.125, 0.5), loc="center", fontsize="small")
         pyplot.savefig(location, dpi=160)
-        pyplot.close()
+        pyplot.close(figure)
         self.logln("Saved G losses plot")
 
     def save_tvg(self):
@@ -522,8 +522,8 @@ class TrainingResults(Results):
         vgrid = numpy.transpose(vgrid, (1, 2, 0))
         ggrid = numpy.transpose(ggrid, (1, 2, 0))
         location = utils.find_in_path("training-validation-generated.jpg", self.path)
-        pyplot.figure(figsize=(24, 24))
-        fig, axes = pyplot.subplots(1, 3)
+        figure = pyplot.figure(figsize=(24, 24))
+        sp_figure, axes = pyplot.subplots(1, 3)
         sp1, sp2, sp3 = axes[0], axes[1], axes[2]
         sp1.axis("off")
         sp1.set_title("Training Images")
@@ -534,9 +534,10 @@ class TrainingResults(Results):
         sp3.axis("off")
         sp3.set_title("Generated Images")
         sp3.imshow(ggrid)
-        fig.tight_layout()
+        sp_figure.tight_layout()
         pyplot.savefig(location, dpi=240)
-        pyplot.close()
+        pyplot.close(sp_figure)
+        pyplot.close(figure)
         self.logln("Saved TVG figure")
 
 

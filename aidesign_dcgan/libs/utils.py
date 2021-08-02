@@ -296,3 +296,25 @@ def init_folder(path, clean=False):
     if clean and os.path.exists(path):
         shutil.rmtree(path)
     pathlib.Path(path).mkdir(exist_ok=True)
+
+
+def logstr(logs, string=""):
+    """Logs a string on the log file objects.
+
+    Args:
+        logs: the log file objects
+        string: the string to log
+    """
+    for log in logs:
+        log.write(string)
+
+
+def logln(logs, line=""):
+    """Logs a line on the log file objects.
+
+    Args:
+        logs: the log file objects
+        line: the line to log
+    """
+    for log in logs:
+        log.write(line + "\n")

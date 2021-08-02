@@ -16,19 +16,19 @@ class Results:
 
     Attributes:
         path: the root path of the results
-        log: the log file
+        logs: the log file objects
         context: the binded context
     """
 
-    def __init__(self, path, log):
+    def __init__(self, path, logs):
         """Inits self with the given args.
 
         Args:
             path: the root path of the results
-            log: the log file
+            logs: the log file objects
         """
         self.path = path
-        self.log = log
+        self.logs = logs
         self.context = None
 
     def init_folders(self):
@@ -62,7 +62,7 @@ class Results:
         Args:
             string: the string to log
         """
-        self.log.write(string)
+        utils.logstr(self.logs, string)
 
     def logln(self, line=""):
         """Logs a line.
@@ -70,7 +70,7 @@ class Results:
         Args:
             line: the line to log
         """
-        self.log.write(line + "\n")
+        utils.logln(self.logs, line)
 
     def log_configs(self, coords_config, modelers_config):
         """Logs the coords and modelers config info.

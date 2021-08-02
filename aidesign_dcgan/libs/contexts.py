@@ -185,8 +185,10 @@ class TrainingContext(Context):
         size_to_use = int(prop_to_use * size)
         train_start, train_end = 0, int(subset_ratio[0] * size_to_use)
         valid_start, valid_end = train_end, size_to_use
-        train_indices = list(range(train_start, train_end))
-        valid_indices = list(range(valid_start, valid_end))
+        indices = list(range(size_to_use))
+        random.shuffle(indices)
+        train_indices = indices[train_start: train_end]
+        valid_indices = indices[valid_start: valid_end]
         train_set = data.Subset(data_set, train_indices)
         valid_set = data.Subset(data_set, valid_indices)
         train_loader = data.DataLoader(train_set, batch_size=batch_size, shuffle=True, num_workers=worker_count)

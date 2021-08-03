@@ -61,15 +61,14 @@ class DStruct(Struct):
             model_path = defaults.model_path
         self.location = utils.find_in_path(defaults.discriminator_struct_name, model_path)
         # fmt: off
-        self.definition = r"""
-# D (Discriminator)
+        self.definition = r"""# D (Discriminator)
 # CNN (Convolutional Neural Network)
 
 from torch import nn
 
 self = self
-fm = self.config["feature_map_size"]
 ic = self.config["image_channel_count"]
+fm = self.config["feature_map_size"]
 
 self.model = nn.Sequential(
     # (Layer) 0. Input layer
@@ -114,16 +113,16 @@ class GStruct(Struct):
             model_path = defaults.model_path
         self.location = utils.find_in_path(defaults.generator_struct_name, model_path)
         # fmt: off
-        self.definition = r"""
-# G (Generator)
-# CNN (Convolutional Neural Network) with Transposed Layers
+        self.definition = r"""# G (Generator)
+# CNN (Convolutional Neural Network)
+# Transposed Convolution
 
 from torch import nn
 
 self = self
-fm = self.config["feature_map_size"]
-ic = self.config["image_channel_count"]
 z = self.config["input_size"]
+ic = self.config["image_channel_count"]
+fm = self.config["feature_map_size"]
 
 self.model = nn.Sequential(
     # (Layer) 0. Input layer

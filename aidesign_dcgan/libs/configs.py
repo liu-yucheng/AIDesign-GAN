@@ -145,8 +145,9 @@ class ModelersConfig(Config):
         self.location = utils.find_in_path(defaults.modelers_config_name, model_path)
         self.items = {
             "discriminator": {
-                "feature_map_size": 64,
+                "image_resolution": 64,
                 "image_channel_count": 3,
+                "feature_map_size": 64,
                 "struct_name": defaults.discriminator_struct_name,
                 "state_name": defaults.discriminator_state_name,
                 "optim_name": defaults.discriminator_optim_name,
@@ -157,9 +158,10 @@ class ModelersConfig(Config):
                 }
             },
             "generator": {
-                "feature_map_size": 64,
+                "input_size": 128,
+                "image_resolution": 64,
                 "image_channel_count": 3,
-                "input_size": 100,
+                "feature_map_size": 64,
                 "struct_name": defaults.generator_struct_name,
                 "state_name": defaults.generator_state_name,
                 "optim_name": defaults.generator_optim_name,

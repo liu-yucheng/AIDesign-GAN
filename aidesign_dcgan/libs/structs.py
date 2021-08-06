@@ -71,27 +71,27 @@ ic = self.config["image_channel_count"]
 fm = self.config["feature_map_size"]
 
 self.model = nn.Sequential(
-    # (Layer) 0. Input layer
-    #   input: x (the input image 3-dim matrix)
-    #   in_channels=ic, out_channels=fm, kernel_size=4
-    #   input state sizes (width x length, height): 64x64, ic
+    # Layer group 1. input group
+    #   input: x (the input image)
+    #   input volume: 64*64, ic (width*length, height)
+    #   params: in_channels=ic, out_channels=fm, kernel_size=4, ...
     nn.Conv2d(ic, fm, 4, stride=2, padding=1, bias=False),
     nn.LeakyReLU(0.2, inplace=True),
-    # 1. input state sizes: 32x32, fm
+    # 2. input volume: 32*32, fm
     nn.Conv2d(fm, 2 * fm, 4, stride=2, padding=1, bias=False),
     nn.BatchNorm2d(2 * fm),
     nn.LeakyReLU(0.2, inplace=True),
-    # 2. input state sizes: 16x16, 2*fm
+    # 3. input volume: 16*16, 2*fm
     nn.Conv2d(2 * fm, 4 * fm, 4, stride=2, padding=1, bias=False),
     nn.BatchNorm2d(4 * fm),
     nn.LeakyReLU(0.2, inplace=True),
-    # 3. input state sizes: 8x8, 4*fm
+    # 4. input volume: 8*8, 4*fm
     nn.Conv2d(4 * fm, 8 * fm, 4, stride=2, padding=1, bias=False),
     nn.BatchNorm2d(8 * fm),
     nn.LeakyReLU(0.2, inplace=True),
-    # 4. Output layer
-    #   input state sizes: 4x4, 8*fm
-    #   output: D(x), (1 value, the predicted real/fake label)
+    # 5. output group
+    #   input volume: 4*4, 8*fm
+    #   output: D(x) (the predicted label value)
     nn.Conv2d(8 * fm, 1, 4, stride=1, padding=0, bias=False),
     nn.Sigmoid()
 )
@@ -115,7 +115,7 @@ class GStruct(Struct):
         # fmt: off
         self.definition = r"""# G (Generator)
 # CNN (Convolutional Neural Network)
-# Transposed Convolution
+# Deconvolution
 
 from torch import nn
 
@@ -125,28 +125,28 @@ ic = self.config["image_channel_count"]
 fm = self.config["feature_map_size"]
 
 self.model = nn.Sequential(
-    # (Layer) 0. Input layer
+    # (Layer group) 1. input group
     #   input: z (the input noise vector)
-    #   in_channels=z, out_channels=8 * fm, kernel_size=4
-    #   input state sizes (width x length, height): 1x1, z
+    #   input volume: 1*1, z (width*length, height)
+    #   params: in_channels=z, out_channels=8*fm, kernel_size=4, ...
     nn.ConvTranspose2d(z, 8 * fm, 4, stride=1, padding=0, bias=False),
     nn.BatchNorm2d(8 * fm),
     nn.ReLU(True),
-    # 1. input state sizes: 4x4, 8*fm
+    # 2. input volume: 4*4, 8*fm
     nn.ConvTranspose2d(8 * fm, 4 * fm, 4, stride=2, padding=1, bias=False),
     nn.BatchNorm2d(4 * fm),
     nn.ReLU(True),
-    # 2. input state sizes: 8x8, 4*fm
+    # 3. input volume: 8*8, 4*fm
     nn.ConvTranspose2d(4 * fm, 2 * fm, 4, stride=2, padding=1, bias=False),
     nn.BatchNorm2d(2 * fm),
     nn.ReLU(True),
-    # 3. input state sizes: 16x16, 2*fm
+    # 4. input volume: 16*16, 2*fm
     nn.ConvTranspose2d(2 * fm, fm, 4, stride=2, padding=1, bias=False),
     nn.BatchNorm2d(fm),
     nn.ReLU(True),
-    # 4. Output layer
-    #   input state sizes: 32x32, fm
-    #   output: G(z), (the output image 3-dim matrix)
+    # 5. output group
+    #   input volume: 32*32, fm
+    #   output: G(z) (the output image)
     nn.ConvTranspose2d(fm, ic, 4, stride=2, padding=1, bias=False),
     nn.Tanh()
 )

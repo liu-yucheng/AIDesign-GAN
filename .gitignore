@@ -1,6 +1,6 @@
 # Other ignored files
-aidesign_dcgan/exes/train_config.json
-aidesign_dcgan/exes/generate_config.json
+.aidesign_gan_app_data/
+
 
 # Byte-compiled / optimized / DLL files
 **/__pycache__/

@@ -3,8 +3,8 @@
 # Initially added by: liu-yucheng
 # Last updated by: liu-yucheng
 
-from aidesign_dcgan.libs import defaults
-from aidesign_dcgan.libs import utils
+from aidesign_gan.libs import defaults
+from aidesign_gan.libs import utils
 
 
 class Struct:
@@ -15,15 +15,15 @@ class Struct:
         definition: the structure definition
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Inits self."""
-        self.location = None
-        self.definition = ""
+        self.location: str = None
+        self.definition: str = ""
 
-    def load(self):
+    def load(self) -> None:
         """Loads the struct definition.
 
-        If the file does not exist, the function saves the current stuct at the location.
+        If the file does not exist, the function saves the current stuct.
 
         Raises:
             ValueError: if self.location is None
@@ -33,9 +33,9 @@ class Struct:
         try:
             self.definition = utils.load_text(self.location)
         except FileNotFoundError:
-            self.save()
+            utils.save_text(self.definition, self.location)
 
-    def save(self):
+    def save(self) -> None:
         """Saves the struct definition.
 
         Raises:
@@ -43,25 +43,27 @@ class Struct:
         """
         if self.location is None:
             raise ValueError("struct.location cannot be None")
-
         utils.save_text(self.definition, self.location)
 
 
 class DStruct(Struct):
     """Discriminator structure."""
 
-    def __init__(self, model_path=None):
+    def __init__(self, model_path: str) -> None:
         """Inits self with the given args.
 
         Args:
             model_path: the model path
+
+        Raises:
+            ValueError: if model_path is None
         """
         super().__init__()
         if model_path is None:
-            model_path = defaults.model_path
-        self.location = utils.find_in_path(defaults.discriminator_struct_name, model_path)
+            raise ValueError("Argument model_path cannot be None")
+        self.location: str = utils.find_in_path(defaults.discriminator_struct_name, model_path)
         # fmt: off
-        self.definition = r"""# D (Discriminator)
+        self.definition: str = r"""# D (Discriminator)
 # CNN (Convolutional Neural Network)
 
 from torch import nn
@@ -102,18 +104,21 @@ self.model = nn.Sequential(
 class GStruct(Struct):
     """Generator structure."""
 
-    def __init__(self, model_path=None):
+    def __init__(self, model_path: str) -> None:
         """Inits self with the given args.
 
         Args:
             model_path: the model path
+
+        Raises:
+            ValueError: if argument model_path is None
         """
         super().__init__()
         if model_path is None:
-            model_path = defaults.model_path
-        self.location = utils.find_in_path(defaults.generator_struct_name, model_path)
+            raise ValueError("Argument model_path cannot be None")
+        self.location: str = utils.find_in_path(defaults.generator_struct_name, model_path)
         # fmt: off
-        self.definition = r"""# G (Generator)
+        self.definition: str = r"""# G (Generator)
 # CNN (Convolutional Neural Network)
 # Deconvolution
 

@@ -3,8 +3,8 @@
 # Initially added by: liu-yucheng
 # Last updated by: liu-yucheng
 
-from aidesign_dcgan.libs import defaults
-from aidesign_dcgan.libs import utils
+from aidesign_gan.libs import defaults
+from aidesign_gan.libs import utils
 
 
 class Config:
@@ -15,12 +15,12 @@ class Config:
         items: the config items, the settings
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Inits self."""
-        self.location = None
-        self.items = {}
+        self.location: str = None
+        self.items: dict = {}
 
-    def __getitem__(self, sub):
+    def __getitem__(self, sub: object) -> object:
         """Finds the item corresponding to the given subscript.
 
         The function makes config[sub] a shorthand of config.items[sub].
@@ -33,10 +33,10 @@ class Config:
         """
         return self.items[sub]
 
-    def load(self):
+    def load(self) -> None:
         """Loads the config items from a JSON file.
 
-        If the file does not exist, the function saves the current config at the location.
+        If the file does not exist, the function saves the current config.
 
         Raises:
             ValueError: if self.location is None
@@ -46,9 +46,9 @@ class Config:
         try:
             utils.load_json(self.location, self.items)
         except FileNotFoundError:
-            self.save()
+            utils.save_json(self.items, self.location)
 
-    def save(self):
+    def save(self) -> None:
         """Saves the config to a JSON file.
 
         Raises:
@@ -59,44 +59,24 @@ class Config:
         utils.save_json(self.items, self.location)
 
 
-class TrainConfig(Config):
-    """Config of the train.py executable."""
-
-    def __init__(self):
-        super().__init__()
-        self.location = utils.find_in_path(defaults.train_config_name, defaults.exes_path)
-        self.items = {
-            "data_path": defaults.data_path,
-            "model_path": defaults.model_path
-        }
-
-
-class GenerateConfig(Config):
-    """Config of the generate.py executable."""
-
-    def __init__(self):
-        super().__init__()
-        self.location = utils.find_in_path(defaults.generate_config_name, defaults.exes_path)
-        self.items = {
-            "model_path": defaults.model_path
-        }
-
-
 class CoordsConfig(Config):
     """Config of the training/generation coordinators."""
 
-    def __init__(self, model_path=None):
+    def __init__(self, model_path: str) -> None:
         """Inits self with the given args.
 
         Args:
             model_path: the model path
+
+        Raises:
+            ValueError: if argument model_path is None
         """
         super().__init__()
-        self.model_path = model_path
-        if self.model_path is None:
-            self.model_path = defaults.model_path
-        self.location = utils.find_in_path(defaults.coords_config_name, model_path)
-        self.items = {
+        if model_path is None:
+            raise ValueError("Argument model_path cannot be None")
+        self.model_path: str = model_path
+        self.location: str = utils.find_in_path(defaults.coords_config_name, model_path)
+        self.items: dict = {
             "training": {
                 "mode": "new",
                 "algorithm": "batch_level_algo",
@@ -132,16 +112,19 @@ class CoordsConfig(Config):
 class ModelersConfig(Config):
     """Config of the discriminator/generator modelers."""
 
-    def __init__(self, model_path=None):
+    def __init__(self, model_path: str) -> None:
         """Inits self with the given args.
 
         Args:
             model_path: the model path
+
+        Raises:
+            ValueError: if argument model_path is None
         """
         super().__init__()
+        if model_path is None:
+            raise ValueError("Argument model_path cannot be None")
         self.model_path = model_path
-        if self.model_path is None:
-            self.model_path = defaults.model_path
         self.location = utils.find_in_path(defaults.modelers_config_name, model_path)
         self.items = {
             "discriminator": {

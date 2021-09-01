@@ -8,33 +8,40 @@ command.
 # Initially added by: liu-yucheng
 # Last updated by: liu-yucheng
 
+import pathlib
 import setuptools
 
 
-def _setup_exes_configs():
-    from aidesign_dcgan.libs import configs
-    train_config = configs.TrainConfig()
-    train_config.load()
-    generate_config = configs.GenerateConfig()
-    generate_config.load()
+def _make_default_app_data():
+    from aidesign_gan.libs import defaults
+    from aidesign_gan.libs import statuses
+    from aidesign_gan.libs import utils
+
+    utils.init_folder(defaults.app_data_path)
+    gan_train_status = statuses.GANTrainStatus()
+    gan_train_status.load()
+    gan_generate_status = statuses.GANGenerateStatus()
+    gan_generate_status.load()
+
+    print(f"Created app data at: {defaults.app_data_path}")
 
 
 def main():
     setuptools.setup(
-        name="aidesign-dcgan",
-        version="0.13.1",
-        description="AI Design DCGAN Application",
+        name="aidesign-gan",
+        version="0.14.1",
+        description="AI Design GAN Modeling Application",
         author="AI Design Team",
         packages=setuptools.find_packages(),
         entry_points={
             "console_scripts": [
-                "dcgan-train = aidesign_dcgan.exes.train:main",
-                "dcgan-generate = aidesign_dcgan.exes.generate:main"
+                "gan = aidesign_gan.exes.gan:main"
             ]
         }
         # test_suite="tests"
     )
-    _setup_exes_configs()
+    print("Commands available: gan")
+    _make_default_app_data()
 
 
 if __name__ == "__main__":

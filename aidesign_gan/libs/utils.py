@@ -15,21 +15,16 @@ import torch
 class AttrDict:
     """Attribute dictionary.
 
-    A dictionary whose items are accessed as attributes.
+    A dictionary whose items can be accessed as attributes.
     """
 
-    def __getattr__(self, name):
+    def __getattr__(self, name: str) -> object:
         return self.get_attr(name)
 
-    def __setattr__(self, name, value):
-        return self.set_attr(name, value)
+    def __setattr__(self, name: str, value: object) -> None:
+        self.set_attr(name, value)
 
-    def __repr__(self):
-        """Finds the string representation of self.
-
-        Returns:
-            result: the string representation of self.__dict__
-        """
+    def __repr__(self) -> str:
         result = self.__dict__
         if len(self.__dict__) == 0:
             result = "{ Empty AttrDict }"
@@ -92,7 +87,7 @@ def save_json(from_dict, to_file):
     file.close()
 
 
-def find_in_path(name, path):
+def find_in_path(name: str, path: str) -> str:
     """Finds the location of a file given its name and path.
 
     The path needs to be an existing path. But, the file needs not to be an existing file.
@@ -105,7 +100,7 @@ def find_in_path(name, path):
         location: the location of the config file
     """
     path = str(pathlib.Path(path).resolve())
-    location = str(pathlib.Path(path + "/" + name).absolute())
+    location: str = str(pathlib.Path(path + "/" + name).absolute())
     return location
 
 
@@ -286,7 +281,7 @@ def concat_paths(path1, path2):
     return path
 
 
-def init_folder(path, clean=False):
+def init_folder(path: str, clean: bool = False) -> None:
     """Initializes a folder given a path.
 
     Args:

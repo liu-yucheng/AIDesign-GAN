@@ -5,8 +5,8 @@
 
 import torch
 
-from aidesign_dcgan.libs import structs
-from aidesign_dcgan.libs import utils
+from aidesign_gan.libs import structs
+from aidesign_gan.libs import utils
 
 
 class Modeler:
@@ -99,7 +99,7 @@ class DModeler(Modeler):
         """
         super().__init__(model_path, config, device, gpu_count, loss_func)
         # Init self.model
-        struct = structs.DStruct()
+        struct = structs.DStruct(self.model_path)
         struct.location = utils.find_in_path(self.config["struct_name"], self.model_path)
         struct.load()
         exec(struct.definition)
@@ -145,7 +145,7 @@ class DModeler(Modeler):
         loss.backward()
         self.optim.step()
         out_mean = output.mean().item()
-        loss_val = loss.detach().cpu()
+        loss_val = loss.item()
         return out_mean, loss_val
 
     def valid(self, batch, label):
@@ -167,7 +167,7 @@ class DModeler(Modeler):
             output = self.model(batch).detach().view(-1)
             loss = self.loss_func(output, labels)
         out_mean = output.mean().item()
-        loss_val = loss.detach().cpu()
+        loss_val = loss.item()
         return out_mean, loss_val
 
     def test(self, batch):
@@ -203,7 +203,7 @@ class GModeler(Modeler):
         """
         super().__init__(model_path, config, device, gpu_count, loss_func)
         # Init self.model
-        struct = structs.GStruct()
+        struct = structs.GStruct(self.model_path)
         struct.location = utils.find_in_path(self.config["struct_name"], self.model_path)
         struct.load()
         exec(struct.definition)
@@ -266,7 +266,7 @@ class GModeler(Modeler):
         loss.backward()
         self.optim.step()
         out_mean = output.mean().item()
-        loss_val = loss.detach().cpu()
+        loss_val = loss.item()
         if not d_model_training:
             d_model.train(False)
         return out_mean, loss_val
@@ -296,7 +296,7 @@ class GModeler(Modeler):
             output = d_model(batch).detach().view(-1)
             loss = self.loss_func(output, labels)
         out_mean = output.mean().item()
-        loss_val = loss.detach().cpu()
+        loss_val = loss.item()
         if d_model_training:
             d_model.train(True)
         return out_mean, loss_val

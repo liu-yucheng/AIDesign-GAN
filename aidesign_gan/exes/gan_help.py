@@ -3,6 +3,7 @@
 Attributes:
     info: the primary info to display
     too_many_args_info: the info to display when the executable gets too many arguments
+
     argv_copy: a copy of sys.argv
 """
 
@@ -43,6 +44,10 @@ generate:
     How-to: gan generate
     Notes:  You will be prompted with the command status. You need to confirm to continue. Depending on your generation
             configs, the generation session might take seconds or minutes.
+reset:
+    When:   You want to reset the app data, which contains the command statuses.
+    How-to: gan reset
+    Notes:  You will lose the current command statuses after the reset
 welcome:
     When:   You want to display the welcome message.
     How-to: gan welcome

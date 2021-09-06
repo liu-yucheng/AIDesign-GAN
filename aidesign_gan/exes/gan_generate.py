@@ -32,31 +32,31 @@ _brief_usage = "gan generate"
 _usage = fr"""Usage: {_brief_usage}
 Help: gan help"""
 
-info: str = f"\"{_brief_usage}\":"r"""
+info = f"\"{_brief_usage}\":"r"""
 {}
 Please confirm the above generation session setup
 Do you want to continue? [ Y (Yes) | n (no) ]:    """
-will_start_session_info: str = r"""Will start a generation session
+will_start_session_info = r"""Will start a generation session
 ---- The following will be logged to: {} ----
 """
-completed_session_info: str = r"""---- The above has been logged to: {} ----
+completed_session_info = r"""---- The above has been logged to: {} ----
 Completed the generation session
 """
-aborted_session_info: str = r"""Aborted the generation session
+aborted_session_info = r"""Aborted the generation session
 """
 
-too_many_args_info: str = f"\"{_brief_usage}\""r""" gets too many arguments
+too_many_args_info = f"\"{_brief_usage}\""r""" gets too many arguments
 Expects 0 arguments; Gets {} arguments"""fr"""
 {_usage}
 """
-none_model_info: str = f"\"{_brief_usage}\""fr""" finds that the model_path selection is None
+none_model_info = f"\"{_brief_usage}\""fr""" finds that the model_path selection is None
 Please select a model with the "gan model <path-to-model>" command
 {_usage}
 """
 
-argv_copy: list[str] = None
-model_path: str = None
-log_location: str = None
+argv_copy = None
+model_path = None
+log_location = None
 
 
 def start_session():
@@ -94,8 +94,8 @@ def start_session():
     log_file.close()
 
 
-def run() -> None:
-    """Runs the executable as a command"""
+def run():
+    """Runs the executable as a command."""
     global argv_copy
     global model_path
     global log_location
@@ -140,7 +140,7 @@ def run() -> None:
         exit(1)
 
 
-def main() -> None:
+def main():
     """Starts the executable."""
     global argv_copy
     argv_length = len(sys.argv)

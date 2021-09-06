@@ -18,13 +18,13 @@ class AttrDict:
     A dictionary whose items can be accessed as attributes.
     """
 
-    def __getattr__(self, name: str) -> object:
+    def __getattr__(self, name):
         return self.get_attr(name)
 
-    def __setattr__(self, name: str, value: object) -> None:
-        self.set_attr(name, value)
+    def __setattr__(self, name, value):
+        return self.set_attr(name, value)
 
-    def __repr__(self) -> str:
+    def __repr__(self):
         result = self.__dict__
         if len(self.__dict__) == 0:
             result = "{ Empty AttrDict }"
@@ -87,7 +87,7 @@ def save_json(from_dict, to_file):
     file.close()
 
 
-def find_in_path(name: str, path: str) -> str:
+def find_in_path(name, path):
     """Finds the location of a file given its name and path.
 
     The path needs to be an existing path. But, the file needs not to be an existing file.
@@ -281,7 +281,7 @@ def concat_paths(path1, path2):
     return path
 
 
-def init_folder(path: str, clean: bool = False) -> None:
+def init_folder(path, clean=False):
     """Initializes a folder given a path.
 
     Args:

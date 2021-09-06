@@ -34,20 +34,20 @@ _brief_usage = "gan <command> ..."
 _usage = fr"""Usage: {_brief_usage}
 Help: gan help"""
 
-info: str = fr"""AIDesign-GAN (aidesign-gan) {_version}
+info = fr"""AIDesign-GAN (aidesign-gan) {_version}
 {_usage}
 """
-unknown_command_info: str = f"\"{_brief_usage}\""r""" gets an unknown command: {}"""fr"""
+unknown_command_info = f"\"{_brief_usage}\""r""" gets an unknown command: {}"""fr"""
 {_usage}
 """
-unknown_arg_info: str = f"\"{_brief_usage}\""r""" gets an unknown argument: {}"""fr"""
+unknown_arg_info = f"\"{_brief_usage}\""r""" gets an unknown argument: {}"""fr"""
 {_usage}
 """
 
-argv_copy: list[str] = None
+argv_copy = None
 
 
-def _run_command() -> None:
+def _run_command():
     global argv_copy
     assert len(argv_copy) > 0
     command = argv_copy.pop(0)
@@ -85,7 +85,7 @@ def _run_command() -> None:
         print(unknown_command_info.format(command), end="")
 
 
-def main() -> None:
+def main():
     """Starts the executable."""
     global argv_copy
     argv_length = len(sys.argv)

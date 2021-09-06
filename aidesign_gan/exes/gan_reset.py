@@ -1,4 +1,4 @@
-"""Executable for the following app parts: the "gan status" command.
+"""Executable for the following app parts: the "gan reset" command.
 
 Attributes:
     info: the primary info to display
@@ -11,23 +11,17 @@ Attributes:
 # Last updated by: liu-yucheng
 
 import copy
-import os
 import sys
 
 from aidesign_gan.libs import defaults
 from aidesign_gan.libs import statuses
 from aidesign_gan.libs import utils
 
-_brief_usage = "gan status"
+_brief_usage = "gan reset"
 _usage = fr"""Usage: {_brief_usage}
 Help: gan help"""
 
-info = r"""App data: {}
-"gan train":
-{}
-"gan generate":
-{}
-"""
+info = r"""Completed resetting the app data at: {}"""
 too_many_args_info = f"\"{_brief_usage}\""r""" gets too many arguments
 Expects 0 arguments; Gets {} arguments"""fr"""
 {_usage}
@@ -42,30 +36,14 @@ def run() -> None:
     argv_copy_length = len(argv_copy)
     assert argv_copy_length >= 0
     if argv_copy_length == 0:
-        if not os.path.exists(defaults.app_data_path):
-            utils.init_folder(defaults.app_data_path)
-
-        app_data_info = defaults.app_data_path
-        gan_train_info = ""
-        gan_generate_info = ""
+        utils.init_folder(defaults.app_data_path, clean=True)
 
         gan_train_status = statuses.GANTrainStatus()
         gan_generate_status = statuses.GANGenerateStatus()
         gan_train_status.load()
         gan_generate_status.load()
 
-        gan_train_lines = []
-        gan_generate_lines = []
-        for key in gan_train_status.items:
-            tab_spaces = " " * (8 - len(key) % 8)
-            gan_train_lines.append(f"    {key}:{tab_spaces}{gan_train_status[key]}")
-        for key in gan_generate_status.items:
-            tab_spaces = " " * (8 - len(key) % 8)
-            gan_generate_lines.append(f"    {key}:{tab_spaces}{gan_generate_status[key]}")
-        gan_train_info = "\n".join(gan_train_lines)
-        gan_generate_info = "\n".join(gan_generate_lines)
-
-        print(info.format(app_data_info, gan_train_info, gan_generate_info), end="")
+        print(info.format(defaults.app_data_path), end="")
         exit(0)
     # elif argv_copy_length > 0
     else:

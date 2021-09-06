@@ -2,10 +2,12 @@
 
 Attributes:
     info: the primary info to display
+
     too_few_args_info: the info to display when the executable gets too few arguments
     too_many_args_info: the info to display when the executable gets too many arguments
     model_does_not_exist_info: the info to display when the selected model does not exist
     model_is_not_dir_info: the info to display when the selected model is not a directory
+
     argv_copy: a copy of sys.argv
 """
 

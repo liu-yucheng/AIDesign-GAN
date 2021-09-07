@@ -3,6 +3,7 @@
 Attributes:
     info: the primary info to display
     too_many_args_info: the info to display when the executable gets too many arguments
+
     argv_copy: a copy of sys.argv
 """
 
@@ -21,22 +22,22 @@ _brief_usage = "gan status"
 _usage = fr"""Usage: {_brief_usage}
 Help: gan help"""
 
-info: str = r"""App data: {}
+info = r"""App data: {}
 "gan train":
 {}
 "gan generate":
 {}
 """
-too_many_args_info: str = f"\"{_brief_usage}\""r""" gets too many arguments
+too_many_args_info = f"\"{_brief_usage}\""r""" gets too many arguments
 Expects 0 arguments; Gets {} arguments"""fr"""
 {_usage}
 """
 
-argv_copy: list[str] = None
+argv_copy = None
 
 
 def run() -> None:
-    """Runs the executable as a command"""
+    """Runs the executable as a command."""
     global argv_copy
     argv_copy_length = len(argv_copy)
     assert argv_copy_length >= 0
@@ -72,7 +73,7 @@ def run() -> None:
         exit(1)
 
 
-def main() -> None:
+def main():
     """Starts the executable."""
     global argv_copy
     argv_length = len(sys.argv)

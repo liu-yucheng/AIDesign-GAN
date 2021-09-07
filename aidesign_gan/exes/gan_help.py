@@ -3,6 +3,7 @@
 Attributes:
     info: the primary info to display
     too_many_args_info: the info to display when the executable gets too many arguments
+
     argv_copy: a copy of sys.argv
 """
 
@@ -16,7 +17,7 @@ _brief_usage = "gan help"
 _usage = fr"""Usage: {_brief_usage}
 Help: gan help"""
 
-info: str = r"""Usage: gan <command> ...
+info = r"""Usage: gan <command> ...
 ==== Commands ====
 help:
     When:   You need help info. For example, now.
@@ -43,20 +44,24 @@ generate:
     How-to: gan generate
     Notes:  You will be prompted with the command status. You need to confirm to continue. Depending on your generation
             configs, the generation session might take seconds or minutes.
+reset:
+    When:   You want to reset the app data, which contains the command statuses.
+    How-to: gan reset
+    Notes:  You will lose the current command statuses after the reset
 welcome:
     When:   You want to display the welcome message.
     How-to: gan welcome
 """
-too_many_args_info: str = f"\"{_brief_usage}\""r""" gets too many arguments
+too_many_args_info = f"\"{_brief_usage}\""r""" gets too many arguments
 Expects 0 arguments; Gets {} arguments"""fr"""
 {_usage}
 """
 
-argv_copy: list[str] = None
+argv_copy = None
 
 
-def run() -> None:
-    """Runs the executable as a command"""
+def run():
+    """Runs the executable as a command."""
     global argv_copy
     argv_copy_length = len(argv_copy)
     assert argv_copy_length >= 0
@@ -69,7 +74,7 @@ def run() -> None:
         exit(1)
 
 
-def main() -> None:
+def main():
     """Starts the executable."""
     global argv_copy
     argv_length = len(sys.argv)

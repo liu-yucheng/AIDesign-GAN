@@ -8,7 +8,6 @@ command.
 # Initially added by: liu-yucheng
 # Last updated by: liu-yucheng
 
-import pathlib
 import setuptools
 
 
@@ -29,7 +28,7 @@ def _make_default_app_data():
 def main():
     setuptools.setup(
         name="aidesign-gan",
-        version="0.14.1",
+        version="0.15.1",
         description="AI Design GAN Modeling Application",
         author="AI Design Team",
         packages=setuptools.find_packages(),
@@ -40,8 +39,8 @@ def main():
         }
         # test_suite="tests"
     )
-    print("Commands available: gan")
     _make_default_app_data()
+    print("Commands available: gan")
 
 
 if __name__ == "__main__":

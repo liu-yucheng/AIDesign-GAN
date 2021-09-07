@@ -27,31 +27,31 @@ _brief_usage = "gan create <path-to-model>"
 _usage = fr"""Usage: {_brief_usage}
 Help: gan help"""
 
-info: str = r"""Created a model at {}
+info = r"""Created a model at {}
 """
 
-too_few_args_info: str = f"\"{_brief_usage}\""r""" gets too few arguments
+too_few_args_info = f"\"{_brief_usage}\""r""" gets too few arguments
 Expects 1 arguments; Gets {} arguments"""fr"""
 {_usage}
 """
-too_many_args_info: str = f"\"{_brief_usage}\""r""" gets too many arguments
+too_many_args_info = f"\"{_brief_usage}\""r""" gets too many arguments
 Expects 1 arguments; Gets {} arguments"""fr"""
 {_usage}
 """
-model_exists_info: str = f"\"{_brief_usage}\""r""" finds that the model already exists
+model_exists_info = f"\"{_brief_usage}\""r""" finds that the model already exists
 Please check the model at: {}"""fr"""
 {_usage}
 """
-model_is_not_dir_info: str = f"\"{_brief_usage}\""r""" finds that the model exists but not as a directory
+model_is_not_dir_info = f"\"{_brief_usage}\""r""" finds that the model exists but not as a directory
 Please check the model at: {}"""fr"""
 {_usage}
 """
 
-argv_copy: list[str] = None
+argv_copy = None
 
 
-def run() -> None:
-    """Runs the executable as a command"""
+def run():
+    """Runs the executable as a command."""
     global argv_copy
     argv_copy_length = len(argv_copy)
     assert argv_copy_length >= 0
@@ -93,7 +93,7 @@ def run() -> None:
         exit(1)
 
 
-def main() -> None:
+def main():
     """Starts the executable."""
     global argv_copy
     argv_length = len(sys.argv)

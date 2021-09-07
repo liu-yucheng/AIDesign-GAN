@@ -11,6 +11,8 @@ import pathlib
 import shutil
 import torch
 
+from aidesign_gan.libs import optims
+
 
 class AttrDict:
     """Attribute dictionary.
@@ -18,13 +20,13 @@ class AttrDict:
     A dictionary whose items can be accessed as attributes.
     """
 
-    def __getattr__(self, name: str) -> object:
+    def __getattr__(self, name):
         return self.get_attr(name)
 
-    def __setattr__(self, name: str, value: object) -> None:
-        self.set_attr(name, value)
+    def __setattr__(self, name, value):
+        return self.set_attr(name, value)
 
-    def __repr__(self) -> str:
+    def __repr__(self):
         result = self.__dict__
         if len(self.__dict__) == 0:
             result = "{ Empty AttrDict }"
@@ -87,7 +89,7 @@ def save_json(from_dict, to_file):
     file.close()
 
 
-def find_in_path(name: str, path: str) -> str:
+def find_in_path(name, path):
     """Finds the location of a file given its name and path.
 
     The path needs to be an existing path. But, the file needs not to be an existing file.
@@ -224,21 +226,18 @@ def init_model_weights(model):
         nn.init.constant_(model.bias.data, 0)
 
 
-def setup_adam(model, config, rollbacks=0):
+def setup_adam(model, config):
     """Sets up an Adam optimizer with the given args.
 
     Args:
         model: the model, a pytorch nn module
         config: the adam optimizer config dict
-        rollbacks: the number of times the model rollbacks
 
     Returns:
         adam: the Adam optimizer
     """
     adam = optim.Adam(
-        model.parameters(),
-        lr=config["learning_rate"] / (2 ** rollbacks),
-        betas=(config["beta1"], config["beta2"])
+        model.parameters(), lr=config["learning_rate"], betas=(config["beta1"], config["beta2"])
     )
     return adam
 
@@ -281,7 +280,7 @@ def concat_paths(path1, path2):
     return path
 
 
-def init_folder(path: str, clean: bool = False) -> None:
+def init_folder(path, clean=False):
     """Initializes a folder given a path.
 
     Args:
@@ -313,3 +312,19 @@ def logln(logs, line=""):
     """
     for log in logs:
         log.write(line + "\n")
+
+
+def setup_pred_adam(model, config):
+    """Sets up a predictive Adam optimizer with the given args.
+
+    Args:
+        model: the model, a pytorch nn module
+        config: the adam optimizer config dict
+
+    Returns:
+        pred_adam: the predictive Adam optimizer
+    """
+    pred_adam = optims.PredAdam(
+        model.parameters(), lr=config["learning_rate"], betas=(config["beta1"], config["beta2"])
+    )
+    return pred_adam

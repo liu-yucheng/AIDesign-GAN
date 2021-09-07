@@ -1,115 +1,162 @@
-# https://github.com/shahsohil/stableGAN/blob/master/adamPre.py
+"""Module of the optims (optimizers).
 
+==== References ====
+PyTorch Adam source code. https://pytorch.org/docs/stable/_modules/torch/optim/adam.html#Adam
+Yadav, et al., 2018. Stabilizing Adversarial Nets With Prediction Methods. https://openreview.net/pdf?id=Skj8Kag0Z
+"""
+
+# Initially added by: liu-yucheng
+# Last updated by: liu-yucheng
+
+from torch import optim
 import math
-from torch.optim.optimizer import Optimizer
+import torch
 
 
-class AdamPre(Optimizer):
-    """Implements Adam algorithm with prediction step.
-    This class implements lookahead version of Adam Optimizer.
-    The structure of class is similar to Adam class in Pytorch.
-    Arguments:
-        params (iterable): iterable of parameters to optimize or dicts defining
-            parameter groups
-        lr (float, optional): learning rate (default: 1e-3)
-        betas (Tuple[float, float], optional): coefficients used for computing
-            running averages of gradient and its square (default: (0.9, 0.999))
-        eps (float, optional): term added to the denominator to improve
-            numerical stability (default: 1e-8)
-        weight_decay (float, optional): weight decay (L2 penalty) (default: 0)
+class PredAdam(optim.Optimizer):
+    """Predictive Adam optimizer.
+
+    An Adam optimizer with the predict and restore extra functions.
     """
 
-    def __init__(self, params, lr=1e-3, betas=(0.9, 0.999), eps=1e-8,
-                 weight_decay=0, name='NotGiven'):
-        self.name = name
-        defaults = dict(lr=lr, betas=betas, eps=eps,
-                        weight_decay=weight_decay)
-        super(AdamPre, self).__init__(params, defaults)
+    def __init__(self, params, lr=1e-3, betas=(0.9, 0.999), eps=1e-8, weight_decay=0, amsgrad=False):
+        """ Inits self with the given args.
+
+        Args:
+            params: iterable of parameters to optimize or dicts defining parameter groups
+            lr: learning rate
+            betas: coefficients used for computing running averages of gradient and its square
+            eps: term added to the denominator to improve numerical stability
+            weight_decay: weight decay (L2 penalty)
+            amsgrad: whether to use the AMSGrad variant of this algorithm
+        """
+        if not 0.0 <= lr:
+            raise ValueError(f"Invalid learning rate: {lr}")
+        if not 0.0 <= eps:
+            raise ValueError(f"Invalid epsilon value: {eps}")
+        if not 0.0 <= betas[0] < 1.0:
+            raise ValueError(f"Invalid beta parameter at index 0: {betas[0]}")
+        if not 0.0 <= betas[1] < 1.0:
+            raise ValueError(f"Invalid beta parameter at index 1: {betas[1]}")
+        if not 0.0 <= weight_decay:
+            raise ValueError(f"Invalid weight_decay value: {weight_decay}")
+
+        defaults = dict(lr=lr, betas=betas, eps=eps, weight_decay=weight_decay, amsgrad=amsgrad)
+        super().__init__(params, defaults)
 
     def step(self, closure=None):
         """Performs a single optimization step.
-        Arguments:
-            closure (callable, optional): A closure that reevaluates the model
-                and returns the loss.
+
+        Args:
+            closure: a closure that reevaluates the model and returns the loss
         """
         loss = None
         if closure is not None:
             loss = closure()
 
         for group in self.param_groups:
-            for p in group['params']:
-                if p.grad is None:
+            for param in group["params"]:
+                if param.grad is None:
                     continue
-                grad = p.grad.data
+                if param.grad.is_sparse:
+                    raise RuntimeError('Adam does not support sparse gradients, please consider SparseAdam instead')
 
-                state = self.state[p]
+                grad = param.grad.data
+                state = self.state[param]
 
-                # State initialization
+                # Lazy state initialization
                 if len(state) == 0:
-                    state['step'] = 0
+                    state["step"] = 0
                     # Exponential moving average of gradient values
-                    state['exp_avg'] = grad.new().resize_as_(grad).zero_()
+                    state["exp_avg"] = torch.zeros_like(param, memory_format=torch.preserve_format)
                     # Exponential moving average of squared gradient values
-                    state['exp_avg_sq'] = grad.new().resize_as_(grad).zero_()
+                    state["exp_avg_sq"] = torch.zeros_like(param, memory_format=torch.preserve_format)
+                    if group["amsgrad"]:
+                        # Maintains max of all exp. moving avg. of sq. grad. values
+                        state['max_exp_avg_sq'] = torch.zeros_like(param, memory_format=torch.preserve_format)
+                    # Add a restore point
+                    state["restore_point"] = param.data.clone()
 
-                    state['oldWeights'] = p.data.clone()
+                state["step"] += 1
 
-                exp_avg, exp_avg_sq = state['exp_avg'], state['exp_avg_sq']
-                beta1, beta2 = group['betas']
+                exp_avg = state["exp_avg"]
+                exp_avg_sq = state["exp_avg_sq"]
+                if group["amsgrad"]:
+                    max_exp_avg_sq = state["max_exp_avg_sq"]
 
-                state['step'] += 1
+                beta1, beta2 = group["betas"]
+                bias_correction1 = 1 - beta1 ** state["step"]
+                bias_correction2 = 1 - beta2 ** state["step"]
 
-                if group['weight_decay'] != 0:
-                    grad = grad.add(group['weight_decay'], p.data)
+                if group["weight_decay"] != 0:
+                    grad = grad.add(param.data, group["weight_decay"])
 
                 # Decay the first and second moment running average coefficient
-                exp_avg.mul_(beta1).add_(1 - beta1, grad)
-                exp_avg_sq.mul_(beta2).addcmul_(1 - beta2, grad, grad)
+                exp_avg.mul_(beta1).add_(grad, alpha=1 - beta1)
+                exp_avg_sq.mul_(beta2).addcmul_(grad, grad.conj(), value=1 - beta2)
 
-                denom = exp_avg_sq.sqrt().add_(group['eps'])
+                if group["amsgrad"]:
+                    # Maintains the maximum of all 2nd moment running avg. till now
+                    torch.maximum(max_exp_avg_sq, exp_avg_sq, out=max_exp_avg_sq)
+                    # Use the max. for normalizing running avg. of gradient
+                    denom = (max_exp_avg_sq.sqrt() / math.sqrt(bias_correction2)).add_(group["eps"])
+                else:
+                    denom = (exp_avg_sq.sqrt() / math.sqrt(bias_correction2)).add_(group["eps"])
 
-                bias_correction1 = 1 - beta1 ** min(state['step'],1022)
-                bias_correction2 = 1 - beta2 ** min(state['step'],1022)
-                step_size = group['lr'] * math.sqrt(bias_correction2) / bias_correction1
-
-                p.data.addcdiv_(-step_size, exp_avg, denom)
+                step_size = group["lr"] / bias_correction1
+                param.data.addcdiv_(exp_avg, denom, value=-step_size)
+            # end for
+        # end for
         return loss
 
-    def stepLookAhead(self, closure=None):
-        """Performs a single optimization step.
-        Arguments:
-            closure (callable, optional): A closure that reevaluates the model
-                and returns the loss.
+    def predict(self, closure=None):
+        """Performs a predictive optimization step.
+
+        Let the previous state be P1, the current state be P2, and the next state be P3. This function will update the
+        state to _P3_, where _P3_ = P2 + (P2 - P1). This _P3_ can be seen as the prediction of P3. This function will
+        save P2 to a restore point for later restoration.
+
+        Args:
+            closure: a closure that reevaluates the model and returns the loss
         """
         loss = None
         if closure is not None:
             loss = closure()
 
         for group in self.param_groups:
-            for p in group['params']:
-                if p.grad is None:
+            for param in group["params"]:
+                if param.grad is None:
                     continue
-                state = self.state[p]
-                temp_grad = p.data.sub(state['oldWeights'])
-                state['oldWeights'].copy_(p.data)
-                p.data.add_(temp_grad)
+                state = self.state[param]
+                # Find the pred_incr (predictive incrementation)
+                pred_incr = param.data.sub(state["restore_point"])
+                # Save the current state as the restore point
+                state["restore_point"].copy_(param.data)
+                # Apply the pred_incr to complete the prediction
+                param.data.add_(pred_incr)
+            # end for
+        # end for
         return loss
 
+    def restore(self, closure=None):
+        """Performs a prediction restoration optimization step.
 
-    def restoreStepLookAhead(self, closure=None):
-        """Performs a single optimization step.
-        Arguments:
-            closure (callable, optional): A closure that reevaluates the model
-                and returns the loss.
+        Let the current state be _P3_, and the state at the restore point be P2. This function will restore the state
+        to P2.
+
+        Args:
+            closure: a closure that reevaluates the model and returns the loss
         """
         loss = None
         if closure is not None:
             loss = closure()
 
         for group in self.param_groups:
-            for p in group['params']:
-                if p.grad is None:
+            for param in group["params"]:
+                if param.grad is None:
                     continue
-                state = self.state[p]
-                p.data.copy_(state['oldWeights'])
+                state = self.state[param]
+                param.data.copy_(state["restore_point"])
+            # end for
+        # end for
         return loss

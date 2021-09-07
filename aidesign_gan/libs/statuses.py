@@ -23,23 +23,23 @@ class Status:
         self.location: str = None
         self.items: dict = {}
 
-    def __getitem__(self, key: object) -> object:
+    def __getitem__(self, key):
         """Finds the item corresponding to the given key.
 
-        This function makes status[key] a shorthand of status.items[key].
+        This function makes self[key] a shorthand of self.items[key].
 
         Args:
             key: the key
 
         Returns:
-            the item corresponding to the key
+            self.items[key]: the corresponding item
         """
         return self.items[key]
 
-    def __setitem__(self, key: object, value: object) -> None:
+    def __setitem__(self, key, value):
         """Sets the item corresponding to the key to a specified value.
         
-        This function makes status[key] = value a shorthand of status.items[key] = value.
+        This function makes self[key] = value a shorthand of self.items[key] = value.
 
         Args:
             key: the key

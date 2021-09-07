@@ -15,25 +15,25 @@ class Config:
         items: the config items, the settings
     """
 
-    def __init__(self) -> None:
+    def __init__(self):
         """Inits self."""
-        self.location: str = None
-        self.items: dict = {}
+        self.location = None
+        self.items = {}
 
-    def __getitem__(self, sub: object) -> object:
-        """Finds the item corresponding to the given subscript.
+    def __getitem__(self, key):
+        """Finds the item corresponding to the given key.
 
-        The function makes config[sub] a shorthand of config.items[sub].
+        The function makes self[key] a shorthand of self.items[key].
 
         Args:
-            sub: the subscript of the item
+            key: key
 
         Returns:
-            the corresponding item
+            self.item[key]: the corresponding item
         """
-        return self.items[sub]
+        return self.items[key]
 
-    def load(self) -> None:
+    def load(self):
         """Loads the config items from a JSON file.
 
         If the file does not exist, the function saves the current config.
@@ -48,7 +48,7 @@ class Config:
         except FileNotFoundError:
             utils.save_json(self.items, self.location)
 
-    def save(self) -> None:
+    def save(self):
         """Saves the config to a JSON file.
 
         Raises:
@@ -62,7 +62,7 @@ class Config:
 class CoordsConfig(Config):
     """Config of the training/generation coordinators."""
 
-    def __init__(self, model_path: str) -> None:
+    def __init__(self, model_path):
         """Inits self with the given args.
 
         Args:
@@ -74,12 +74,12 @@ class CoordsConfig(Config):
         super().__init__()
         if model_path is None:
             raise ValueError("Argument model_path cannot be None")
-        self.model_path: str = model_path
-        self.location: str = utils.find_in_path(defaults.coords_config_name, model_path)
-        self.items: dict = {
+        self.model_path = model_path
+        self.location = utils.find_in_path(defaults.coords_config_name, model_path)
+        self.items = {
             "training": {
                 "mode": "new",
-                "algorithm": "batch_level_algo",
+                "algorithm": "pred_alt_sgd_algo",
                 "manual_seed": 0,
                 "gpu_count": 1,
                 "iteration_count": 2,
@@ -89,17 +89,17 @@ class CoordsConfig(Config):
                 "data_sets": {
                     "loader_worker_count": 0,
                     "percents_to_use": 1,
-                    "images_per_batch": 16,
+                    "images_per_batch": 32,
                     "image_resolution": 64,
                     "image_channel_count": 3,
-                    "training_set_weight": 8,
-                    "validation_set_weight": 2
+                    "training_set_weight": 9,
+                    "validation_set_weight": 1
                 }
             },
             "generation": {
                 "manual_seed": None,
                 "gpu_count": 1,
-                "image_count": 64,
+                "image_count": 256,
                 "grid_mode": {
                     "enabled": True,
                     "images_per_grid": 64,
@@ -112,7 +112,7 @@ class CoordsConfig(Config):
 class ModelersConfig(Config):
     """Config of the discriminator/generator modelers."""
 
-    def __init__(self, model_path: str) -> None:
+    def __init__(self, model_path):
         """Inits self with the given args.
 
         Args:

@@ -11,6 +11,8 @@ import pathlib
 import shutil
 import torch
 
+from aidesign_gan.libs import optims
+
 
 class AttrDict:
     """Attribute dictionary.
@@ -224,21 +226,18 @@ def init_model_weights(model):
         nn.init.constant_(model.bias.data, 0)
 
 
-def setup_adam(model, config, rollbacks=0):
+def setup_adam(model, config):
     """Sets up an Adam optimizer with the given args.
 
     Args:
         model: the model, a pytorch nn module
         config: the adam optimizer config dict
-        rollbacks: the number of times the model rollbacks
 
     Returns:
         adam: the Adam optimizer
     """
     adam = optim.Adam(
-        model.parameters(),
-        lr=config["learning_rate"] / (2 ** rollbacks),
-        betas=(config["beta1"], config["beta2"])
+        model.parameters(), lr=config["learning_rate"], betas=(config["beta1"], config["beta2"])
     )
     return adam
 
@@ -313,3 +312,19 @@ def logln(logs, line=""):
     """
     for log in logs:
         log.write(line + "\n")
+
+
+def setup_pred_adam(model, config):
+    """Sets up a predictive Adam optimizer with the given args.
+
+    Args:
+        model: the model, a pytorch nn module
+        config: the adam optimizer config dict
+
+    Returns:
+        pred_adam: the predictive Adam optimizer
+    """
+    pred_adam = optims.PredAdam(
+        model.parameters(), lr=config["learning_rate"], betas=(config["beta1"], config["beta2"])
+    )
+    return pred_adam

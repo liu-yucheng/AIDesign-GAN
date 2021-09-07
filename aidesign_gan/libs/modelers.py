@@ -81,7 +81,6 @@ class Modeler:
             raise ValueError("self.optim cannot be None")
         self.model.zero_grad()
         self.load()
-        self.optim = utils.setup_adam(self.model, self.config["adam_optimizer"], count)
 
 
 class DModeler(Modeler):
@@ -116,7 +115,7 @@ class DModeler(Modeler):
         self.size = size
         # Init self.optim
         if train:
-            self.optim = utils.setup_adam(self.model, self.config["adam_optimizer"])
+            self.optim = utils.setup_pred_adam(self.model, self.config["adam_optimizer"])
 
     def train(self, batch, label):
         """Trains the model with a batch of data and a target label.
@@ -220,7 +219,7 @@ class GModeler(Modeler):
         self.size = size
         # Init self.optim
         if train:
-            self.optim = utils.setup_adam(self.model, self.config["adam_optimizer"])
+            self.optim = utils.setup_pred_adam(self.model, self.config["adam_optimizer"])
 
     def generate_noises(self, count):
         """Generates a set of input noises for the model.

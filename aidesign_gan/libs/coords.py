@@ -125,7 +125,7 @@ class TrainingCoord(Coord):
         """Sets up self.algo.
 
         Raises:
-            ValueError: if the algo's name is unknown (supported algo names: `iter_level_algo`, `batch_level_algo`)
+            ValueError: if the algo's name is unknown
         """
         if not self.results_ready:
             self.setup_results()
@@ -136,6 +136,8 @@ class TrainingCoord(Coord):
             self.algo = algos.IterLevelAlgo()
         elif algo_name == "batch_level_algo":
             self.algo = algos.BatchLevelAlgo()
+        elif algo_name == "pred_alt_sgd_algo":
+            self.algo = algos.PredAltSGDAlgo()
         else:
             raise ValueError(f"Unknown algo: {algo_name}")
         self.results.log_algo(algo_name)

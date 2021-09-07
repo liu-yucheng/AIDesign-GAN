@@ -206,7 +206,7 @@ class GenerationCoord(Coord):
         r = self.results
         c = self.context
         for index in range(len(c.images.list)):
-            c.images.list[index] = vutils.make_grid(c.images.list[index], normalize=True)
+            c.images.list[index] = vutils.make_grid(c.images.list[index], normalize=True, value_range=(-1, 1))
         r.logln("Normalized images")
 
     def convert_images_to_grids(self):
@@ -219,9 +219,7 @@ class GenerationCoord(Coord):
         while start_index < c.images.count:
             end_index = start_index + c.grids.each_size
             grid = vutils.make_grid(
-                orig_list[start_index: end_index],
-                nrow=math.ceil(c.grids.each_size ** 0.5),
-                padding=c.grids.padding
+                orig_list[start_index: end_index], nrow=math.ceil(c.grids.each_size ** 0.5), padding=c.grids.padding
             )
             c.images.list.append(grid)
             start_index = end_index

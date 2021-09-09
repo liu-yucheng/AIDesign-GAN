@@ -20,6 +20,7 @@ Attributes:
 
 import copy
 import datetime
+import select
 import sys
 import traceback
 
@@ -31,11 +32,14 @@ from aidesign_gan.libs import utils
 _brief_usage = "gan generate"
 _usage = fr"""Usage: {_brief_usage}
 Help: gan help"""
+_timeout = 30
 
 info = f"\"{_brief_usage}\":"r"""
 {}
+-
 Please confirm the above generation session setup
-Do you want to continue? [ Y (Yes) | n (no) ]:    """
+Do you want to continue? [ Y (Yes) | n (no) ]:"""fr""" < default: Yes, timeout: {_timeout} seconds >
+"""
 will_start_session_info = r"""Will start a generation session
 ---- The following will be logged to: {} ----
 """
@@ -118,12 +122,18 @@ def run():
             gan_generate_lines.append(f"    {key}:{tab_spaces}{gan_generate_status[key]}")
         gan_generate_info = "\n".join(gan_generate_lines)
 
+        timed_input = utils.TimedInput()
         print(info.format(gan_generate_info), end="")
-        answer = input()
-        if len(answer) <= 0:
+        answer = timed_input.take(_timeout)
+
+        if answer is None:
+            answer = "Yes"
+            print(f"\n{answer} (timeout)\n", end="")
+        elif len(answer) <= 0:
             answer = "Yes"
             print(f"{answer} (default)\n", end="")
 
+        print("-\n", end="")
         if answer.lower() == "yes" or answer.lower() == "y":
             log_location = utils.find_in_path("log.txt", model_path)
             print(will_start_session_info.format(log_location), end="")

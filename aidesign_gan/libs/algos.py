@@ -414,7 +414,7 @@ class BatchLevelAlgo(Algo):
 
 
 class PredAltSGDAlgo(Algo):
-    """Predictive alternative SGD, which is a "batch level algo" with prediction steps."""
+    """Predictive alternating SGD, which is a "batch level algo" with prediction steps."""
 
     def __init__(self):
         """Inits self."""
@@ -588,7 +588,7 @@ class PredAltSGDAlgo(Algo):
         self.check_context_and_results()
         r = self.results
         c = self.context
-        r.logln("Started predictive alternative SGD algorithm")
+        r.logln("Started predictive alternating SGD algorithm")
         r.logln("-")
         r.save_training_images()
         r.save_validation_images()

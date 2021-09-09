@@ -86,7 +86,7 @@ class CoordsConfig(Config):
                 "epochs_per_iteration": 2,
                 "max_rollbacks": 1,
                 "max_early_stops": 1,
-                "data_sets": {
+                "dataset": {
                     "loader_worker_count": 0,
                     "percents_to_use": 1,
                     "images_per_batch": 32,
@@ -100,6 +100,7 @@ class CoordsConfig(Config):
                 "manual_seed": None,
                 "gpu_count": 1,
                 "image_count": 256,
+                "images_per_batch": 32,
                 "grid_mode": {
                     "enabled": True,
                     "images_per_grid": 64,

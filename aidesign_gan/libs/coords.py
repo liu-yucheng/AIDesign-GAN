@@ -4,7 +4,9 @@
 # Last updated by: liu-yucheng
 
 from torchvision import utils as vutils
+
 import math
+import torch
 
 from aidesign_gan.libs import algos
 from aidesign_gan.libs import configs
@@ -234,7 +236,14 @@ class GenerationCoord(Coord):
         r = self.results
         c = self.context
         r.logln("Started generation")
-        c.images.list = c.g.test(c.noises).cpu()
+        c.prog.batch_index = 0
+        while c.prog.batch_index < c.prog.batch_count:
+            noise_batch = c.noise_batches[c.prog.batch_index]
+            image_batch = c.g.test(noise_batch)
+            c.images.list.append(image_batch)
+            r.log_batch()
+            c.prog.batch_index += 1
+        c.images.list = torch.cat(c.images.list)
         self.normalize_images()
         if c.grids.enabled:
             self.convert_images_to_grids()

@@ -6,6 +6,8 @@
 from matplotlib import lines
 from matplotlib import pyplot
 from torchvision import utils as vutils
+
+import datetime
 import numpy
 
 from aidesign_gan.libs import utils
@@ -403,7 +405,10 @@ class TrainingResults(Results):
         batch = c.mods.g.test(c.noises.batch_64)
         grid = vutils.make_grid(batch, padding=2, normalize=True).cpu()
         grid = numpy.transpose(grid, (1, 2, 0))
-        file_name = f"before-training.jpg"
+        now = datetime.datetime.now()
+        timestamp = f"time-{now.year:04}{now.month:02}{now.day:02}-{now.hour:02}{now.minute:02}{now.second:02}-"\
+            f"{now.microsecond:06}"
+        file_name = f"before-training-{timestamp}.jpg"
         location = utils.find_in_path(file_name, self.generated_images_path)
         figure = pyplot.figure(figsize=(8, 8))
         pyplot.axis("off")
@@ -420,7 +425,10 @@ class TrainingResults(Results):
         batch = c.mods.g.test(c.noises.batch_64)
         grid = vutils.make_grid(batch, padding=2, normalize=True).cpu()
         grid = numpy.transpose(grid, (1, 2, 0))
-        file_name = f"iter-{c.loops.iter + 1}_epoch-{c.loops.epoch + 1}.jpg"
+        now = datetime.datetime.now()
+        timestamp = f"time-{now.year:04}{now.month:02}{now.day:02}-{now.hour:02}{now.minute:02}{now.second:02}-"\
+            f"{now.microsecond:06}"
+        file_name = f"iter-{c.loops.iter + 1}_epoch-{c.loops.epoch + 1}-{timestamp}.jpg"
         location = utils.find_in_path(file_name, self.generated_images_path)
         figure = pyplot.figure(figsize=(8, 8))
         pyplot.axis("off")
@@ -566,12 +574,26 @@ class GenerationResults(Results):
         self.logln(f"==== G's struct ====")
         self.logln(str(c.g.model))
 
+    def log_batch(self):
+        """Logs the batch info."""
+        self.check_context()
+        c = self.context
+        needs_log = c.prog.batch_index == 0
+        needs_log = needs_log or (c.prog.batch_index + 1) % 15 == 0
+        needs_log = needs_log or c.prog.batch_index == c.prog.batch_count - 1
+        if not needs_log:
+            return
+        self.logln(f"Generated image batch {c.prog.batch_index + 1} / {c.prog.batch_count}")
+
     def save_generated_images(self):
         """Saves the generated images."""
         self.check_context()
         c = self.context
         for index, image in enumerate(c.images.list):
-            location = utils.find_in_path(f"image-{index + 1}.jpg", self.path)
+            now = datetime.datetime.now()
+            timestamp = f"time-{now.year:04}{now.month:02}{now.day:02}-{now.hour:02}{now.minute:02}{now.second:02}-"\
+                f"{now.microsecond:06}"
+            location = utils.find_in_path(f"image-{index + 1}-{timestamp}.jpg", self.path)
             vutils.save_image(image, location, "JPEG")
         count = len(c.images.list)
         if c.grids.enabled:

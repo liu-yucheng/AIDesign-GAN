@@ -7,6 +7,7 @@ from torch import nn
 from torch.utils import data
 from torchvision import datasets
 from torchvision import transforms
+
 import numpy
 import random
 import torch
@@ -157,7 +158,7 @@ class TrainingContext(Context):
             path: the data path
             config: the training coords config subset
         """
-        config = config["data_sets"]
+        config = config["datasets"]
         image_resolution = config["image_resolution"]
         channel_count = config["image_channel_count"]
         train_weight = config["training_set_weight"]
@@ -167,7 +168,7 @@ class TrainingContext(Context):
         batch_size = config["images_per_batch"]
 
         norm_list = [0.5 for _ in range(channel_count)]
-        data_set = datasets.ImageFolder(
+        dataset = datasets.ImageFolder(
             root=path,
             transform=transforms.Compose([
                 transforms.Resize(image_resolution, interpolation=transforms.InterpolationMode.BICUBIC),
@@ -177,7 +178,7 @@ class TrainingContext(Context):
             ])
         )
 
-        size = len(data_set)
+        size = len(dataset)
         subset_ratio = numpy.array([train_weight, valid_weight])
         subset_ratio = subset_ratio / subset_ratio.sum()
         prop_to_use = percents_to_use / 100
@@ -189,8 +190,8 @@ class TrainingContext(Context):
         random.shuffle(indices)
         train_indices = indices[train_start: train_end]
         valid_indices = indices[valid_start: valid_end]
-        train_set = data.Subset(data_set, train_indices)
-        valid_set = data.Subset(data_set, valid_indices)
+        train_set = data.Subset(dataset, train_indices)
+        valid_set = data.Subset(dataset, valid_indices)
         train_loader = data.DataLoader(train_set, batch_size=batch_size, shuffle=True, num_workers=worker_count)
         train_size = len(train_set)
         train_batch_count = len(train_loader)
@@ -340,15 +341,19 @@ class GenerationContext(Context):
     """Generation context.
 
     Attributes:
-        g: the generator modeler
+        g: the generator modeler \n
         images: the images attr dict \n
-            `images.count`: the image count
-            `images.list`: the images to save
+            `images.count`: the image count \n
+            `images.per_batch`: the image count per batch \n
+            `images.list`: the images to save \n
         grids: the grids attr dict \n
             `grids.enabled`: whether the grid mode is enabled \n
             `grids.each_size`: the size of each grid \n
             `grids.padding`: the padding of the grids \n
-        noises: the generator inputs
+        noise_batches: the generator input batches \n
+        prog: the progress attr dict \n
+            `prog.batch_count`: the batch count \n
+            `prog.batch_index`: the batch index \n
     """
 
     def __init__(self):
@@ -357,7 +362,8 @@ class GenerationContext(Context):
         self.g = None
         self.images = None
         self.grids = None
-        self.noises = None
+        self.noise_batches = None
+        self.prog = None
 
     def setup_all(self, coords_config, modelers_config):
         """Sets up the entire context.
@@ -381,10 +387,23 @@ class GenerationContext(Context):
         config = coords_config["generation"]
         self.images = utils.AttrDict()
         self.images.count = config["image_count"]
-        self.images.list = None
+        self.images.per_batch = config["images_per_batch"]
+        self.images.list = []
         config = config["grid_mode"]
         self.grids = utils.AttrDict()
         self.grids.enabled = config["enabled"]
         self.grids.each_size = config["images_per_grid"]
         self.grids.padding = config["padding"]
-        self.noises = self.g.generate_noises(self.images.count)
+
+        noises_left = self.images.count
+        noise_batches = []
+        while noises_left > 0:
+            noise_count = min(noises_left, self.images.per_batch)
+            noise_batch = self.g.generate_noises(noise_count)
+            noise_batches.append(noise_batch)
+            noises_left -= noise_count
+        self.noise_batches = noise_batches
+
+        self.prog = utils.AttrDict()
+        self.prog.batch_count = len(self.noise_batches)
+        self.prog.batch_index = 0

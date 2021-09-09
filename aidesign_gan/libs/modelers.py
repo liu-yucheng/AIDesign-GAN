@@ -15,20 +15,21 @@ class Modeler:
     Attributes:
         model_path: the model path
         config: the config
-        device: the device to use
-        gpu_count: the number of GPUs to use
+        device: the device to use, will be the GPUs if they are available
+        gpu_count: the number of GPUs to use, >= 1 if GPUs are available
         loss_func: the loss function
-        model: the model, a pytorch nn module
+        model: the model, a pytorch nn module, definitely runs on GPUs if they are available
         size: the total size of the model
-        optim: the optimizer
+        optim: the optimizer, can run on GPUs if they are available
     """
 
     def __init__(self, model_path, config, device, gpu_count, loss_func):
         """Inits self with the given args.
 
         Args:
+            model_path: the model path
             config: the config
-            device: the device to use
+            device: the device to use, will be the GPUs if they are available
             gpu_count: the number of GPUs to use
             loss_func: the loss function
         """
@@ -42,7 +43,7 @@ class Modeler:
         self.optim = None
 
     def load(self):
-        """Loads the states of the model."""
+        """Loads the model and optimizer states."""
         state_location = utils.find_in_path(self.config["state_name"], self.model_path)
         optim_location = utils.find_in_path(self.config["optim_name"], self.model_path)
         try:
@@ -56,7 +57,7 @@ class Modeler:
                 utils.save_optim(self.optim, optim_location)
 
     def save(self):
-        """Saves the states of the model."""
+        """Saves the model and optimizer states."""
         state_location = utils.find_in_path(self.config["state_name"], self.model_path)
         optim_location = utils.find_in_path(self.config["optim_name"], self.model_path)
         utils.save_model(self.model, state_location)
@@ -90,9 +91,10 @@ class DModeler(Modeler):
         """Inits self with the given args.
 
         Args:
+            model_path: the model path
             config: the config
-            device: the device to use
-            gpu_count: the number of GPUs to use
+            device: the device to use, will be the GPUs if they are available
+            gpu_count: the number of GPUs to use, >= 1 if GPUs are available
             loss_func: the loss function
             train: training mode, whether to setup the optimizer
         """
@@ -124,12 +126,12 @@ class DModeler(Modeler):
         gradients through a backward pass. Optimize/Update the model. Return the average output and loss value.
 
         Args:
-            batch: the batch of data
-            label: the target label
+            batch: the batch of data, can be on either the CPUs or GPUs, preferred to be on the CPUs
+            label: the target label, definitely on the CPUs
 
         Returns:
-            out_mean: Mean(D(batch)), the average output of D
-            loss_val: Loss(D(batch), label), the loss of D on the batch
+            out_mean: Mean(D(batch)), the average output of D, definitely on the CPUs
+            loss_val: Loss(D(batch), label), the loss of D on the batch, definitely on the CPUs
 
         Raises:
             ValueError: if self.optim is None
@@ -153,12 +155,12 @@ class DModeler(Modeler):
         Set the model to evaluation mode. Forward pass the batch. Find the loss. Return the average output and loss.
 
         Args:
-            batch: the batch of data
-            label: the target label
+            batch: the batch of data, can be on either the CPUs or GPUs, preferred to be on the CPUs
+            label: the target label, definitely on the CPUs
 
         Returns:
-            out_mean: Mean(D(batch)), the average output of D
-            loss_val: Loss(D(batch), label), the loss of D on the batch
+            out_mean: Mean(D(batch)), the average output of D, definitely on the CPUs
+            loss_val: Loss(D(batch), label), the loss of D on the batch, definitely on the CPUs
         """
         self.model.train(False)
         batch, labels = utils.prep_batch_and_labels(batch, label, self.device)
@@ -175,15 +177,15 @@ class DModeler(Modeler):
         Set the model to evaluation mode. Forward pass the batch. Return the output.
 
         Args:
-            batch: the batch of data
+            batch: the batch of data, can be on either the CPUs or GPUs
 
         Returns:
-            output: D(batch), the output of D
+            output: D(batch), the output of D, definitely on the CPUs
         """
         self.model.train(False)
         batch = batch.to(self.device)
         with torch.no_grad():
-            output = self.model(batch).detach().view(-1)
+            output = self.model(batch).detach().cpu().view(-1)
         return output
 
 
@@ -194,9 +196,10 @@ class GModeler(Modeler):
         """Inits self with the given args.
 
         Args:
+            model_path: the model path
             config: the config
-            device: the device to use
-            gpu_count: the number of GPUs to use
+            device: the device to use, will be the GPUs if they are available
+            gpu_count: the number of GPUs to use, >= 1 if GPUs are available
             loss_func: the loss function
             train: training mode, whether to setup the optimizer
         """
@@ -222,15 +225,15 @@ class GModeler(Modeler):
             self.optim = utils.setup_pred_adam(self.model, self.config["adam_optimizer"])
 
     def generate_noises(self, count):
-        """Generates a set of input noises for the model.
+        """Generates a random set of input noises for the model.
 
         Args:
-            count: the number of input noises
+            count: the number of input noises, definitely on the CPUs
 
         Returns:
-            noises: the generated set of noises
+            noises: the generated set of noises, definitely on the CPUs
         """
-        noises = torch.randn(count, self.config["input_size"], 1, 1, device=self.device)
+        noises = torch.randn(count, self.config["input_size"], 1, 1)
         return noises
 
     def train(self, d_model, noises, label):
@@ -241,13 +244,15 @@ class GModeler(Modeler):
         Optimize/Update the model. Return the average output and the loss value.
 
         Args:
-            d_model: the discriminator model
-            noises: the noises used to generate the training batch
-            label: the target label
+            d_model: the discriminator model, can be on either the CPUs or the GPUs, preferred to be on the GPUs; this
+                function will not change the device of d_model
+            noises: the noises used to generate the training batch, can be on either the CPUs or GPUs, preferred to be
+                on the CPUs
+            label: the target label, definitely on the CPUs
 
         Returns:
-            out_mean: Mean(D(G(noises))), the average output of d_model
-            loss_val: Loss(D(G(noises)), label), the loss of the model
+            out_mean: Mean(D(G(noises))), the average output of d_model, definitely on the CPUs
+            loss_val: Loss(D(G(noises)), label), the loss of the model, definitely on the CPUs
 
         Raises:
             ValueError: if self.optim is None
@@ -258,6 +263,7 @@ class GModeler(Modeler):
         d_model_training = d_model.training
         d_model.train(True)
         self.model.zero_grad()
+        noises = noises.to(self.device)
         batch = self.model(noises)
         batch, labels = utils.prep_batch_and_labels(batch, label, self.device)
         output = d_model(batch).view(-1)
@@ -277,17 +283,20 @@ class GModeler(Modeler):
         the discriminator model. Find the loss. Return the average output and the loss.
 
         Args:
-            d_model: the discriminator model
-            noises: the noises used to generate the validation batch
-            label: the target label
+            d_model: the discriminator model, can be on either the CPUs or the GPUs, preferred to be on the GPUs; this
+                function will not change the device of d_model
+            noises: the noises used to generate the validation batch, can be on either the CPUs or GPUs, preferred to
+                be on the CPUs
+            label: the target label, definitely on the CPUs
 
         Returns:
-            out_mean: Mean(D(G(noises))), the average output of d_model
-            loss_val: Loss(D(G(noises)), label), the loss of the model
+            out_mean: Mean(D(G(noises))), the average output of d_model, definitely on the CPUs
+            loss_val: Loss(D(G(noises)), label), the loss of the model, definitely on the CPUs
         """
         self.model.train(False)
         d_model_training = d_model.training
         d_model.train(False)
+        noises = noises.to(self.device)
         with torch.no_grad():
             batch = self.model(noises).detach()
         batch, labels = utils.prep_batch_and_labels(batch, label, self.device)
@@ -306,12 +315,14 @@ class GModeler(Modeler):
         Set the model to evaluation mode. Generate an image batch with the given noises. Return the batch.
 
         Args:
-            noises: the noises used to generate the batch.
+            noises: the noises used to generate the batch, can be on either the CPUs or GPUs, preferred to be on the
+                CPUs
 
         Returns:
-            output: G(noises): the output of the model
+            output: G(noises): the output of the model, definitely on the CPUs
         """
         self.model.train(False)
+        noises = noises.to(self.device)
         with torch.no_grad():
-            output = self.model(noises).detach()
+            output = self.model(noises).detach().cpu()
         return output

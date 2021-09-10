@@ -133,9 +133,11 @@ class TrainingResults(Results):
         self.check_context()
         c = self.context
         self.logln(f"D's size: {c.mods.d.size}")
+        self.logln(f"D's training size: {c.mods.d.training_size}")
         self.logln(f"==== D's struct ====")
         self.logln(str(c.mods.d.model))
         self.logln(f"G's size: {c.mods.g.size}")
+        self.logln(f"G's training size: {c.mods.g.training_size}")
         self.logln(f"==== G's struct ====")
         self.logln(str(c.mods.g.model))
 
@@ -571,6 +573,7 @@ class GenerationResults(Results):
         self.check_context()
         c = self.context
         self.logln(f"G's size: {c.g.size}")
+        self.logln(f"G's training size: {c.g.training_size}")
         self.logln(f"==== G's struct ====")
         self.logln(str(c.g.model))
 

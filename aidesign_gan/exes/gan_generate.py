@@ -20,7 +20,6 @@ Attributes:
 
 import copy
 import datetime
-import select
 import sys
 import traceback
 
@@ -57,6 +56,9 @@ none_model_info = f"\"{_brief_usage}\""fr""" finds that the model_path selection
 Please select a model with the "gan model <path-to-model>" command
 {_usage}
 """
+stopped_session_info = r"""---- The above has been logged to: {} ----
+Stopped the generation session
+"""
 
 argv_copy = None
 model_path = None
@@ -64,7 +66,11 @@ log_location = None
 
 
 def start_session():
-    """Starts a generation session."""
+    """Starts a generation session.
+
+    Raises:
+        BaseException: if any base exception occurred in coordinator execution
+    """
     global model_path
     global log_location
 
@@ -80,7 +86,7 @@ def start_session():
         coord.setup_results()
         coord.setup_context()
         coord.start_generation()
-    except Exception as _:
+    except BaseException as base_exception:
         utils.logstr(all_logs, traceback.format_exc())
         end_time = datetime.datetime.now()
         execution_time = end_time - start_time
@@ -88,7 +94,7 @@ def start_session():
         utils.logln(all_logs, f"Execution stopped after: {execution_time} (days, hours: minutes: seconds)")
         utils.logln(all_logs, "... AIDesign-GAN generation session (stopped from an exception)")
         log_file.close()
-        exit(1)
+        raise base_exception
 
     end_time = datetime.datetime.now()
     execution_time = end_time - start_time
@@ -137,7 +143,16 @@ def run():
         if answer.lower() == "yes" or answer.lower() == "y":
             log_location = utils.find_in_path("log.txt", model_path)
             print(will_start_session_info.format(log_location), end="")
-            start_session()
+
+            try:
+                start_session()
+            except BaseException as base_exception:
+                exit_code = 1
+                if isinstance(base_exception, SystemExit):
+                    exit_code = base_exception.code
+                print(stopped_session_info.format(log_location), end="")
+                exit(exit_code)
+
             print(completed_session_info.format(log_location), end="")
         # elif answer.lower() == "no" or answer.lower() == "n" or any other answer
         else:

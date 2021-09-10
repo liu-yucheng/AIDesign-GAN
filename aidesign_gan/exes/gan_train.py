@@ -38,7 +38,7 @@ _timeout = 30
 info = f"\"{_brief_usage}\":"r"""
 {}
 -
-Please confirm the above generation session setup
+Please confirm the above training session setup
 Do you want to continue? [ Y (Yes) | n (no) ]:"""fr""" < default: Yes, timeout: {_timeout} seconds >
 """
 will_start_session_info = r"""Will start a training session
@@ -62,6 +62,9 @@ none_model_info = f"\"{_brief_usage}\""fr""" finds that the model_path selection
 Please select a model with the "gan model <path-to-model>" command
 {_usage}
 """
+stopped_session_info = r"""---- The above has been logged to: {} ----
+Stopped the training session
+"""
 
 argv_copy = None
 dataset_path = None
@@ -70,7 +73,11 @@ log_location = None
 
 
 def start_session():
-    """Starts a training session."""
+    """Starts a training session.
+
+    Raises:
+        BaseException: if any base exception occurred in coordinator execution
+    """
     global dataset_path
     global model_path
     global log_location
@@ -88,15 +95,15 @@ def start_session():
         coord.setup_results()
         coord.setup_context()
         coord.start_training()
-    except Exception as _:
+    except BaseException as base_exception:
         utils.logstr(all_logs, traceback.format_exc())
         end_time = datetime.datetime.now()
         execution_time = end_time - start_time
         utils.logln(all_logs, "-")
         utils.logln(all_logs, f"Execution stopped after: {execution_time} (days, hours: minutes: seconds)")
-        utils.logln(all_logs, "... AIDesign-GAN training session (stopped from an exception)")
+        utils.logln(all_logs, "... AIDesign-GAN training session (stopped)")
         log_file.close()
-        exit(1)
+        raise base_exception
 
     end_time = datetime.datetime.now()
     execution_time = end_time - start_time
@@ -151,7 +158,16 @@ def run():
         if answer.lower() == "yes" or answer.lower() == "y":
             log_location = utils.find_in_path("log.txt", model_path)
             print(will_start_session_info.format(log_location), end="")
-            start_session()
+
+            try:
+                start_session()
+            except BaseException as base_exception:
+                exit_code = 1
+                if isinstance(base_exception, SystemExit):
+                    exit_code = base_exception.code
+                print(stopped_session_info.format(log_location), end="")
+                exit(exit_code)
+
             print(completed_session_info.format(log_location), end="")
         # elif answer.lower() == "no" or answer.lower() == "n" or any other answer
         else:

@@ -19,8 +19,9 @@ class Modeler:
         gpu_count: the number of GPUs to use, >= 1 if GPUs are available
         loss_func: the loss function
         model: the model, a pytorch nn module, definitely runs on GPUs if they are available
-        size: the total size of the model
         optim: the optimizer, can run on GPUs if they are available
+        size: the total size of the model
+        training_size: the training size of the model, 0 if the model is not initialized to the training mode
     """
 
     def __init__(self, model_path, config, device, gpu_count, loss_func):
@@ -39,8 +40,9 @@ class Modeler:
         self.gpu_count = gpu_count
         self.loss_func = loss_func
         self.model = None
-        self.size = None
         self.optim = None
+        self.size = None
+        self.training_size = None
 
     def load(self):
         """Loads the model and optimizer states."""
@@ -107,17 +109,15 @@ class DModeler(Modeler):
         self.model = self.model.to(self.device)
         self.model = utils.parallelize_model(self.model, self.device, self.gpu_count)
         self.model.apply(utils.init_model_weights)
-        # Init self.size
-        size = 0
-        for param in self.model.parameters():
-            size_of_param = 1
-            for size_of_dim in param.size():
-                size_of_param *= size_of_dim
-            size += size_of_param
-        self.size = size
         # Init self.optim
         if train:
             self.optim = utils.setup_pred_adam(self.model, self.config["adam_optimizer"])
+            self.model.train(True)
+        self.model.train(train)
+        # Init self.size, self.trainable_size
+        size, training_size = utils.find_model_sizes(self.model)
+        self.size = size
+        self.training_size = training_size
 
     def train(self, batch, label):
         """Trains the model with a batch of data and a target label.
@@ -212,17 +212,14 @@ class GModeler(Modeler):
         self.model = self.model.to(self.device)
         self.model = utils.parallelize_model(self.model, self.device, self.gpu_count)
         self.model.apply(utils.init_model_weights)
-        # Init self.size
-        size = 0
-        for param in self.model.parameters():
-            size_of_param = 1
-            for size_of_dim in param.size():
-                size_of_param *= size_of_dim
-            size += size_of_param
-        self.size = size
         # Init self.optim
         if train:
             self.optim = utils.setup_pred_adam(self.model, self.config["adam_optimizer"])
+        self.model.train(train)
+        # Init self.size, self.trainable_size
+        size, training_size = utils.find_model_sizes(self.model)
+        self.size = size
+        self.training_size = training_size
 
     def generate_noises(self, count):
         """Generates a random set of input noises for the model.

@@ -379,3 +379,24 @@ def setup_pred_adam(model, config):
         model.parameters(), lr=config["learning_rate"], betas=(config["beta1"], config["beta2"])
     )
     return pred_adam
+
+
+def find_model_sizes(model):
+    """Finds the total and trainable sizes of a model.
+
+    Args:
+        model: the model
+
+    Returns:
+        size: the total size
+        training_size: the trainable size
+    """
+    training = model.training
+    size = 0
+    training_size = 0
+    for param in model.parameters():
+        param_size = param.numel()
+        size += param_size
+        if training and param.requires_grad:
+            training_size += param_size
+    return size, training_size

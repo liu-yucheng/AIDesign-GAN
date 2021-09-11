@@ -86,7 +86,7 @@ class CoordsConfig(Config):
                 "epochs_per_iteration": 2,
                 "max_rollbacks": 1,
                 "max_early_stops": 1,
-                "dataset": {
+                "datasets": {
                     "loader_worker_count": 0,
                     "percents_to_use": 1,
                     "images_per_batch": 32,

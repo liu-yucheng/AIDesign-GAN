@@ -1,15 +1,4 @@
-"""Executable for the following app parts: the "gan model" command.
-
-Attributes:
-    info: the primary info to display
-
-    too_few_args_info: the info to display when the executable gets too few arguments
-    too_many_args_info: the info to display when the executable gets too many arguments
-    model_does_not_exist_info: the info to display when the selected model does not exist
-    model_is_not_dir_info: the info to display when the selected model is not a directory
-
-    argv_copy: a copy of sys.argv
-"""
+"""Executable module for the "gan model" command."""
 
 # Initially added by: liu-yucheng
 # Last updated by: liu-yucheng
@@ -21,32 +10,54 @@ import sys
 
 from aidesign_gan.libs import statuses
 
+# Private attributes ...
+
 _brief_usage = "gan model <path-to-model>"
 _usage = fr"""Usage: {_brief_usage}
 Help: gan help"""
 
+# ... Private attributes
+# Nominal info strings ...
+
 info = r"""Selected the model at: {}
 Applied the selection to "gan train" and "gan generate"
 """
+"""The primary info to display."""
+
+# ... Nominal info strings
+# Error info strings ...
 
 too_few_args_info = f"\"{_brief_usage}\""r""" gets too few arguments
 Expects 1 arguments; Gets {} arguments"""fr"""
 {_usage}
 """
+"""The info to display when the executable gets too few arguments."""
+
 too_many_args_info = f"\"{_brief_usage}\""r""" gets too many arguments
 Expects 1 arguments; Gets {} arguments"""fr"""
 {_usage}
 """
+"""The info to display when the executable gets too many arguments."""
+
 model_does_not_exist_info = f"\"{_brief_usage}\""r""" cannot find the model
 Please check if the model is present at: {}"""fr"""
 {_usage}
 """
+"""The info to display when the selected model does not exist."""
+
 model_is_not_dir_info = f"\"{_brief_usage}\""r""" finds that the model is not a directory
 Please check if the model appears as a directory at: {}"""fr"""
 {_usage}
 """
+"""The info to display when the selected model is not a directory."""
+
+# ... Error info strings
+# Other public attributes ...
 
 argv_copy = None
+"""A consumable copy of sys.argv."""
+
+# ... Other public attributes
 
 
 def run():

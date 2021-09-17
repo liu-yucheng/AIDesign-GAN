@@ -1,18 +1,4 @@
-"""Executable for the following app parts: the "gan generate" command.
-
-Attributes:
-    info: the primary info to display
-    will_start_session_info: the info to display when the session starts
-    completed_session_info: the info to display when the session completes
-    aborted_session_info: the info to display when the user aborts the session
-
-    too_many_args_info: the info to display when the executable gets too many arguments
-    none_model_info: the info to display when the model selection is None
-
-    argv_copy: a copy of sys.argv
-    model_path: the model path
-    log_location: the log location
-"""
+"""Executable module for the "gan generate" command."""
 
 # Initially added by: liu-yucheng
 # Last updated by: liu-yucheng
@@ -27,11 +13,15 @@ from aidesign_gan.libs import coords
 from aidesign_gan.libs import statuses
 from aidesign_gan.libs import utils
 
+# Private attributes ...
 
 _brief_usage = "gan generate"
 _usage = fr"""Usage: {_brief_usage}
 Help: gan help"""
 _timeout = 30
+
+# ... Private attributes
+# Nominal info strings ...
 
 info = f"\"{_brief_usage}\":"r"""
 {}
@@ -39,38 +29,58 @@ info = f"\"{_brief_usage}\":"r"""
 Please confirm the above generation session setup
 Do you want to continue? [ Y (Yes) | n (no) ]:"""fr""" < default: Yes, timeout: {_timeout} seconds >
 """
+"""The primary info to display."""
+
 will_start_session_info = r"""Will start a generation session
 ---- The following will be logged to: {} ----
 """
+"""The info to display when the session starts."""
+
 completed_session_info = r"""---- The above has been logged to: {} ----
 Completed the generation session
 """
+"""The info to display when the session completes."""
+
 aborted_session_info = r"""Aborted the generation session
 """
+"""The info to display when the user aborts the session."""
+
+# ... Nominal info strings
+# Error info strings ...
 
 too_many_args_info = f"\"{_brief_usage}\""r""" gets too many arguments
 Expects 0 arguments; Gets {} arguments"""fr"""
 {_usage}
 """
+"""The info to display when the executable gets too many arguments."""
+
 none_model_info = f"\"{_brief_usage}\""fr""" finds that the model_path selection is None
 Please select a model with the "gan model <path-to-model>" command
 {_usage}
 """
+"""The info to display when the model selection is None."""
+
 stopped_session_info = r"""---- The above has been logged to: {} ----
 Stopped the generation session
 """
+"""The info to display when the session stops from an exception."""
+
+# ... Error info strings
+# Other public attributes ...
 
 argv_copy = None
+"""A consumable copy of sys.argv."""
+
 model_path = None
+"""The model path."""
+
 log_location = None
+"""The log location."""
+
+# ... Other public attributes
 
 
-def start_session():
-    """Starts a generation session.
-
-    Raises:
-        BaseException: if any base exception occurred in coordinator execution
-    """
+def _start_session():
     global model_path
     global log_location
 
@@ -145,7 +155,7 @@ def run():
             print(will_start_session_info.format(log_location), end="")
 
             try:
-                start_session()
+                _start_session()
             except BaseException as base_exception:
                 exit_code = 1
                 if isinstance(base_exception, SystemExit):

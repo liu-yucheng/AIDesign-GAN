@@ -1,11 +1,4 @@
-"""Executable for the following app parts: the "gan" command.
-
-Attributes:
-    info: the primary info to display
-    unknown_command_info: the info to display when the executable gets an unknown command
-    unknown_arg_info: the info to display when the executable gets an unknown argument
-    argv_copy: a deepcopy of sys.argv, can be consumed by the commands
-"""
+"""Executable module for the "gan" command."""
 
 # Initially added by: liu-yucheng
 # Last updated by: liu-yucheng
@@ -13,6 +6,8 @@ Attributes:
 import copy
 import pkg_resources
 import sys
+
+# Private attributes ...
 
 # Init _version
 _version = "<unknown version>"
@@ -24,17 +19,34 @@ _brief_usage = "gan <command> ..."
 _usage = fr"""Usage: {_brief_usage}
 Help: gan help"""
 
+# ... Private attributes
+# Nominal info strings ...
+
 info = fr"""AIDesign-GAN (aidesign-gan) {_version}
 {_usage}
 """
+"""The primary info to display."""
+
+# ... Nominal info strings
+# Error info strings ...
+
 unknown_command_info = f"\"{_brief_usage}\""r""" gets an unknown command: {}"""fr"""
 {_usage}
 """
+"""The info to display when the executable gets an unknown command."""
+
 unknown_arg_info = f"\"{_brief_usage}\""r""" gets an unknown argument: {}"""fr"""
 {_usage}
 """
+"""The info to display when the executable gets an unknown argument."""
+
+# ... Error info strings
+# Other public attributes ...
 
 argv_copy = None
+"""A consumable copy of sys.argv."""
+
+# ... Other public attributes
 
 
 def _run_command():

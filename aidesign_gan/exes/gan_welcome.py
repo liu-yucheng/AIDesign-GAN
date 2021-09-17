@@ -1,11 +1,4 @@
-"""Executable for the following app parts: the "gan welcome" command.
-
-Attributes:
-    info: the primary info to display
-    too_many_args_info: the info to display when the executable gets too many arguments
-
-    argv_copy: a copy of sys.argv
-"""
+"""Executable module for the "gan welcome" command."""
 
 # Initially added by: liu-yucheng
 # Last updated by: liu-yucheng
@@ -13,6 +6,8 @@ Attributes:
 import copy
 import pkg_resources
 import sys
+
+# Private attributes ...
 
 # Init _version
 _version = "<unknown version>"
@@ -24,14 +19,29 @@ _brief_usage = "gan welcome"
 _usage = fr"""Usage: {_brief_usage}
 Help: gan help"""
 
+# ... Private attributes
+# Nominal info strings ...
+
 info = fr"""Welcome to AIDesign-GAN {_version}! :-)
 """
+"""The primary info to display."""
+
+# ... Nominal info strings
+# Error info strings ...
+
 too_many_args_info = f"\"{_brief_usage}\""r""" gets too many arguments
 Expects 0 arguments; Gets {} arguments"""fr"""
 {_usage}
 """
+"""The info to display when the executable gets too many arguments."""
+
+# ... Error info strings
+# Other public attributes ...
 
 argv_copy = None
+"""A consumable copy of sys.argv."""
+
+# ... Other public attributes
 
 
 def run():

@@ -104,8 +104,6 @@ def _start_session():
 
     try:
         coord = coords.TrainingCoord(dataset_path, model_path, all_logs)
-        coord.setup_results()
-        coord.setup_context()
         coord.start_training()
     except BaseException as base_exception:
         utils.logstr(all_logs, traceback.format_exc())

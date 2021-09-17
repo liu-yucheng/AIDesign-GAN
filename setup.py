@@ -1,8 +1,8 @@
-"""Package setup script.
+"""Package setup executable module.
 
-Inform the package manager (pip/conda/python) on how to install the source in the directory as a package. The
-entry_points param of the setup function specifies the function to be called when the user enters the corresponding
-command.
+When called by a package manager (pip/conda/python), this executable informs the package manager about how to install
+the source directory as a package. The "entry_points" parameter of the setup function specifies the function to call
+when the user enters the corresponding command to the command line.
 """
 
 # Initially added by: liu-yucheng
@@ -28,7 +28,7 @@ def _make_default_app_data():
 def main():
     setuptools.setup(
         name="aidesign-gan",
-        version="0.20.0",
+        version="0.20.1",
         description="AIDesign GAN Modeling Application",
         author="The AIDesign Team",
         packages=setuptools.find_packages(),

@@ -3,22 +3,21 @@
 # Initially added by: liu-yucheng
 # Last updated by: liu-yucheng
 
+import pkg_resources
+
 from aidesign_gan.libs import defaults
 from aidesign_gan.libs import utils
 
 
 class Config:
-    """Super class of the config classes.
-
-    Attributes:
-        location: the config file location
-        items: the config items, the settings
-    """
+    """Super class of the config classes."""
 
     def __init__(self):
         """Inits self."""
         self.location = None
+        """Config file location."""
         self.items = {}
+        """Config items."""
 
     def __getitem__(self, key):
         """Finds the item corresponding to the given key.
@@ -142,7 +141,8 @@ class ModelersConfig(Config):
                 }
             },
             "generator": {
-                "input_size": 128,
+                "noise_resolution": 2,
+                "noise_channel_count": 32,
                 "image_resolution": 64,
                 "image_channel_count": 3,
                 "feature_map_size": 64,
@@ -155,4 +155,41 @@ class ModelersConfig(Config):
                     "beta2": 0.999
                 }
             }
+        }
+
+
+class FormatConfig(Config):
+    """Config format."""
+
+    def __init__(self, model_path):
+        """Inits self with the given args.
+
+        Args:
+            model_path: model path
+
+        Raises:
+            ValueError: if argument model_path is None
+
+        """
+        super().__init__()
+
+        if model_path is None:
+            raise ValueError("Argument model_path cannot be None")
+
+        self.location = utils.find_in_path(defaults.format_config, model_path)
+
+        # Init version
+        version = "<unknown version>"
+        packages = pkg_resources.require("aidesign-gan")
+        if len(packages) > 0:
+            version = packages[0].version
+
+        self.items = {
+            "aidesign_gan_version": version,
+            "aidesign_gan_repo_tag": "v" + version,
+            "coords_config_version": version,
+            "discriminator_struct_version": version,
+            "format_config_version": version,
+            "generator_struct_version": version,
+            "modelers_config_version": version
         }

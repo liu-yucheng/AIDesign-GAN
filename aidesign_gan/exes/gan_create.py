@@ -86,11 +86,13 @@ def run():
         utils.init_folder(path_to_model)
         path_to_model = str(pathlib.Path(path_to_model).resolve())
 
+        format_config = configs.FormatConfig(path_to_model)
         coords_config = configs.CoordsConfig(path_to_model)
         modelers_config = configs.ModelersConfig(path_to_model)
         d_struct = structs.DStruct(path_to_model)
         g_struct = structs.GStruct(path_to_model)
 
+        format_config.load()
         coords_config.load()
         modelers_config.load()
         d_struct.load()

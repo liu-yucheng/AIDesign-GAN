@@ -15,17 +15,14 @@ from aidesign_gan.libs import utils
 
 
 class Struct:
-    """Super class of the NN struct classes.
-
-    Attributes:
-        location: the structure file location
-        definition: the structure definition
-    """
+    """Super class of the NN struct classes."""
 
     def __init__(self):
         """Inits self."""
         self.location = None
+        """Structure file location."""
         self.definition = ""
+        """Structure definition."""
 
     def load(self):
         """Loads the struct definition.
@@ -82,26 +79,26 @@ ic = self.config["image_channel_count"]
 fm = self.config["feature_map_size"]
 
 self.model = nn.Sequential(
-    # Layer group 1. input group
+    # Layer group 1. input group; in res 64
     nn.Conv2d(ic, fm, 3, stride=1, padding=1, bias=False),
     nn.Upsample(size=ir // 2, mode="bilinear", align_corners=False),
     nn.LeakyReLU(0.2, inplace=True),
-    # 2.
+    # 2. in res 32
     nn.Conv2d(fm, 2 * fm, 3, stride=1, padding=1, bias=False),
     nn.Upsample(size=ir // 4, mode="bilinear", align_corners=False),
     nn.BatchNorm2d(2 * fm),
     nn.LeakyReLU(0.2, inplace=True),
-    # 3.
+    # 3. in res 16
     nn.Conv2d(2 * fm, 4 * fm, 3, stride=1, padding=1, bias=False),
     nn.Upsample(size=ir // 8, mode="bilinear", align_corners=False),
     nn.BatchNorm2d(4 * fm),
     nn.LeakyReLU(0.2, inplace=True),
-    # 4.
+    # 4. in res 8
     nn.Conv2d(4 * fm, 8 * fm, 3, stride=1, padding=1, bias=False),
     nn.Upsample(size=ir // 16, mode="bilinear", align_corners=False),
     nn.BatchNorm2d(8 * fm),
     nn.LeakyReLU(0.2, inplace=True),
-    # 5. output group
+    # 5. output group; in res 4; out res 1
     nn.Conv2d(8 * fm, 1, 3, stride=1, padding=1, bias=False),
     nn.Upsample(size=1, mode="bilinear", align_corners=False),
     nn.Sigmoid()
@@ -134,33 +131,34 @@ class GStruct(Struct):
 from torch import nn
 
 self = self
-z = self.config["input_size"]
+zr = self.config["noise_resolution"]
+zc = self.config["noise_channel_count"]
 ir = self.config["image_resolution"]
 ic = self.config["image_channel_count"]
 fm = self.config["feature_map_size"]
 
 self.model = nn.Sequential(
-    # Layer group 1. input group
+    # Layer group 1. input group; in res 1
     nn.Upsample(size=ir // 16, mode="bilinear", align_corners=False),
-    nn.Conv2d(z, 8 * fm, 3, stride=1, padding=1, bias=False),
+    nn.Conv2d(zc, 8 * fm, 3, stride=1, padding=1, bias=False),
     nn.BatchNorm2d(8 * fm),
     nn.ReLU(True),
-    # 2.
+    # 2. in res 4
     nn.Upsample(size=ir // 8, mode="bilinear", align_corners=False),
     nn.Conv2d(8 * fm, 4 * fm, 3, stride=1, padding=1, bias=False),
     nn.BatchNorm2d(4 * fm),
     nn.ReLU(True),
-    # 3.
+    # 3. in res 8
     nn.Upsample(size=ir // 4, mode="bilinear", align_corners=False),
     nn.Conv2d(4 * fm, 2 * fm, 3, stride=1, padding=1, bias=False),
     nn.BatchNorm2d(2 * fm),
     nn.ReLU(True),
-    # 4.
+    # 4. in res 16
     nn.Upsample(size=ir // 2, mode="bilinear", align_corners=False),
     nn.Conv2d(2 * fm, fm, 3, stride=1, padding=1, bias=False),
     nn.BatchNorm2d(fm),
     nn.ReLU(True),
-    # 5. output group
+    # 5. output group; in res 32; out res 64
     nn.Upsample(size=ir, mode="bilinear", align_corners=False),
     nn.Conv2d(fm, ic, 3, stride=1, padding=1, bias=False),
     nn.Tanh()

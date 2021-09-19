@@ -16,34 +16,32 @@ from aidesign_gan.libs import utils
 
 
 class Coord:
-    """Super class of the coord classes.
+    """Super class of the coord classes."""
 
-    Attributes:
-        model_path: the model path
-        log: the log file object
-        coords_config: the coords config
-        modelers_config: the modelers config
-        results: the training results
-        context: the training context
-        results_ready: whether the results are ready
-        context_ready: whether the context is ready
-    """
-
-    def __init__(self, model_path, log):
+    def __init__(self, model_path, logs):
         """Inits self with the given args.
 
         Args:
             model_path: the model path
-            log: the log file object
+            logs: the log file objects
         """
         self.model_path = model_path
-        self.log = log
+        """Model path."""
+        self.logs = logs
+        """Log file objects"""
+
         self.coords_config = None
+        """Coordinators configuration."""
         self.modelers_config = None
+        """Modelers configuration."""
         self.results = None
+        """Results."""
         self.context = None
+        """Context."""
         self.results_ready = False
+        """Whether self.results is ready."""
         self.context_ready = False
+        """Whether self.context is ready."""
 
     def setup_results(self):
         """Sets up self.result.
@@ -63,39 +61,38 @@ class Coord:
 
 
 class TrainingCoord(Coord):
-    """Training coordinator.
+    """Training coordinator."""
 
-    Attributes:
-        data_path: the data path
-        algo: the training algo (algorithm)
-        algo_ready: whether the algo is ready
-    """
-
-    def __init__(self, data_path, model_path, log):
+    def __init__(self, data_path, model_path, logs):
         """Inits self with the given args.
 
         Args:
             data_path: the data path
             model_path: the model path
-            log: the log file object
+            logs: the log file objects
         """
-        super().__init__(model_path, log)
+        super().__init__(model_path, logs)
         self.data_path = data_path
+        """Data path."""
         self.algo = None
+        """Algorithm."""
         self.algo_ready = False
+        """Whether self.algo is ready."""
 
     def setup_results(self):
         """Sets up self.result."""
         path = utils.concat_paths(self.model_path, "Training-Results")
-        self.results = results.TrainingResults(path, self.log)
+        self.results = results.TrainingResults(path, self.logs)
         self.results.init_folders()
         self.results_ready = True
+
         self.results.logln("Completed results setup")
 
     def setup_context(self):
         """Sets up self.context."""
         if not self.results_ready:
             self.setup_results()
+
         self.coords_config = configs.CoordsConfig(self.model_path)
         self.coords_config.load()
         self.modelers_config = configs.ModelersConfig(self.model_path)
@@ -121,6 +118,7 @@ class TrainingCoord(Coord):
         self.context.setup_stats()
         self.context.setup_noises()
         self.context_ready = True
+
         self.results.logln("Completed context setup")
 
     def setup_algo(self):
@@ -131,8 +129,10 @@ class TrainingCoord(Coord):
         """
         if not self.results_ready:
             self.setup_results()
+
         if not self.context_ready:
             self.setup_context()
+
         algo_name = self.coords_config["training"]["algorithm"]
         if algo_name == "iter_level_algo":
             self.algo = algos.IterLevelAlgo()
@@ -142,19 +142,24 @@ class TrainingCoord(Coord):
             self.algo = algos.PredAltSGDAlgo()
         else:
             raise ValueError(f"Unknown algo: {algo_name}")
+
         self.results.log_algo(algo_name)
         self.algo.bind_context_and_results(self.context, self.results)
         self.algo_ready = True
+
         self.results.logln("Completed algo setup")
 
     def start_training(self):
         """Starts the training."""
         if not self.results_ready:
             self.setup_results()
+
         if not self.context_ready:
             self.setup_context()
+
         if not self.algo_ready:
             self.setup_algo()
+
         r = self.results
         r.logln("Started training")
         r.logln("-")
@@ -177,15 +182,17 @@ class GenerationCoord(Coord):
     def setup_results(self):
         """Sets up self.result."""
         path = utils.concat_paths(self.model_path, "Generation-Results")
-        self.results = results.GenerationResults(path, self.log)
+        self.results = results.GenerationResults(path, self.logs)
         self.results.init_folders()
         self.results_ready = True
+
         self.results.logln("Completed results setup")
 
     def setup_context(self):
         """Sets up self.context."""
         if not self.results_ready:
             self.setup_results()
+
         self.coords_config = configs.CoordsConfig(self.model_path)
         self.coords_config.load()
         self.modelers_config = configs.ModelersConfig(self.model_path)
@@ -201,51 +208,65 @@ class GenerationCoord(Coord):
         self.context.setup_all(self.coords_config, self.modelers_config)
         self.results.log_g()
         self.context_ready = True
+
         self.results.logln("Completed context setup")
 
     def normalize_images(self):
         """Normalizes the images."""
         r = self.results
         c = self.context
-        for index in range(len(c.images.list)):
-            c.images.list[index] = vutils.make_grid(c.images.list[index], normalize=True, value_range=(-1, 1))
+
+        for index in range(len(c.images.to_save)):
+            c.images.to_save[index] = vutils.make_grid(c.images.to_save[index], normalize=True, value_range=(-1, 1))
+
         r.logln("Normalized images")
 
     def convert_images_to_grids(self):
         """Converts the images to grids."""
         r = self.results
         c = self.context
-        orig_list = c.images.list
-        c.images.list = []
+
+        orig_list = c.images.to_save
+        c.images.to_save = []
         start_index = 0
         while start_index < c.images.count:
-            end_index = start_index + c.grids.each_size
+            end_index = start_index + c.grids.size_each
             grid = vutils.make_grid(
-                orig_list[start_index: end_index], nrow=math.ceil(c.grids.each_size ** 0.5), padding=c.grids.padding
+                orig_list[start_index: end_index], nrow=math.ceil(c.grids.size_each ** 0.5), padding=c.grids.padding
             )
-            c.images.list.append(grid)
+            c.images.to_save.append(grid)
             start_index = end_index
+
         r.logln("Converted images to grids")
 
     def start_generation(self):
         """Starts the generation."""
         if not self.results_ready:
             self.setup_results()
+
         if not self.context_ready:
             self.setup_context()
+
         r = self.results
         c = self.context
+
         r.logln("Started generation")
-        c.prog.batch_index = 0
-        while c.prog.batch_index < c.prog.batch_count:
-            noise_batch = c.noise_batches[c.prog.batch_index]
+        c.images.to_save = []
+        c.batch_prog.index = 0
+        while c.batch_prog.index < c.batch_prog.count:
+            noise_batch = c.noise_batches[c.batch_prog.index]
             image_batch = c.g.test(noise_batch)
-            c.images.list.append(image_batch)
+            c.images.to_save.append(image_batch)
             r.log_batch()
-            c.prog.batch_index += 1
-        c.images.list = torch.cat(c.images.list)
+            c.batch_prog.index += 1
+
+        c.images.to_save = torch.cat(c.images.to_save)
+
         self.normalize_images()
+
         if c.grids.enabled:
             self.convert_images_to_grids()
+
         r.save_generated_images()
+
         r.logln("Completed generation")

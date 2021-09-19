@@ -93,8 +93,6 @@ def _start_session():
 
     try:
         coord = coords.GenerationCoord(model_path, all_logs)
-        coord.setup_results()
-        coord.setup_context()
         coord.start_generation()
     except BaseException as base_exception:
         utils.logstr(all_logs, traceback.format_exc())

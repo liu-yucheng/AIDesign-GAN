@@ -11,11 +11,15 @@ from torchvision import transforms
 import numpy
 import random
 import torch
+import typing
 
 from aidesign_gan.libs import modelers
 from aidesign_gan.libs import utils
 
 AttrDict = utils.AttrDict
+DModeler = modelers.DModeler
+GModeler = modelers.GModeler
+Union = typing.Union
 
 
 class Context:
@@ -116,9 +120,9 @@ class TrainingContext(Context):
     class Mods(AttrDict):
         """Modelers info."""
 
-        d = None
+        d: Union[None, DModeler] = None
         """Discriminator modeler instance."""
-        g = None
+        g: Union[None, GModeler] = None
         """Generator modeler instance."""
 
     class Labels(AttrDict):

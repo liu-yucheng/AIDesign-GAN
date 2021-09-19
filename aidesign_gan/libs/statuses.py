@@ -3,6 +3,7 @@
 # Initially added by: liu-yucheng
 # Last updated by: liu-yucheng
 
+import pkg_resources
 
 from aidesign_gan.libs import defaults
 from aidesign_gan.libs import utils
@@ -12,16 +13,14 @@ class Status:
     """Super class of the status classes.
 
     Users can access all entries in the items attribute of this class with subscripts of this class.
-
-    Attributes:
-        location: the status file location
-        items: the status items
     """
 
     def __init__(self):
         """Inits self."""
         self.location: str = None
+        """Status file location."""
         self.items: dict = {}
+        """Status items."""
 
     def __getitem__(self, key):
         """Finds the item corresponding to the given key.
@@ -38,7 +37,7 @@ class Status:
 
     def __setitem__(self, key, value):
         """Sets the item corresponding to the key to a specified value.
-        
+
         This function makes self[key] = value a shorthand of self.items[key] = value.
 
         Args:
@@ -73,7 +72,7 @@ class Status:
 
 
 class GANTrainStatus(Status):
-    """Status of the following app parts: the "gan train" command."""
+    """Status of the "gan train" command."""
 
     def __init__(self):
         super().__init__()
@@ -85,7 +84,7 @@ class GANTrainStatus(Status):
 
 
 class GANGenerateStatus(Status):
-    """Status of the following app parts: the "gan generate" command."""
+    """Status of the "gan generate" command."""
 
     def __init__(self):
         super().__init__()

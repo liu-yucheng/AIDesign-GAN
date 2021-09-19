@@ -10,19 +10,7 @@ from aidesign_gan.libs import utils
 
 
 class Modeler:
-    """Super class of the modeler classes.
-
-    Attributes:
-        model_path: the model path
-        config: the config
-        device: the device to use, will be the GPUs if they are available
-        gpu_count: the number of GPUs to use, >= 1 if GPUs are available
-        loss_func: the loss function
-        model: the model, a pytorch nn module, definitely runs on GPUs if they are available
-        optim: the optimizer, can run on GPUs if they are available
-        size: the total size of the model
-        training_size: the training size of the model, 0 if the model is not initialized to the training mode
-    """
+    """Super class of the modeler classes."""
 
     def __init__(self, model_path, config, device, gpu_count, loss_func):
         """Inits self with the given args.
@@ -35,14 +23,23 @@ class Modeler:
             loss_func: the loss function
         """
         self.model_path = model_path
+        """Model path."""
         self.config = config
+        """Discriminator / Generator modelers config subconfig."""
         self.device = device
+        """Device to use, will be the GPUs if they are available."""
         self.gpu_count = gpu_count
+        """Number of GPUs to use, >= 1 if GPUs are available."""
         self.loss_func = loss_func
+        """Loss function."""
         self.model = None
+        """Model, a pytorch nn module, definitely runs on GPUs if they are available."""
         self.optim = None
+        """Optimizer, can run on GPUs if they are available."""
         self.size = None
+        """Total size of the model."""
         self.training_size = None
+        """Training size of the model, 0 if the model is not initialized to the training mode."""
 
     def load(self):
         """Loads the model and optimizer states."""
@@ -230,7 +227,9 @@ class GModeler(Modeler):
         Returns:
             noises: the generated set of noises, definitely on the CPUs
         """
-        noises = torch.randn(count, self.config["input_size"], 1, 1)
+        zr = self.config["noise_resolution"]
+        zc = self.config["noise_channel_count"]
+        noises = torch.randn(count, zc, zr, zr)
         return noises
 
     def train(self, d_model, noises, label):

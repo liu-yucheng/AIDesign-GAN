@@ -15,23 +15,31 @@ import torch
 from aidesign_gan.libs import modelers
 from aidesign_gan.libs import utils
 
+AttrDict = utils.AttrDict
+
 
 class Context:
-    """Super class of the context classes.
+    """Super class of the context classes."""
+    class Rand(AttrDict):
+        """Random info."""
+        mode = None
+        """Random mode."""
+        seed = None
+        """Random seed."""
 
-    Attributes:
-        rand: the random number generators attr dict  \n
-            `rand.mode`: the mode of the random seed \n
-            `rand.seed`: the value of the random seed \n
-        hw: the hardware attr dict \n
-            `hw.device`: the torch device to use \n
-            `hw.gpu_count`: the number of GPUs to use \n
-    """
+    class Hw(AttrDict):
+        """Hardware info."""
+        device = None
+        """Device to use."""
+        gpu_count = None
+        """Number of GPUs to use."""
 
     def __init__(self):
         """Inits self."""
-        self.hw = None
-        self.rand = None
+        self.rand = Context.Rand()
+        """Random info attr dict."""
+        self.hw = Context.Hw()
+        """Hardware info attr dict."""
 
     def setup_rand(self, config):
         """Sets the random seeds with the given args.
@@ -39,18 +47,23 @@ class Context:
         Set up seeds for numpy, random and torch. Set up self.rand and its attributes.
 
         Args:
-            config: the training/generation coords config subset
+            config: the training / generation coords config subset
         """
         mode = "manual"
         seed = config["manual_seed"]
-        if seed is None:
+
+        if hasattr(seed, "__int__"):
+            seed = int(seed)
+            seed = seed % (2 ** 32 - 1)
+        else:  # elif not hasattr(seed, "__int__")
             mode = "auto"
             random.seed(None)
             seed = random.randint(0, 2 ** 32 - 1)
+
         numpy.random.seed(seed)
         random.seed(seed)
         torch.manual_seed(seed)
-        self.rand = utils.AttrDict()
+
         self.rand.mode = mode
         self.rand.seed = seed
 
@@ -60,96 +73,191 @@ class Context:
         Set up self.hw and its attributes.
 
         Args:
-            config: the training/generation coords config subset
+            config: the training / generation coords config subset
         """
         gpu_count = config["gpu_count"]
+
         device_name = "cpu"
         if torch.cuda.is_available() and gpu_count > 0:
             device_name = "cuda:0"
         device = torch.device(device_name)
-        self.hw = utils.AttrDict()
+
         self.hw.device = device
         self.hw.gpu_count = gpu_count
 
 
 class TrainingContext(Context):
-    """Training context.
+    """Training context."""
 
-    Attributes:
-        data: the data attr dict \n
-            `data.size`: the dataset's total size \n
-            `data.size_to_use`: the size of the data portion to use \n
-            `data.batch_size`: the size of each batch \n
-            `data.train.loader`: the training data loader \n
-            `data.train.size`: the training set's size \n
-            `data.train.batch_count`: the number of training batches \n
-            `data.valid.loader`: the validation data loader \n
-            `data.valid.size`: the validation set's size \n
-            `data.valid.batch_count`: the number of validation batches \n
-        mods: the modelers attr dict \n
-            `mods.d`: the discriminator modeler \n
-            `mods.g`: the generator modeler \n
-        mode: the training mode string \n
-        labels: the labels attr dict \n
-            `labels.real`: the real label \n
-            `labels.fake`: the fake label \n
-        loops: the loop control variables attr dict \n
-            `loops.iter_count`: the total number of iterations \n
-            `loops.iter`: the current iteration number \n
-            `loops.epoch_count`: the total number of epochs \n
-            `loops.epoch`: the current epoch number \n
-            `loops.train_index`: the current training batch index \n
-            `loops.valid_index`: the current validation batch index \n
-            `loops.rb.max`: the maximum rollback count \n
-            `loops.rb.d`: the discriminator rollback count \n
-            `loops.rb.g`: the generator rollback count \n
-            `loops.es.max`: the maximum early stop count \n
-            `loops.es.d`: the discriminator early stop count \n
-            `loops.es.g`: the generator early stop count \n
-        latest: the latest output attr dict \n
-            `latest.dx`: the latest average D(X) \n
-            `latest.dgz`: the latest average D(G(Z)) \n
-            `latest.dgz2`: another latest average D(G(Z)) \n
-            `latest.ld`: the latest discriminator loss, L(D) \n
-            `latest.lg`: the latest generator loss, L(G) \n
-        losses: the losses attr dict \n
-            `losses.train.d`: discriminator's training losses \n
-            `losses.train.g`: generator's training losses \n
-            `losses.valid.d`: discriminator's validation losses \n
-            `losses.valid.g`: generator's validation losses \n
-        bests: the best losses attr dict \n
-            `bests.d`: the best discriminator loss overall \n
-            `bests.g`: the best generator loss overall \n
-        rbs: the rollbacks attr dict \n
-            `rbs.d`: the discriminator rollback list \n
-            `rbs.g`: the generator rollback list \n
-        collapses: the training collapses attr dict \n
-            `collapses.epochs`: the collapse epoch list \n
-            `collapses.batch_count`: the collapses batch count in an epoch \n
-            `collapses.max_loss`: the collapses maximum loss for each training batch (in a training batch, if any of
-                the losses is >= collapses.max_loss, the training batch has collapsed) \n
-            `collapses.factor`: the collapse factor (in an epoch, if `collapses.batch_count` is >=
-                `int(collapses.factor * data.train.batch_count)`, the epoch has collapsed) \n
-            `collapses.max_batch_count`: `int(collapses.factor * data.train.batch_count)` \n
-        noises: the fixed generator inputs attr dict \n
-            `noises.valid_set`: the validation batches of generator inputs \n
-            `noises.batch_64`: a batch of 64 generator inputs \n
-    """
+    class Data(AttrDict):
+        """Data info."""
+
+        class TrainValid(AttrDict):
+            """Training validation subset info."""
+
+            loader = None
+            """Subset data loader."""
+            size = None
+            """Total image count."""
+            batch_count = None
+            """Batch count."""
+
+        size = None
+        """Dataset's image count."""
+        size_to_use = None
+        """Image count to use."""
+        batch_size = None
+        """Image count for each mini-batch."""
+        train = TrainValid()
+        """Dataset training subset info."""
+        valid = TrainValid()
+        """Dataset validation subset info."""
+
+    class Mods(AttrDict):
+        """Modelers info."""
+
+        d = None
+        """Discriminator modeler instance."""
+        g = None
+        """Generator modeler instance."""
+
+    class Labels(AttrDict):
+        """Target labels info."""
+
+        real = None
+        """Real label."""
+        fake = None
+        """Fake label."""
+
+    class Loops(AttrDict):
+        """Loop controls info."""
+
+        class IterationEpochBatch(AttrDict):
+            """Iteration epoch batch info."""
+
+            count = None
+            """Count."""
+            index = None
+            """Current index."""
+
+        class RollbackEarlystop(AttrDict):
+            """Rollback earlystop info."""
+
+            max = None
+            """Maximum rollback / earlystop count."""
+            d = None
+            """Discriminator rollback / earlystop count."""
+            g = None
+            """Generator rollback / earlystop count."""
+
+        iteration = IterationEpochBatch()
+        """Iteration control info."""
+        epoch = IterationEpochBatch()
+        """Epoch control info."""
+        train = IterationEpochBatch()
+        """Training batch control info."""
+        valid = IterationEpochBatch()
+        """Validation batch control info."""
+        rb = RollbackEarlystop()
+        """Rollback control info."""
+        es = RollbackEarlystop()
+        """Earlystop control info."""
+
+    class Latest(AttrDict):
+        """Latest batch result info."""
+
+        dx = None
+        """Average D(X)."""
+        dgz = None
+        """Average D(G(Z)) when training D."""
+        dgz2 = None
+        """Average D(G(Z)) when training G."""
+        ld = None
+        """L(D), the loss of D, with range [0, 200]."""
+        lg = None
+        """L(G), the loss of G, with range [0, 100]."""
+
+    class Losses(AttrDict):
+        """Epoch losses info."""
+
+        class Subset(AttrDict):
+            """Data subset losses info."""
+
+            d = None
+            """Discriminator epoch losses."""
+            g = None
+            """Generator epoch losses."""
+
+        train = Subset()
+        """Training losses info."""
+        valid = Subset()
+        """Validation losses info."""
+
+    class Bests(AttrDict):
+        """Best losses info."""
+
+        d = None
+        """Discriminator best loss."""
+        g = None
+        """Generator best loss."""
+
+    class Rbs(AttrDict):
+        """Rollback epochs info."""
+
+        d = None
+        """Discriminator rollback epoch number list."""
+        g = None
+        """Generator rollback epoch number list."""
+
+    class Noises(AttrDict):
+        """Fixed noises info."""
+        valid = None
+        """Validation noise batch."""
+        batch_of_64 = None
+        """A batch of 64 fixed noises."""
+
+    class Collapses(AttrDict):
+        """Training collapses info."""
+
+        epochs = None
+        """Collapses epoch number list."""
+        batch_count = None
+        """Collapses batch count in the current epoch."""
+        max_loss = None
+        """The maximum loss allowed for the batch to pass the collapse detection."""
+        factor = None
+        """The collapse batch factor."""
+        max_batch_count = None
+        """The maximum collapsed batch count allowed for the epoch to pass the collapse detection.
+
+        This is found by calculating max_batch_count = int(self.collapses.factor * self.data.train.batch_count).
+        """
 
     def __init__(self):
         """Inits self."""
         super().__init__()
-        self.data = None
-        self.mods = None
+        self.data = TrainingContext.Data()
+        """Data info attr dict."""
+        self.mods = TrainingContext.Mods()
+        """Modelers info attr dict."""
         self.mode = None
-        self.labels = None
-        self.loops = None
-        self.latest = None
-        self.losses = None
-        self.bests = None
-        self.rbs = None
-        self.noises = None
-        self.collapses = None
+        """Training mode name."""
+        self.labels = TrainingContext.Labels()
+        """Target labels info attr dict."""
+        self.loops = TrainingContext.Loops()
+        """Loop controls info attr dict."""
+        self.latest = TrainingContext.Latest()
+        """Latest batch result info attr dict."""
+        self.losses = TrainingContext.Losses()
+        """Epoch losses info attr dict."""
+        self.bests = TrainingContext.Bests()
+        """Best losses info attr dict."""
+        self.rbs = TrainingContext.Rbs()
+        """Rollback epochs info attr dict."""
+        self.noises = TrainingContext.Noises()
+        """Fixed noises info attr dict."""
+        self.collapses = TrainingContext.Collapses()
+        """Training collapses info attr dict."""
 
     def setup_data(self, path, config):
         """Sets up self.data and its attributes with the given args.
@@ -159,6 +267,7 @@ class TrainingContext(Context):
             config: the training coords config subset
         """
         config = config["datasets"]
+
         image_resolution = config["image_resolution"]
         channel_count = config["image_channel_count"]
         train_weight = config["training_set_weight"]
@@ -199,7 +308,6 @@ class TrainingContext(Context):
         valid_size = len(valid_set)
         valid_batch_count = len(valid_loader)
 
-        self.data = utils.AttrDict()
         self.data.size = size
         self.data.size_to_use = size_to_use
         self.data.batch_size = batch_size
@@ -217,16 +325,18 @@ class TrainingContext(Context):
             config: the modelers config
 
         Raises:
-            ValueError: if self.hw is None
+            ValueError: if self.hw.device is None
         """
-        if self.hw is None:
-            raise ValueError("self.hw cannot be None")
+        if self.hw.device is None:
+            raise ValueError("self.hw.device cannot be None")
+
         d_config = config["discriminator"]
         g_config = config["generator"]
         loss_func = nn.BCELoss()
+
         d = modelers.DModeler(config.model_path, d_config, self.hw.device, self.hw.gpu_count, loss_func)
         g = modelers.GModeler(config.model_path, g_config, self.hw.device, self.hw.gpu_count, loss_func)
-        self.mods = utils.AttrDict()
+
         self.mods.d = d
         self.mods.g = g
 
@@ -237,10 +347,11 @@ class TrainingContext(Context):
             config: the training coords config subset
 
         Raises:
-            ValueError: if self.mods is None; or, if the training mode is unknown (other than "new" and "resume")
+            ValueError: if self.mods.d is None; or, if the training mode is unknown (other than "new" and "resume")
         """
-        if self.mods is None:
-            raise ValueError("self.mods cannot be None")
+        if self.mods.d is None:
+            raise ValueError("self.mods.d cannot be None")
+
         mode = config["mode"]
         if mode == "new":
             self.mods.d.save()
@@ -250,31 +361,39 @@ class TrainingContext(Context):
             self.mods.g.load()
         else:
             raise ValueError(f"Unknown training mode {mode}")
+
         self.mode = mode
 
     def setup_labels(self):
         """Sets up the labels."""
-        self.labels = utils.AttrDict()
-        self.labels.real = 1.0
-        self.labels.fake = 0.0
+        self.labels.real = float(1)
+        self.labels.fake = float(0)
 
     def setup_loops(self, config):
         """Sets up the loop control variables.
 
         Args:
             config: the training coords config subset
+
+        Raises:
+            ValueError: if self.data.size is None
         """
-        iter_count = config["iteration_count"]
+        if self.data.size is None:
+            raise ValueError("self.data.size cannot be None")
+
+        iteration_count = config["iteration_count"]
         epoch_count = config["epochs_per_iteration"]
         max_rb = config["max_rollbacks"]
         max_es = config["max_early_stops"]
-        self.loops = utils.AttrDict()
-        self.loops.iter_count = iter_count
-        self.loops.iter = 0
-        self.loops.epoch_count = epoch_count
-        self.loops.epoch = 0
-        self.loops.train_index = 0
-        self.loops.valid_index = 0
+
+        self.loops.iteration.count = iteration_count
+        self.loops.iteration.index = 0
+        self.loops.epoch.count = epoch_count
+        self.loops.epoch.index = 0
+        self.loops.train.count = self.data.train.batch_count
+        self.loops.train.index = 0
+        self.loops.valid.count = self.data.valid.batch_count
+        self.loops.valid.index = 0
         self.loops.rb.max = max_rb
         self.loops.rb.d = 0
         self.loops.rb.g = 0
@@ -285,85 +404,104 @@ class TrainingContext(Context):
     def setup_stats(self):
         """Sets up the statistics.
 
-        The statistics consists of self.latest, self.losses, self.bests, self.rbs, self.collapses, and their
-        attributes.
+        The statistics include self.latest, self.losses, self.bests, self.rbs, self.collapses, and their attributes.
 
         Raises:
-            ValueError: if self.data is None
+            ValueError: if self.data.size is None
         """
-        if self.data is None:
-            raise ValueError("self.data cannot be None")
-        self.latest = utils.AttrDict()
+        if self.data.size is None:
+            raise ValueError("self.data.size cannot be None")
+
         self.latest.dx = None
         self.latest.dgz = None
         self.latest.dgz2 = None
         self.latest.ld = None
         self.latest.lg = None
-        self.losses = utils.AttrDict()
+
         self.losses.train.d = []
         self.losses.train.g = []
         self.losses.valid.d = []
         self.losses.valid.g = []
-        self.bests = utils.AttrDict()
+
         self.bests.d = None
         self.bests.g = None
-        self.rbs = utils.AttrDict()
+
         self.rbs.d = []
         self.rbs.g = []
-        self.collapses = utils.AttrDict()
+
         self.collapses.epochs = []
         self.collapses.batch_count = 0
-        self.collapses.max_loss = 100
+        self.collapses.max_loss = float(99)
         self.collapses.factor = 0.67
         self.collapses.max_batch_count = int(self.collapses.factor * self.data.train.batch_count)
 
     def setup_noises(self):
-        """Sets up the noises.
+        """Sets up self.noises.
 
         Raises:
-            ValueError: if self.data of self.mods is None
+            ValueError: if self.data.size or self.mods.d is None
         """
-        if self.data is None:
-            raise ValueError("self.data cannot be None")
-        if self.mods is None:
-            raise ValueError("self.mods cannot be None")
-        valid_set = []
+        if self.data.size is None:
+            raise ValueError("self.data.size cannot be None")
+
+        if self.mods.d is None:
+            raise ValueError("self.mods.d cannot be None")
+
+        valid = []
         for _ in range(self.data.valid.batch_count):
             noise_batch = self.mods.g.generate_noises(self.data.batch_size)
-            valid_set.append(noise_batch)
-        batch_64 = self.mods.g.generate_noises(64)
-        self.noises = utils.AttrDict()
-        self.noises.valid_set = valid_set
-        self.noises.batch_64 = batch_64
+            valid.append(noise_batch)
+
+        batch_of_64 = self.mods.g.generate_noises(64)
+
+        self.noises.valid = valid
+        self.noises.batch_of_64 = batch_of_64
 
 
 class GenerationContext(Context):
-    """Generation context.
+    """Generation context."""
 
-    Attributes:
-        g: the generator modeler \n
-        images: the images attr dict \n
-            `images.count`: the image count \n
-            `images.per_batch`: the image count per batch \n
-            `images.list`: the images to save \n
-        grids: the grids attr dict \n
-            `grids.enabled`: whether the grid mode is enabled \n
-            `grids.each_size`: the size of each grid \n
-            `grids.padding`: the padding of the grids \n
-        noise_batches: the generator input batches \n
-        prog: the progress attr dict \n
-            `prog.batch_count`: the batch count \n
-            `prog.batch_index`: the batch index \n
-    """
+    class Images(utils.AttrDict):
+        """Images info."""
+
+        count = None
+        """Image count."""
+        per_batch = None
+        """Image count of each batch."""
+        to_save = None
+        """Images to save."""
+
+    class Grids(utils.AttrDict):
+        """Grid mode info."""
+
+        enabled = None
+        """Whether grid mode is enabled."""
+        size_each = None
+        """Size of each grid."""
+        padding = None
+        """Grid padding width."""
+
+    class BatchProg(utils.AttrDict):
+        """Generation batch progress info."""
+
+        count = None
+        """Count."""
+        index = None
+        """Current index."""
 
     def __init__(self):
         """Inits self."""
         super().__init__()
         self.g = None
-        self.images = None
-        self.grids = None
+        """Generator modeler instance."""
+        self.images = GenerationContext.Images()
+        """Images info attr dict."""
+        self.grids = GenerationContext.Grids()
+        """Grid mode info attr dict."""
         self.noise_batches = None
-        self.prog = None
+        """Noise batch list."""
+        self.batch_prog = GenerationContext.BatchProg()
+        """Generation batch progress info."""
 
     def setup_all(self, coords_config, modelers_config):
         """Sets up the entire context.
@@ -375,26 +513,31 @@ class GenerationContext(Context):
             modelers_config: the modelers config
 
         Raises:
-            ValueError: if self.hw is None
+            ValueError: if self.hw.device is None
         """
-        if self.hw is None:
-            raise ValueError("self.hw cannot be None")
+        if self.hw.device is None:
+            raise ValueError("self.hw.device cannot be None")
+
+        # Setup self.g
         model_path = modelers_config.model_path
         config = modelers_config["generator"]
         loss_func = nn.BCELoss()
         self.g = modelers.GModeler(model_path, config, self.hw.device, self.hw.gpu_count, loss_func, train=False)
         self.g.load()
+
+        # Setup self.images
         config = coords_config["generation"]
-        self.images = utils.AttrDict()
         self.images.count = config["image_count"]
         self.images.per_batch = config["images_per_batch"]
-        self.images.list = []
+        self.images.to_save = []
+
+        # Setup self.grids
         config = config["grid_mode"]
-        self.grids = utils.AttrDict()
         self.grids.enabled = config["enabled"]
-        self.grids.each_size = config["images_per_grid"]
+        self.grids.size_each = config["images_per_grid"]
         self.grids.padding = config["padding"]
 
+        # Setup self.noise_batches
         noises_left = self.images.count
         noise_batches = []
         while noises_left > 0:
@@ -404,6 +547,6 @@ class GenerationContext(Context):
             noises_left -= noise_count
         self.noise_batches = noise_batches
 
-        self.prog = utils.AttrDict()
-        self.prog.batch_count = len(self.noise_batches)
-        self.prog.batch_index = 0
+        # Setup self.batch_prog
+        self.batch_prog.count = len(self.noise_batches)
+        self.batch_prog.index = 0

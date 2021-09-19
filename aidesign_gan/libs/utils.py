@@ -41,7 +41,7 @@ class AttrDict:
         Returns:
             result: the resulting AttrDict
         """
-        # print(f"fromdict____ dic: {dic}")
+        # print(f"fromdict____ dic: {dic}")  # Debug
         result = AttrDict()
         for key in dic:
             result.setattr____(key, dic[key])
@@ -57,7 +57,7 @@ class AttrDict:
         Returns:
             result: the result
         """
-        # print(f"isprotected____ key: {key}")
+        # print(f"isprotected____ key: {key}")  # Debug
         key = str(key)
         result = key[:1] == "_"  # See whether the key is private
         result = result or len(key) >= 4 and key[:2] == "__" and key[-2:] == "__"  # See whether the key is magic
@@ -81,7 +81,7 @@ class AttrDict:
             classdict = type(self).__dict__
             for key in classdict:
                 key = str(key)
-                print(f"__init__ classdict {key}: {classdict[key]}")
+                # print(f"__init__ classdict {key}: {classdict[key]}")  # Debug
                 if not type(self).isprotected____(key):
                     value = classdict[key]
                     self.setattr____(key, value)
@@ -89,14 +89,14 @@ class AttrDict:
         # Set keys with the key names from the variable arguments
         for arg in args:
             arg = str(arg)
-            print(f"__init__ *args arg {arg}")
+            # print(f"__init__ *args arg {arg}")  # Debug
             if not selftype.isprotected____(key):
                 self.setattr____(arg, None)
 
         # Set keys with the key names and values from the keyword arguments
         for kw in kwargs:
             kw = str(kw)
-            print(f"__init__ **kwargs kw {kw}: {kwargs[kw]}")
+            # print(f"__init__ **kwargs kw {kw}: {kwargs[kw]}")  # Debug
             if not selftype.isprotected____(key):
                 self.setattr____(kw, kwargs[kw])
 

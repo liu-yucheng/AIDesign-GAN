@@ -126,7 +126,7 @@ class GStruct(Struct):
         # fmt: off
         self.definition = r"""# G (Generator)
 # CNN (Convolutional Neural Network)
-# Resize convolution
+# Resize transposed convolution
 
 from torch import nn
 
@@ -138,29 +138,29 @@ ic = self.config["image_channel_count"]
 fm = self.config["feature_map_size"]
 
 self.model = nn.Sequential(
-    # Layer group 1. input group; in res 1
+    # Layer group 1. input group; in res zr
     nn.Upsample(size=ir // 16, mode="bilinear", align_corners=False),
-    nn.Conv2d(zc, 8 * fm, 3, stride=1, padding=1, bias=False),
+    nn.ConvTranspose2d(zc, 8 * fm, 3, stride=1, padding=1, bias=False),
     nn.BatchNorm2d(8 * fm),
     nn.ReLU(True),
     # 2. in res 4
     nn.Upsample(size=ir // 8, mode="bilinear", align_corners=False),
-    nn.Conv2d(8 * fm, 4 * fm, 3, stride=1, padding=1, bias=False),
+    nn.ConvTranspose2d(8 * fm, 4 * fm, 3, stride=1, padding=1, bias=False),
     nn.BatchNorm2d(4 * fm),
     nn.ReLU(True),
     # 3. in res 8
     nn.Upsample(size=ir // 4, mode="bilinear", align_corners=False),
-    nn.Conv2d(4 * fm, 2 * fm, 3, stride=1, padding=1, bias=False),
+    nn.ConvTranspose2d(4 * fm, 2 * fm, 3, stride=1, padding=1, bias=False),
     nn.BatchNorm2d(2 * fm),
     nn.ReLU(True),
     # 4. in res 16
     nn.Upsample(size=ir // 2, mode="bilinear", align_corners=False),
-    nn.Conv2d(2 * fm, fm, 3, stride=1, padding=1, bias=False),
+    nn.ConvTranspose2d(2 * fm, fm, 3, stride=1, padding=1, bias=False),
     nn.BatchNorm2d(fm),
     nn.ReLU(True),
     # 5. output group; in res 32; out res 64
     nn.Upsample(size=ir, mode="bilinear", align_corners=False),
-    nn.Conv2d(fm, ic, 3, stride=1, padding=1, bias=False),
+    nn.ConvTranspose2d(fm, ic, 3, stride=1, padding=1, bias=False),
     nn.Tanh()
 )
 """

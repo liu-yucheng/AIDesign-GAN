@@ -67,6 +67,7 @@ class Context:
         numpy.random.seed(seed)
         random.seed(seed)
         torch.manual_seed(seed)
+        torch.cuda.manual_seed_all(seed)
 
         self.rand.mode = mode
         self.rand.seed = seed

@@ -118,9 +118,9 @@ class TrainingResults(Results):
     def init_folders(self):
         """Inits the result folders."""
         utils.init_folder(self.path)
-        self.logln(f"Init'd folder: {self.path}")
-        utils.init_folder(self.generated_images_path, clean=True)
-        self.logln(f"Init'd folder (clean): {self.generated_images_path}")
+        self.logln(f"Initialized folder: {self.path}")
+        utils.init_folder(self.generated_images_path)
+        self.logln(f"Initialized folder: {self.generated_images_path}")
 
     def log_data(self):
         """Logs the data loaders info."""
@@ -660,8 +660,8 @@ class GenerationResults(Results):
 
     def init_folders(self):
         """Inits the result folders."""
-        utils.init_folder(self.path, clean=True)
-        self.logln(f"Init'd folder (clean): {self.path}")
+        utils.init_folder(self.path)
+        self.logln(f"Initialized folder: {self.path}")
 
     def log_g(self):
         """Logs the G modelers info."""

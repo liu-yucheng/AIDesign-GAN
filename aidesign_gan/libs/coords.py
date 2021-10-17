@@ -3,6 +3,7 @@
 # Initially added by: liu-yucheng
 # Last updated by: liu-yucheng
 
+from torchvision import transforms
 from torchvision import utils as vutils
 
 import math
@@ -216,9 +217,19 @@ class GenerationCoord(Coord):
         r = self.results
         c = self.context
 
+        if len(c.images.to_save) <= 0:
+            return
+
+        channel_count = c.images.to_save.size()[1]
+        means = [0.0 for _ in range(channel_count)]
+        sdevs = [0.5 for _ in range(channel_count)]
+
+        normalize = transforms.Normalize(means, sdevs)
+
         for index in range(len(c.images.to_save)):
+            c.images.to_save[index] = normalize(c.images.to_save[index])
             c.images.to_save[index] = vutils.make_grid(
-                c.images.to_save[index], normalize=True, value_range=(-1.0, 1.0)
+                c.images.to_save[index], normalize=True, value_range=(-0.825, 0.825)
             )
 
         r.logln("Normalized images")
@@ -234,7 +245,7 @@ class GenerationCoord(Coord):
         while start_index < c.images.count:
             end_index = start_index + c.grids.size_each
             grid = vutils.make_grid(
-                orig_list[start_index: end_index], nrow=math.ceil(c.grids.size_each ** 0.5), padding=c.grids.padding
+                orig_list[start_index: end_index], nrow=math.ceil(c.grids.size_each ** 0.5), padding=c.grids.padding,
             )
             c.images.to_save.append(grid)
             start_index = end_index

@@ -217,7 +217,9 @@ class GenerationCoord(Coord):
         c = self.context
 
         for index in range(len(c.images.to_save)):
-            c.images.to_save[index] = vutils.make_grid(c.images.to_save[index], normalize=True, value_range=(-1, 1))
+            c.images.to_save[index] = vutils.make_grid(
+                c.images.to_save[index], normalize=True, value_range=(-1.0, 1.0)
+            )
 
         r.logln("Normalized images")
 

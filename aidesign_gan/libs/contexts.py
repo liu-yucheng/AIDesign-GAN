@@ -281,14 +281,15 @@ class TrainingContext(Context):
         worker_count = config["loader_worker_count"]
         batch_size = config["images_per_batch"]
 
-        norm_list = [0.5 for _ in range(channel_count)]
+        means = [0.0 for _ in range(channel_count)]
+        sdevs = [1.0 for _ in range(channel_count)]
         dataset = datasets.ImageFolder(
             root=path,
             transform=transforms.Compose([
                 transforms.Resize(image_resolution, interpolation=transforms.InterpolationMode.BICUBIC),
                 transforms.CenterCrop(image_resolution),
                 transforms.ToTensor(),
-                transforms.Normalize(norm_list, norm_list)
+                transforms.Normalize(means, sdevs)
             ])
         )
 

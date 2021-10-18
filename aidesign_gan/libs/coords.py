@@ -217,19 +217,9 @@ class GenerationCoord(Coord):
         r = self.results
         c = self.context
 
-        if len(c.images.to_save) <= 0:
-            return
-
-        channel_count = c.images.to_save.size()[1]
-        means = [0.5 for _ in range(channel_count)]
-        sdevs = [0.5 for _ in range(channel_count)]
-
-        normalize = transforms.Normalize(means, sdevs)
-
         for index in range(len(c.images.to_save)):
-            c.images.to_save[index] = normalize(c.images.to_save[index])
             c.images.to_save[index] = vutils.make_grid(
-                c.images.to_save[index], normalize=True, value_range=(0, 1)
+                c.images.to_save[index], normalize=True, value_range=(-0.75, 0.75)
             )
 
         r.logln("Normalized images")

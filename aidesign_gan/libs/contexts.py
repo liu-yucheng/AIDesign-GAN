@@ -281,7 +281,7 @@ class TrainingContext(Context):
         worker_count = config["loader_worker_count"]
         batch_size = config["images_per_batch"]
 
-        means = [0.0 for _ in range(channel_count)]
+        means = [0.5 for _ in range(channel_count)]
         sdevs = [0.5 for _ in range(channel_count)]
         dataset = datasets.ImageFolder(
             root=path,

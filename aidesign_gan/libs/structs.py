@@ -3,7 +3,7 @@
 ==== References ====
 Odena, et al., 2016. Deconvolution and Checkerboard Artifacts. https://distill.pub/2016/deconv-checkerboard/
 PyTorch DCGAN tutorial. https://pytorch.org/tutorials/beginner/dcgan_faces_tutorial.html
-Radford, et al., 2016. Unsupervised Representation Learning With Deep Convolutional Genetrative Adversarial Networks.
+Radford, et al., 2016. Unsupervised Representation Learning With Deep Convolutional Generative Adversarial Networks.
     https://arxiv.org/pdf/1511.06434.pdf
 """
 

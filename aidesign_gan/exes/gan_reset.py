@@ -41,7 +41,7 @@ argv_copy = None
 # ... Other public attributes
 
 
-def run() -> None:
+def run():
     """Runs the executable as a command."""
     global argv_copy
     argv_copy_length = len(argv_copy)
@@ -70,6 +70,7 @@ def main():
     argv_copy = copy.deepcopy(sys.argv)
     argv_copy.pop(0)
     run()
+    exit(0)
 
 
 # Let main be the script entry point

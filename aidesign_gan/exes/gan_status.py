@@ -46,7 +46,7 @@ argv_copy = None
 # ... Other public attributes
 
 
-def run() -> None:
+def run():
     """Runs the executable as a command."""
     global argv_copy
     argv_copy_length = len(argv_copy)

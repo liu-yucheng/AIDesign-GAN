@@ -95,8 +95,10 @@ def _run_command():
         from aidesign_gan.exes import gan_reset
         gan_reset.argv_copy = argv_copy
         gan_reset.run()
+        exit(0)
     else:
         print(unknown_command_info.format(command), end="")
+        exit(1)
 
 
 def main():
@@ -112,6 +114,7 @@ def main():
         argv_copy = copy.deepcopy(sys.argv)
         argv_copy.pop(0)
         _run_command()
+        exit(0)
 
 
 # Let main be the script entry point

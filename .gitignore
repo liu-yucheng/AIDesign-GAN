@@ -1,5 +1,5 @@
 # Other ignored files
-.aidesign_gan_app_data/
+**/.aidesign_gan_app_data/
 
 
 # Byte-compiled / optimized / DLL files

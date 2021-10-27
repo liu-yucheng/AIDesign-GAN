@@ -241,7 +241,10 @@ class AttrDict:
 
 
 class TimedInput:
-    """Timed input class."""
+    """Timed input class.
+
+    Python-native and platform-independent timed input prompt.
+    """
 
     def __init__(self):
         """Inits self with the given args."""

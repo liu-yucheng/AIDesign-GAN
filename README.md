@@ -5,7 +5,7 @@
 
 AIDesign GAN modeling application.
 
-# Installation (with `pip`)
+# Installing The App Using `pip`
 
 1. Go to the root directory of this repository.
 2. If you are using GUI, open a command line window in the directory.
@@ -22,15 +22,15 @@ AIDesign GAN modeling application.
 1. Run the `pip install ./` command. This will install the application.
 2. If you need to update the app or change the code, you will need to reinstall the package.
 
-# Usage
+# Using The App On The Command Line
 
 `gan`: The main command, which provides you the access to all the subcommands of the app.
 
-`gan help`: The help subcommand, which tells you in detail about how you can use the app.
+`gan help`: The help subcommand, which tells you the details about how to use the app.
 
 # References
 
-**Note: **The referenced works are listed below in alphabetical order. You can find the reference details in the docstring of the modules that are relevant to the referenced works.
+**Note:** The referenced works are listed below in alphabetical order. You can find the reference details in the docstring of the modules that are relevant to the referenced works.
 
 Odena, et al., 2016. *Deconvolution and Checkerboard Artifacts.* https://distill.pub/2016/deconv-checkerboard/
 

@@ -8,6 +8,7 @@ from matplotlib import pyplot
 from torchvision import utils as vutils
 
 import datetime
+import math
 import numpy
 
 from aidesign_gan.libs import contexts
@@ -424,9 +425,9 @@ class TrainingResults(Results):
 
         batch = next(iter(c.data.train.loader))
         batch = batch[0].cpu()
-        batch = batch[:64]
+        batch = batch[:c.data.batch_size]
 
-        grid = vutils.make_grid(batch, padding=2, normalize=True).cpu()
+        grid = vutils.make_grid(batch, nrow=math.ceil(c.data.batch_size ** 0.5), padding=2, normalize=True).cpu()
         grid = numpy.transpose(grid, (1, 2, 0))
 
         location = utils.find_in_path("Training-Images.jpg", self.path)
@@ -446,9 +447,9 @@ class TrainingResults(Results):
 
         batch = next(iter(c.data.valid.loader))
         batch = batch[0].cpu()
-        batch = batch[:64]
+        batch = batch[:c.data.batch_size]
 
-        grid = vutils.make_grid(batch, padding=2, normalize=True).cpu()
+        grid = vutils.make_grid(batch, nrow=math.ceil(c.data.batch_size ** 0.5), padding=2, normalize=True).cpu()
         grid = numpy.transpose(grid, (1, 2, 0))
 
         location = utils.find_in_path("Validation-Images.jpg", self.path)
@@ -466,9 +467,9 @@ class TrainingResults(Results):
         self.check_context()
         c: TrainingContext = self.context
 
-        batch = c.mods.g.test(c.noises.batch_of_64)
+        batch = c.mods.g.test(c.noises.ref_batch)
 
-        grid = vutils.make_grid(batch, padding=2, normalize=True).cpu()
+        grid = vutils.make_grid(batch, nrow=math.ceil(c.data.batch_size ** 0.5), padding=2, normalize=True).cpu()
         grid = numpy.transpose(grid, (1, 2, 0))
 
         now = datetime.datetime.now()
@@ -491,9 +492,9 @@ class TrainingResults(Results):
         self.check_context()
         c: TrainingContext = self.context
 
-        batch = c.mods.g.test(c.noises.batch_of_64)
+        batch = c.mods.g.test(c.noises.ref_batch)
 
-        grid = vutils.make_grid(batch, padding=2, normalize=True).cpu()
+        grid = vutils.make_grid(batch, nrow=math.ceil(c.data.batch_size ** 0.5), padding=2, normalize=True).cpu()
         grid = numpy.transpose(grid, (1, 2, 0))
 
         now = datetime.datetime.now()
@@ -609,13 +610,13 @@ class TrainingResults(Results):
 
         tbatch = next(iter(c.data.train.loader))
         tbatch = tbatch[0].cpu()
-        tbatch = tbatch[:64]
+        tbatch = tbatch[:c.data.batch_size]
 
         vbatch = next(iter(c.data.valid.loader))
         vbatch = vbatch[0].cpu()
-        vbatch = vbatch[:64]
+        vbatch = vbatch[:c.data.batch_size]
 
-        gbatch = c.mods.g.test(c.noises.batch_of_64)
+        gbatch = c.mods.g.test(c.noises.ref_batch)
 
         tgrid = vutils.make_grid(tbatch, padding=2, normalize=True).cpu()
         vgrid = vutils.make_grid(vbatch, padding=2, normalize=True).cpu()

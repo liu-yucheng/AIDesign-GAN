@@ -218,8 +218,8 @@ class TrainingContext(Context):
         """Fixed noises info."""
         valid = None
         """Validation noise batch."""
-        batch_of_64 = None
-        """A batch of 64 fixed noises."""
+        ref_batch = None
+        """A reference batch."""
 
     class Collapses(AttrDict):
         """Training collapses info."""
@@ -458,10 +458,10 @@ class TrainingContext(Context):
             noise_batch = self.mods.g.generate_noises(self.data.batch_size)
             valid.append(noise_batch)
 
-        batch_of_64 = self.mods.g.generate_noises(64)
+        ref_batch = self.mods.g.generate_noises(self.data.batch_size)
 
         self.noises.valid = valid
-        self.noises.batch_of_64 = batch_of_64
+        self.noises.ref_batch = ref_batch
 
 
 class GenerationContext(Context):

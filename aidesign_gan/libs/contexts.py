@@ -338,7 +338,7 @@ class TrainingContext(Context):
 
         d_config = config["discriminator"]
         g_config = config["generator"]
-        loss_func = nn.BCELoss()
+        loss_func = nn.BCEWithLogitsLoss()
 
         d = modelers.DModeler(config.model_path, d_config, self.hw.device, self.hw.gpu_count, loss_func)
         g = modelers.GModeler(config.model_path, g_config, self.hw.device, self.hw.gpu_count, loss_func)
@@ -372,8 +372,8 @@ class TrainingContext(Context):
 
     def setup_labels(self):
         """Sets up the labels."""
-        self.labels.real = float(1)
-        self.labels.fake = float(0)
+        self.labels.real = float(1 - 1e-5)
+        self.labels.fake = float(1e-5)
 
     def setup_loops(self, config):
         """Sets up the loop control variables.

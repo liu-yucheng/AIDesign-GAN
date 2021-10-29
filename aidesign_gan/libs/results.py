@@ -316,7 +316,6 @@ class TrainingResults(Results):
             self.logstr(f"  D: D(X) = {c.latest.dx:.6f} D(G(Z)) = {c.latest.dgz:.6f} L(D) = {c.latest.ld:.6f}\n")
             self.logstr(f"  G: D(G(Z)) = {c.latest.dgz2:.6f} L(G) = {c.latest.lg:.6f}")
         elif "v" in batch_type:
-            self.logstr(" ")
             if "d" in batch_type:
                 if "r" in batch_type:
                     self.logstr(f"D(X) = {c.latest.dx:.6f} L(D) = {c.latest.ld:.6f}")
@@ -618,9 +617,9 @@ class TrainingResults(Results):
 
         gbatch = c.mods.g.test(c.noises.ref_batch)
 
-        tgrid = vutils.make_grid(tbatch, padding=2, normalize=True).cpu()
-        vgrid = vutils.make_grid(vbatch, padding=2, normalize=True).cpu()
-        ggrid = vutils.make_grid(gbatch, padding=2, normalize=True).cpu()
+        tgrid = vutils.make_grid(tbatch, nrow=math.ceil(c.data.batch_size ** 0.5), padding=2, normalize=True).cpu()
+        vgrid = vutils.make_grid(vbatch, nrow=math.ceil(c.data.batch_size ** 0.5), padding=2, normalize=True).cpu()
+        ggrid = vutils.make_grid(gbatch, nrow=math.ceil(c.data.batch_size ** 0.5), padding=2, normalize=True).cpu()
 
         tgrid = numpy.transpose(tgrid, (1, 2, 0))
         vgrid = numpy.transpose(vgrid, (1, 2, 0))

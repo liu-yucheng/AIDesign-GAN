@@ -50,6 +50,8 @@ class PredAdam(optim.Optimizer):
         Args:
             closure: a closure that reevaluates the model and returns the loss
         """
+        # print("step called")  # Debug
+
         loss = None
         if closure is not None:
             loss = closure()

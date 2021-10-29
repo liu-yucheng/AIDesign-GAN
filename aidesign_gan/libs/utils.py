@@ -576,3 +576,49 @@ def find_model_sizes(model):
         if training and param.requires_grad:
             training_size += param_size
     return size, training_size
+
+
+def half_float_nan_to_num(tensor):
+    """Applies a half-precison float overflow-underflow-preventing nan_to_num operation to a tensor.
+
+    Does nothing if the given tensor is not an instance of torch.Tensor.
+
+    Args:
+        tensor: the tensor
+    """
+    if isinstance(tensor, torch.Tensor):
+        torch.nan_to_num_(tensor, nan=0.0, posinf=65504.0, neginf=-65504.0)
+
+
+def nan_to_num_model(model):
+    """Applies nan_to_num to a model.
+
+    Args:
+        model: the model, a pytorch nn module
+    """
+    class_name = model.__class__.__name__
+    if class_name.find("Conv") != -1:
+        half_float_nan_to_num(model.weight.data)
+        half_float_nan_to_num(model.weight.grad.data)
+    elif class_name.find("BatchNorm") != -1:
+        half_float_nan_to_num(model.weight.data)
+        half_float_nan_to_num(model.weight.grad.data)
+        half_float_nan_to_num(model.bias.data)
+        half_float_nan_to_num(model.bias.grad.data)
+
+
+def nan_to_num_optim(optim):
+    """Applies nan_to_num to an optimizer.
+
+    Args:
+        optim: the optimizer, a PyTorch optim
+    """
+    for group in optim.param_groups:
+        for param in group["params"]:
+            if param.grad is None:
+                continue
+            grad = param.grad.data
+            half_float_nan_to_num(grad)
+            state = optim.state[param]
+            for key in state:
+                half_float_nan_to_num(state[key])

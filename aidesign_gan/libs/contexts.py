@@ -16,22 +16,22 @@ import typing
 from aidesign_gan.libs import modelers
 from aidesign_gan.libs import utils
 
-AttrDict = utils.AttrDict
-DModeler = modelers.DModeler
-GModeler = modelers.GModeler
-Union = typing.Union
+_AttrDict = utils.AttrDict
+_DModeler = modelers.DModeler
+_GModeler = modelers.GModeler
+_Union = typing.Union
 
 
 class Context:
     """Super class of the context classes."""
-    class Rand(AttrDict):
+    class Rand(_AttrDict):
         """Random info."""
         mode = None
         """Random mode."""
         seed = None
         """Random seed."""
 
-    class Hw(AttrDict):
+    class Hw(_AttrDict):
         """Hardware info."""
         device = None
         """Device to use."""
@@ -44,6 +44,10 @@ class Context:
         """Random info attr dict."""
         self.hw = Context.Hw()
         """Hardware info attr dict."""
+
+        # Explicitly set torch default dtype to float32 and default tensor type to FloatTensor
+        torch.set_default_dtype(torch.float32)
+        torch.set_default_tensor_type(torch.FloatTensor)
 
     def setup_rand(self, config):
         """Sets the random seeds with the given args.
@@ -94,10 +98,10 @@ class Context:
 class TrainingContext(Context):
     """Training context."""
 
-    class Data(AttrDict):
+    class Data(_AttrDict):
         """Data info."""
 
-        class TrainValid(AttrDict):
+        class TrainValid(_AttrDict):
             """Training validation subset info."""
 
             loader = None
@@ -118,15 +122,15 @@ class TrainingContext(Context):
         valid = TrainValid()
         """Dataset validation subset info."""
 
-    class Mods(AttrDict):
+    class Mods(_AttrDict):
         """Modelers info."""
 
-        d: Union[None, DModeler] = None
+        d: _Union[None, _DModeler] = None
         """Discriminator modeler instance."""
-        g: Union[None, GModeler] = None
+        g: _Union[None, _GModeler] = None
         """Generator modeler instance."""
 
-    class Labels(AttrDict):
+    class Labels(_AttrDict):
         """Target labels info."""
 
         real = None
@@ -134,10 +138,10 @@ class TrainingContext(Context):
         fake = None
         """Fake label."""
 
-    class Loops(AttrDict):
+    class Loops(_AttrDict):
         """Loop controls info."""
 
-        class IterationEpochBatch(AttrDict):
+        class IterationEpochBatch(_AttrDict):
             """Iteration epoch batch info."""
 
             count = None
@@ -145,7 +149,7 @@ class TrainingContext(Context):
             index = None
             """Current index."""
 
-        class RollbackEarlystop(AttrDict):
+        class RollbackEarlystop(_AttrDict):
             """Rollback earlystop info."""
 
             max = None
@@ -168,7 +172,7 @@ class TrainingContext(Context):
         es = RollbackEarlystop()
         """Earlystop control info."""
 
-    class Latest(AttrDict):
+    class Latest(_AttrDict):
         """Latest batch result info."""
 
         dx = None
@@ -182,10 +186,10 @@ class TrainingContext(Context):
         lg = None
         """L(G), the loss of G, with range [0, 100]."""
 
-    class Losses(AttrDict):
+    class Losses(_AttrDict):
         """Epoch losses info."""
 
-        class Subset(AttrDict):
+        class Subset(_AttrDict):
             """Data subset losses info."""
 
             d = None
@@ -198,7 +202,7 @@ class TrainingContext(Context):
         valid = Subset()
         """Validation losses info."""
 
-    class Bests(AttrDict):
+    class Bests(_AttrDict):
         """Best losses info."""
 
         d = None
@@ -206,7 +210,7 @@ class TrainingContext(Context):
         g = None
         """Generator best loss."""
 
-    class Rbs(AttrDict):
+    class Rbs(_AttrDict):
         """Rollback epochs info."""
 
         d = None
@@ -214,14 +218,14 @@ class TrainingContext(Context):
         g = None
         """Generator rollback epoch number list."""
 
-    class Noises(AttrDict):
+    class Noises(_AttrDict):
         """Fixed noises info."""
         valid = None
         """Validation noise batch."""
         ref_batch = None
         """A reference batch."""
 
-    class Collapses(AttrDict):
+    class Collapses(_AttrDict):
         """Training collapses info."""
 
         epochs = None
@@ -338,7 +342,7 @@ class TrainingContext(Context):
 
         d_config = config["discriminator"]
         g_config = config["generator"]
-        loss_func = nn.BCEWithLogitsLoss()
+        loss_func = nn.BCELoss()
 
         d = modelers.DModeler(config.model_path, d_config, self.hw.device, self.hw.gpu_count, loss_func)
         g = modelers.GModeler(config.model_path, g_config, self.hw.device, self.hw.gpu_count, loss_func)
@@ -372,8 +376,8 @@ class TrainingContext(Context):
 
     def setup_labels(self):
         """Sets up the labels."""
-        self.labels.real = float(1 - 1e-5)
-        self.labels.fake = float(1e-5)
+        self.labels.real = float(1)
+        self.labels.fake = float(0)
 
     def setup_loops(self, config):
         """Sets up the loop control variables.

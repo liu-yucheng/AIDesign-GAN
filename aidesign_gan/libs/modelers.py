@@ -3,13 +3,12 @@
 # Initially added by: liu-yucheng
 # Last updated by: liu-yucheng
 
-from torch.cuda.amp import autocast_mode
 import torch
 
 from aidesign_gan.libs import structs
 from aidesign_gan.libs import utils
 
-autocast = autocast_mode.autocast
+_no_grad = torch.no_grad
 
 
 class Modeler:
@@ -43,8 +42,6 @@ class Modeler:
         """Total size of the model."""
         self.training_size = None
         """Training size of the model, 0 if the model is not initialized to the training mode."""
-        self.scaler = torch.cuda.amp.GradScaler()
-        """CUDA AMP gradient scaler."""
 
     def load(self):
         """Loads the model and optimizer states."""
@@ -103,6 +100,7 @@ class DModeler(Modeler):
             train: training mode, whether to setup the optimizer
         """
         super().__init__(model_path, config, device, gpu_count, loss_func)
+
         # Init self.model
         struct = structs.DStruct(self.model_path)
         struct.location = utils.find_in_path(self.config["struct_name"], self.model_path)
@@ -110,18 +108,26 @@ class DModeler(Modeler):
         exec(struct.definition)
         self.model = self.model.to(self.device)
         self.model = utils.parallelize_model(self.model, self.device, self.gpu_count)
-        self.model.apply(utils.init_model_weights)
+
+        # Init model parameters
+        params_stddev_key = "params_init_stddev"
+        if params_stddev_key in self.config:
+            params_init_func = utils.find_params_init_func(params_stddev=self.config[params_stddev_key])
+        else:
+            params_init_func = utils.find_params_init_func()
+        self.model.apply(params_init_func)
+
         # Init self.optim
         if train:
             self.optim = utils.setup_pred_adam(self.model, self.config["adam_optimizer"])
             self.model.train(True)
         self.model.train(train)
+
         # Init self.size, self.trainable_size
         size, training_size = utils.find_model_sizes(self.model)
         self.size = size
         self.training_size = training_size
 
-    @autocast()
     def train(self, batch, label):
         """Trains the model with a batch of data and a target label.
 
@@ -141,31 +147,23 @@ class DModeler(Modeler):
         """
         if self.optim is None:
             raise ValueError("self.optim cannot be None")
+
         self.model.train(True)
         self.model.zero_grad()
         self.optim.zero_grad()
 
         batch, labels = utils.prep_batch_and_labels(batch, label, self.device)
         output = self.model(batch).view(-1)
-        logit_output = torch.logit(output, eps=1e-5)
-        loss = self.loss_func(logit_output, labels)
+        output = output.float()
+
+        loss = self.loss_func(output, labels)
         loss.backward()
         self.optim.step()
 
-        # self.scaler.scale(loss).backward()
-        # self.model.apply(utils.nan_to_num_model)
-        # utils.nan_to_num_optim(self.optim)
-        # self.scaler.unscale_(self.optim)
-        # print("D step?")  # Debug
-        # self.scaler.step(self.optim)
-        # self.optim.step()  # Debug
-        # self.scaler.update()
-
-        out_mean = output.float().mean().item()
-        loss_val = loss.float().item()
+        out_mean = output.mean().item()
+        loss_val = loss.item()
         return out_mean, loss_val
 
-    @autocast()
     def valid(self, batch, label):
         """Validates the model with a batch of data and a target label.
 
@@ -180,16 +178,18 @@ class DModeler(Modeler):
             loss_val: Loss(D(batch), label), the loss of D on the batch, definitely on the CPUs
         """
         self.model.train(False)
+
         batch, labels = utils.prep_batch_and_labels(batch, label, self.device)
-        with torch.no_grad():
+        with _no_grad():
             output = self.model(batch).detach().view(-1)
-            logit_output = torch.logit(output, eps=1e-5)
-            loss = self.loss_func(logit_output, labels)
-        out_mean = output.float().mean().item()
-        loss_val = loss.float().item()
+        output = output.float()
+
+        loss = self.loss_func(output, labels)
+
+        out_mean = output.mean().item()
+        loss_val = loss.item()
         return out_mean, loss_val
 
-    @autocast()
     def test(self, batch):
         """Tests/Uses the model with a batch of data.
 
@@ -202,10 +202,13 @@ class DModeler(Modeler):
             output: D(batch), the output of D, definitely on the CPUs
         """
         self.model.train(False)
+
         batch = batch.to(self.device)
-        with torch.no_grad():
-            output = self.model(batch).detach().cpu().view(-1)
+        with _no_grad():
+            output = self.model(batch).detach().view(-1)
         output = output.float()
+        output = output.cpu()
+
         return output
 
 
@@ -224,6 +227,7 @@ class GModeler(Modeler):
             train: training mode, whether to setup the optimizer
         """
         super().__init__(model_path, config, device, gpu_count, loss_func)
+
         # Init self.model
         struct = structs.GStruct(self.model_path)
         struct.location = utils.find_in_path(self.config["struct_name"], self.model_path)
@@ -231,11 +235,20 @@ class GModeler(Modeler):
         exec(struct.definition)
         self.model = self.model.to(self.device)
         self.model = utils.parallelize_model(self.model, self.device, self.gpu_count)
-        self.model.apply(utils.init_model_weights)
+
+        # Init model parameters
+        params_stddev_key = "params_init_stddev"
+        if params_stddev_key in self.config:
+            params_init_func = utils.find_params_init_func(params_stddev=self.config[params_stddev_key])
+        else:
+            params_init_func = utils.find_params_init_func()
+        self.model.apply(params_init_func)
+
         # Init self.optim
         if train:
             self.optim = utils.setup_pred_adam(self.model, self.config["adam_optimizer"])
         self.model.train(train)
+
         # Init self.size, self.trainable_size
         size, training_size = utils.find_model_sizes(self.model)
         self.size = size
@@ -255,7 +268,6 @@ class GModeler(Modeler):
         noises = torch.randn(count, zc, zr, zr)
         return noises
 
-    @autocast()
     def train(self, d_model, noises, label):
         """Trains the model with the given args.
 
@@ -279,6 +291,7 @@ class GModeler(Modeler):
         """
         if self.optim is None:
             raise ValueError("self.optim cannot be None")
+
         self.model.train(True)
         d_model_training = d_model.training
         d_model.train(True)
@@ -287,29 +300,22 @@ class GModeler(Modeler):
 
         noises = noises.to(self.device)
         batch = self.model(noises)
+        batch = batch.float()
+
         batch, labels = utils.prep_batch_and_labels(batch, label, self.device)
         output = d_model(batch).view(-1)
-        logit_output = torch.logit(output, eps=1e-5)
-        loss = self.loss_func(logit_output, labels)
+        output = output.float()
+
+        loss = self.loss_func(output, labels)
         loss.backward()
         self.optim.step()
 
-        # self.scaler.scale(loss).backward()
-        # self.model.apply(utils.nan_to_num_model)
-        # utils.nan_to_num_optim(self.optim)
-        # self.scaler.unscale_(self.optim)
-        # print("G step?")  # Debug
-        # self.scaler.step(self.optim)
-        # self.optim.step()  # Debug
-        # self.scaler.update()
+        d_model.train(d_model_training)
 
-        if not d_model_training:
-            d_model.train(False)
-        out_mean = output.float().mean().item()
-        loss_val = loss.float().item()
+        out_mean = output.mean().item()
+        loss_val = loss.item()
         return out_mean, loss_val
 
-    @autocast()
     def valid(self, d_model, noises, label):
         """Validates the model with the given args.
 
@@ -330,21 +336,24 @@ class GModeler(Modeler):
         self.model.train(False)
         d_model_training = d_model.training
         d_model.train(False)
+
         noises = noises.to(self.device)
-        with torch.no_grad():
+        with _no_grad():
             batch = self.model(noises).detach()
+        batch = batch.float()
+
         batch, labels = utils.prep_batch_and_labels(batch, label, self.device)
-        with torch.no_grad():
+        with _no_grad():
             output = d_model(batch).detach().view(-1)
-            logit_output = torch.logit(output, eps=1e-5)
-            loss = self.loss_func(logit_output, labels)
-        if d_model_training:
-            d_model.train(True)
-        out_mean = output.float().mean().item()
-        loss_val = loss.float().item()
+        output = output.float()
+
+        loss = self.loss_func(output, labels)
+
+        d_model.train(d_model_training)
+        out_mean = output.mean().item()
+        loss_val = loss.item()
         return out_mean, loss_val
 
-    @autocast()
     def test(self, noises):
         """Tests/Uses the model with the given args.
 
@@ -358,8 +367,11 @@ class GModeler(Modeler):
             output: G(noises): the output of the model, definitely on the CPUs
         """
         self.model.train(False)
+
         noises = noises.to(self.device)
-        with torch.no_grad():
-            output = self.model(noises).detach().cpu()
+        with _no_grad():
+            output = self.model(noises).detach()
         output = output.float()
+        output = output.cpu()
+
         return output

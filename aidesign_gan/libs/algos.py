@@ -8,8 +8,8 @@ import numpy
 from aidesign_gan.libs import contexts
 from aidesign_gan.libs import results
 
-TrainingResults = results.TrainingResults
-TrainingContext = contexts.TrainingContext
+_TrainingResults = results.TrainingResults
+_TrainingContext = contexts.TrainingContext
 
 
 class Algo:
@@ -64,8 +64,8 @@ class IterLevelAlgo(Algo):
 
     def train_d(self):
         """Trains D with the training set."""
-        r: TrainingResults = self.results
-        c: TrainingContext = self.context
+        r: _TrainingResults = self.results
+        c: _TrainingContext = self.context
         r.logln("Started training D")
         lds = []
         c.loops.train.index = 0
@@ -91,8 +91,8 @@ class IterLevelAlgo(Algo):
 
     def valid_d(self):
         """Validates D with the validation set."""
-        r: TrainingResults = self.results
-        c: TrainingContext = self.context
+        r: _TrainingResults = self.results
+        c: _TrainingContext = self.context
 
         r.logln("Started validating D")
 
@@ -126,8 +126,8 @@ class IterLevelAlgo(Algo):
 
     def save_best_d(self):
         """Saves the D model that performs the best."""
-        r: TrainingResults = self.results
-        c: TrainingContext = self.context
+        r: _TrainingResults = self.results
+        c: _TrainingContext = self.context
         r.log_best_losses("d")
         curr_ld = c.losses.valid.d[-1]
         if c.bests.d is None or curr_ld <= c.bests.d:
@@ -149,8 +149,8 @@ class IterLevelAlgo(Algo):
 
     def train_g(self):
         """Trains G with the training set."""
-        r: TrainingResults = self.results
-        c: TrainingContext = self.context
+        r: _TrainingResults = self.results
+        c: _TrainingContext = self.context
 
         r.logln("Started training G")
         lgs = []
@@ -169,8 +169,8 @@ class IterLevelAlgo(Algo):
 
     def valid_g(self):
         """Validates G with the validation set."""
-        r: TrainingResults = self.results
-        c: TrainingContext = self.context
+        r: _TrainingResults = self.results
+        c: _TrainingContext = self.context
 
         r.logln("Started validating G")
         lgs = []
@@ -188,8 +188,8 @@ class IterLevelAlgo(Algo):
 
     def save_best_g(self):
         """Saves the G model that performs the best."""
-        r: TrainingResults = self.results
-        c: TrainingContext = self.context
+        r: _TrainingResults = self.results
+        c: _TrainingContext = self.context
 
         r.log_best_losses("g")
         curr_lg = c.losses.valid.g[-1]
@@ -212,8 +212,8 @@ class IterLevelAlgo(Algo):
 
     def run_d_iter(self):
         """Runs a iter of training, validating, and saving D."""
-        r: TrainingResults = self.results
-        c: TrainingContext = self.context
+        r: _TrainingResults = self.results
+        c: _TrainingContext = self.context
 
         c.loops.epoch.index = 0
         while c.loops.epoch.index < c.loops.epoch.count:
@@ -227,8 +227,8 @@ class IterLevelAlgo(Algo):
 
     def run_g_iter(self):
         """Runs a iter of training, validating, and saving G."""
-        r: TrainingResults = self.results
-        c: TrainingContext = self.context
+        r: _TrainingResults = self.results
+        c: _TrainingContext = self.context
 
         c.loops.epoch.index = 0
         while c.loops.epoch.index < c.loops.epoch.count:
@@ -245,8 +245,8 @@ class IterLevelAlgo(Algo):
     def start_training(self):
         """Starts the training algorithm."""
         self.check_context_and_results()
-        r: TrainingResults = self.results
-        c: TrainingContext = self.context
+        r: _TrainingResults = self.results
+        c: _TrainingContext = self.context
 
         r.logln("Started iter level algorithm")
         r.logln("-")
@@ -271,8 +271,8 @@ class BatchLevelAlgo(Algo):
 
     def train_both(self):
         """Trains both D and G together."""
-        r: TrainingResults = self.results
-        c: TrainingContext = self.context
+        r: _TrainingResults = self.results
+        c: _TrainingContext = self.context
 
         r.logln("Started training both D and G")
         lds = []
@@ -323,8 +323,8 @@ class BatchLevelAlgo(Algo):
 
     def valid_d(self):
         """Validates D with the validation set."""
-        r: TrainingResults = self.results
-        c: TrainingContext = self.context
+        r: _TrainingResults = self.results
+        c: _TrainingContext = self.context
 
         r.logln("Started validating D")
         ldrs = []
@@ -357,8 +357,8 @@ class BatchLevelAlgo(Algo):
 
     def valid_g(self):
         """Validates G with the validation set."""
-        r: TrainingResults = self.results
-        c: TrainingContext = self.context
+        r: _TrainingResults = self.results
+        c: _TrainingContext = self.context
 
         r.logln("Started validating G")
         lgs = []
@@ -376,8 +376,8 @@ class BatchLevelAlgo(Algo):
 
     def save_best_d(self):
         """Saves the best D."""
-        r: TrainingResults = self.results
-        c: TrainingContext = self.context
+        r: _TrainingResults = self.results
+        c: _TrainingContext = self.context
 
         r.log_best_losses("d")
         curr_ld = c.losses.valid.d[-1]
@@ -397,8 +397,8 @@ class BatchLevelAlgo(Algo):
 
     def save_best_g(self):
         """Saves the best G."""
-        r: TrainingResults = self.results
-        c: TrainingContext = self.context
+        r: _TrainingResults = self.results
+        c: _TrainingContext = self.context
 
         r.log_best_losses("g")
         curr_lg = c.losses.valid.g[-1]
@@ -418,8 +418,8 @@ class BatchLevelAlgo(Algo):
 
     def run_iter(self):
         """Runs a iter of multiple epochs."""
-        r: TrainingResults = self.results
-        c: TrainingContext = self.context
+        r: _TrainingResults = self.results
+        c: _TrainingContext = self.context
 
         c.loops.epoch.index = 0
         while c.loops.epoch.index < c.loops.epoch.count:
@@ -439,8 +439,8 @@ class BatchLevelAlgo(Algo):
     def start_training(self):
         """Starts the training algorithm."""
         self.check_context_and_results()
-        r: TrainingResults = self.results
-        c: TrainingContext = self.context
+        r: _TrainingResults = self.results
+        c: _TrainingContext = self.context
 
         r.logln("Started batch level algorithm")
         r.logln("-")
@@ -464,8 +464,8 @@ class PredAltSGDAlgo(Algo):
 
     def train_both(self):
         """Trains both D and G together."""
-        r: TrainingResults = self.results
-        c: TrainingContext = self.context
+        r: _TrainingResults = self.results
+        c: _TrainingContext = self.context
 
         r.logln("Started training both D and G")
         lds = []
@@ -539,8 +539,8 @@ class PredAltSGDAlgo(Algo):
 
     def valid_d(self):
         """Validates D with the validation set."""
-        r: TrainingResults = self.results
-        c: TrainingContext = self.context
+        r: _TrainingResults = self.results
+        c: _TrainingContext = self.context
 
         r.logln("Started validating D")
         ldrs = []
@@ -573,8 +573,8 @@ class PredAltSGDAlgo(Algo):
 
     def valid_g(self):
         """Validates G with the validation set."""
-        r: TrainingResults = self.results
-        c: TrainingContext = self.context
+        r: _TrainingResults = self.results
+        c: _TrainingContext = self.context
 
         r.logln("Started validating G")
         lgs = []
@@ -592,8 +592,8 @@ class PredAltSGDAlgo(Algo):
 
     def save_best_d(self):
         """Saves the best D."""
-        r: TrainingResults = self.results
-        c: TrainingContext = self.context
+        r: _TrainingResults = self.results
+        c: _TrainingContext = self.context
 
         r.log_best_losses("d")
         curr_ld = c.losses.valid.d[-1]
@@ -613,8 +613,8 @@ class PredAltSGDAlgo(Algo):
 
     def save_best_g(self):
         """Saves the best G."""
-        r: TrainingResults = self.results
-        c: TrainingContext = self.context
+        r: _TrainingResults = self.results
+        c: _TrainingContext = self.context
 
         r.log_best_losses("g")
         curr_lg = c.losses.valid.g[-1]
@@ -634,8 +634,8 @@ class PredAltSGDAlgo(Algo):
 
     def run_iter(self):
         """Runs a iter of multiple epochs."""
-        r: TrainingResults = self.results
-        c: TrainingContext = self.context
+        r: _TrainingResults = self.results
+        c: _TrainingContext = self.context
 
         c.loops.epoch.index = 0
         while c.loops.epoch.index < c.loops.epoch.count:
@@ -655,8 +655,8 @@ class PredAltSGDAlgo(Algo):
     def start_training(self):
         """Starts the training algorithm."""
         self.check_context_and_results()
-        r: TrainingResults = self.results
-        c: TrainingContext = self.context
+        r: _TrainingResults = self.results
+        c: _TrainingContext = self.context
 
         r.logln("Started predictive alternating SGD algorithm")
         r.logln("-")

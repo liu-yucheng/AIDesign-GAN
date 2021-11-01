@@ -23,10 +23,8 @@ from aidesign_gan.libs import optims
 class AttrDict:
     """Attribute dictionary.
 
-    A dictionary whose items can be accessed as attributes. A dictionary that supports static non-runtime definitions
-    and thus supports IDE and text editor code auto-completions. A dictionary that is compatible with Python library
-    types, including the native Python dict, the native Python list, and their nested variants. A dictionary that can
-    hopefully help some programmers (like me) save their precious lifetime spent on programming. Peace.
+    The AIDesign-GAN ported version of LYC-PyUtils DotDict. A dict whose items can be accessed using the attrdict.key
+    syntax, while compatible with Python standard library dict.
     """
 
     # Trailing underscores added to the public class method names to avoid attribute naming confusions.
@@ -439,20 +437,6 @@ def prep_batch_and_labels(batch, label, device):
     return batch, labels
 
 
-def init_model_weights(model):
-    """Inits the weights inside a model.
-
-    Args:
-        model: the model, a pytorch nn module
-    """
-    class_name = model.__class__.__name__
-    if class_name.find("Conv") != -1:
-        nn.init.normal_(model.weight.data, 0.0, 0.02)
-    elif class_name.find("BatchNorm") != -1:
-        nn.init.normal_(model.weight.data, 1.0, 0.02)
-        nn.init.constant_(model.bias.data, 0)
-
-
 def setup_adam(model, config):
     """Sets up an Adam optimizer with the given args.
 
@@ -622,3 +606,28 @@ def nan_to_num_optim(optim):
             state = optim.state[param]
             for key in state:
                 half_float_nan_to_num(state[key])
+
+
+def find_params_init_func(params_stddev=0.02):
+    """Finds the parameters initialization function.
+
+    Args:
+        params_stddev: the standard deviation of selected parameters
+
+    Returns:
+        result_func: resulting function
+    """
+    def result_func(model):
+        """Initializes model parameters.
+
+        Args:
+            model: the model
+        """
+        class_name = model.__class__.__name__
+        if class_name.find("Conv") != -1:
+            nn.init.normal_(model.weight.data, 0.0, float(params_stddev))
+        elif class_name.find("BatchNorm") != -1:
+            nn.init.normal_(model.weight.data, 1.0, float(params_stddev))
+            nn.init.constant_(model.bias.data, 0)
+
+    return result_func

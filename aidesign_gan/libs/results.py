@@ -14,9 +14,9 @@ import numpy
 from aidesign_gan.libs import contexts
 from aidesign_gan.libs import utils
 
-Context = contexts.Context
-TrainingContext = contexts.TrainingContext
-GenerationContext = contexts.GenerationContext
+_Context = contexts.Context
+_TrainingContext = contexts.TrainingContext
+_GenerationContext = contexts.GenerationContext
 
 
 class Results:
@@ -90,14 +90,14 @@ class Results:
     def log_rand(self):
         """Logs the random info."""
         self.check_context()
-        c: Context = self.context
+        c: _Context = self.context
 
         self.logln(f"Random seed ({c.rand.mode}): {c.rand.seed}")
 
     def log_hw(self):
         """Logs the torch hardware info."""
         self.check_context()
-        c: Context = self.context
+        c: _Context = self.context
 
         self.logln(f"Torch device: {c.hw.device}; GPU count: {c.hw.gpu_count}")
 
@@ -126,7 +126,7 @@ class TrainingResults(Results):
     def log_data(self):
         """Logs the data loaders info."""
         self.check_context()
-        c: TrainingContext = self.context
+        c: _TrainingContext = self.context
 
         self.logln(f"Data total size: {c.data.size}; Data size to use: {c.data.size_to_use}")
         self.logln(f"Training set size: {c.data.train.size}; Validation set size: {c.data.valid.size}")
@@ -134,7 +134,7 @@ class TrainingResults(Results):
     def log_mods(self):
         """Logs the modelers info."""
         self.check_context()
-        c: TrainingContext = self.context
+        c: _TrainingContext = self.context
 
         self.logln(f"D's size: {c.mods.d.size}")
         self.logln(f"D's training size: {c.mods.d.training_size}")
@@ -148,7 +148,7 @@ class TrainingResults(Results):
     def log_mode(self):
         """Logs the training mode info."""
         self.check_context()
-        c: TrainingContext = self.context
+        c: _TrainingContext = self.context
 
         self.logln(f"Training mode: {c.mode}")
 
@@ -168,7 +168,7 @@ class TrainingResults(Results):
             prefix: the contents to log before the info
         """
         self.check_context()
-        c: TrainingContext = self.context
+        c: _TrainingContext = self.context
 
         self.logstr("==== ==== ")
 
@@ -184,7 +184,7 @@ class TrainingResults(Results):
             epoch_type: epoch type (d/g/(empty string))
         """
         self.check_context()
-        c: TrainingContext = self.context
+        c: _TrainingContext = self.context
 
         self.logstr("==== ")
 
@@ -200,7 +200,7 @@ class TrainingResults(Results):
             result: whether the batch needs to be logged
         """
         self.check_context()
-        c: TrainingContext = self.context
+        c: _TrainingContext = self.context
 
         result = c.loops.train.index == 0
         result = result or (c.loops.train.index + 1) % 30 == 0
@@ -214,7 +214,7 @@ class TrainingResults(Results):
             result: whether the batch needs to be logged
         """
         self.check_context()
-        c: TrainingContext = self.context
+        c: _TrainingContext = self.context
 
         result = c.loops.valid.index == 0
         result = result or (c.loops.valid.index + 1) % 15 == 0
@@ -229,7 +229,7 @@ class TrainingResults(Results):
             batch_type: batch type (tr/tf/vr/vf/t/v)
         """
         self.check_context()
-        c: TrainingContext = self.context
+        c: _TrainingContext = self.context
 
         needs_log = False
         if "t" in batch_type:
@@ -281,7 +281,7 @@ class TrainingResults(Results):
             batch_type: batch type (t/vdr/vdf/vg)
         """
         self.check_context()
-        c: TrainingContext = self.context
+        c: _TrainingContext = self.context
 
         needs_log = False
         if "t" in batch_type:
@@ -333,7 +333,7 @@ class TrainingResults(Results):
             loss_type: loss type (td/vd/tg/vg)
         """
         self.check_context()
-        c: TrainingContext = self.context
+        c: _TrainingContext = self.context
 
         loss = None
         if loss_type == "td":
@@ -366,7 +366,7 @@ class TrainingResults(Results):
             model_type: model type (d/g)
         """
         self.check_context()
-        c: TrainingContext = self.context
+        c: _TrainingContext = self.context
 
         if model_type == "d":
             curr_loss = c.losses.valid.d[-1]
@@ -394,7 +394,7 @@ class TrainingResults(Results):
             model_type: model type (d/g)
         """
         self.check_context()
-        c: TrainingContext = self.context
+        c: _TrainingContext = self.context
 
         model_name = None
         es_count = None
@@ -420,13 +420,16 @@ class TrainingResults(Results):
     def save_training_images(self):
         """Saves the first 64 training images."""
         self.check_context()
-        c: TrainingContext = self.context
+        c: _TrainingContext = self.context
 
         batch = next(iter(c.data.train.loader))
         batch = batch[0].cpu()
         batch = batch[:c.data.batch_size]
 
-        grid = vutils.make_grid(batch, nrow=math.ceil(c.data.batch_size ** 0.5), padding=2, normalize=True).cpu()
+        grid = vutils.make_grid(
+            batch, nrow=math.ceil(c.data.batch_size ** 0.5), padding=2, normalize=True, value_range=(-0.75, 0.75)
+        )
+        grid = grid.cpu()
         grid = numpy.transpose(grid, (1, 2, 0))
 
         location = utils.find_in_path("Training-Images.jpg", self.path)
@@ -442,13 +445,16 @@ class TrainingResults(Results):
     def save_validation_images(self):
         """Saves the first 64 validation images."""
         self.check_context()
-        c: TrainingContext = self.context
+        c: _TrainingContext = self.context
 
         batch = next(iter(c.data.valid.loader))
         batch = batch[0].cpu()
         batch = batch[:c.data.batch_size]
 
-        grid = vutils.make_grid(batch, nrow=math.ceil(c.data.batch_size ** 0.5), padding=2, normalize=True).cpu()
+        grid = vutils.make_grid(
+            batch, nrow=math.ceil(c.data.batch_size ** 0.5), padding=2, normalize=True, value_range=(-0.75, 0.75)
+        )
+        grid = grid.cpu()
         grid = numpy.transpose(grid, (1, 2, 0))
 
         location = utils.find_in_path("Validation-Images.jpg", self.path)
@@ -464,11 +470,14 @@ class TrainingResults(Results):
     def save_images_before_training(self):
         """Saves the generated images grid before any training."""
         self.check_context()
-        c: TrainingContext = self.context
+        c: _TrainingContext = self.context
 
         batch = c.mods.g.test(c.noises.ref_batch)
 
-        grid = vutils.make_grid(batch, nrow=math.ceil(c.data.batch_size ** 0.5), padding=2, normalize=True).cpu()
+        grid = vutils.make_grid(
+            batch, nrow=math.ceil(c.data.batch_size ** 0.5), padding=2, normalize=True, value_range=(-0.75, 0.75)
+        )
+        grid = grid.cpu()
         grid = numpy.transpose(grid, (1, 2, 0))
 
         now = datetime.datetime.now()
@@ -489,11 +498,14 @@ class TrainingResults(Results):
     def save_generated_images(self):
         """Saves the generated images grid."""
         self.check_context()
-        c: TrainingContext = self.context
+        c: _TrainingContext = self.context
 
         batch = c.mods.g.test(c.noises.ref_batch)
 
-        grid = vutils.make_grid(batch, nrow=math.ceil(c.data.batch_size ** 0.5), padding=2, normalize=True).cpu()
+        grid = vutils.make_grid(
+            batch, nrow=math.ceil(c.data.batch_size ** 0.5), padding=2, normalize=True, value_range=(-0.75, 0.75)
+        )
+        grid = grid.cpu()
         grid = numpy.transpose(grid, (1, 2, 0))
 
         now = datetime.datetime.now()
@@ -513,7 +525,7 @@ class TrainingResults(Results):
     def save_d_losses(self):
         """Saves the discriminator training/validation losses plot."""
         self.check_context()
-        c: TrainingContext = self.context
+        c: _TrainingContext = self.context
 
         iteration = c.loops.iteration.index
         epoch_count, epoch = c.loops.epoch.count, c.loops.epoch.index
@@ -559,7 +571,7 @@ class TrainingResults(Results):
     def save_g_losses(self):
         """Saves the generator training/validation losses plot."""
         self.check_context()
-        c: TrainingContext = self.context
+        c: _TrainingContext = self.context
 
         iteration = c.loops.iteration.index
         epoch_count, epoch = c.loops.epoch.count, c.loops.epoch.index
@@ -605,7 +617,7 @@ class TrainingResults(Results):
     def save_tvg(self):
         """Saves the TVG (training-validation-generated) figure."""
         self.check_context()
-        c: TrainingContext = self.context
+        c: _TrainingContext = self.context
 
         tbatch = next(iter(c.data.train.loader))
         tbatch = tbatch[0].cpu()
@@ -617,9 +629,19 @@ class TrainingResults(Results):
 
         gbatch = c.mods.g.test(c.noises.ref_batch)
 
-        tgrid = vutils.make_grid(tbatch, nrow=math.ceil(c.data.batch_size ** 0.5), padding=2, normalize=True).cpu()
-        vgrid = vutils.make_grid(vbatch, nrow=math.ceil(c.data.batch_size ** 0.5), padding=2, normalize=True).cpu()
-        ggrid = vutils.make_grid(gbatch, nrow=math.ceil(c.data.batch_size ** 0.5), padding=2, normalize=True).cpu()
+        tgrid = vutils.make_grid(
+            tbatch, nrow=math.ceil(c.data.batch_size ** 0.5), padding=2, normalize=True, value_range=(-0.75, 0.75)
+        )
+        vgrid = vutils.make_grid(
+            vbatch, nrow=math.ceil(c.data.batch_size ** 0.5), padding=2, normalize=True, value_range=(-0.75, 0.75)
+        )
+        ggrid = vutils.make_grid(
+            gbatch, nrow=math.ceil(c.data.batch_size ** 0.5), padding=2, normalize=True, value_range=(-0.75, 0.75)
+        )
+
+        tgrid = tgrid.cpu()
+        vgrid = vgrid.cpu()
+        ggrid = ggrid.cpu()
 
         tgrid = numpy.transpose(tgrid, (1, 2, 0))
         vgrid = numpy.transpose(vgrid, (1, 2, 0))
@@ -666,7 +688,7 @@ class GenerationResults(Results):
     def log_g(self):
         """Logs the G modelers info."""
         self.check_context()
-        c: GenerationContext = self.context
+        c: _GenerationContext = self.context
 
         self.logln(f"G's size: {c.g.size}")
         self.logln(f"G's training size: {c.g.training_size}")
@@ -676,7 +698,7 @@ class GenerationResults(Results):
     def log_batch(self):
         """Logs the batch info."""
         self.check_context()
-        c: GenerationContext = self.context
+        c: _GenerationContext = self.context
 
         needs_log = c.batch_prog.index == 0
         needs_log = needs_log or (c.batch_prog.index + 1) % 15 == 0
@@ -689,7 +711,7 @@ class GenerationResults(Results):
     def save_generated_images(self):
         """Saves the generated images."""
         self.check_context()
-        c: GenerationContext = self.context
+        c: _GenerationContext = self.context
 
         for index, image in enumerate(c.images.to_save):
             now = datetime.datetime.now()

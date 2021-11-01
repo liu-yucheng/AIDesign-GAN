@@ -134,6 +134,7 @@ class ModelersConfig(Config):
                 "struct_name": defaults.discriminator_struct_name,
                 "state_name": defaults.discriminator_state_name,
                 "optim_name": defaults.discriminator_optim_name,
+                "params_init_stddev": 0.02,
                 "adam_optimizer": {
                     "learning_rate": 0.0002,
                     "beta1": 0.5,
@@ -149,6 +150,7 @@ class ModelersConfig(Config):
                 "struct_name": defaults.generator_struct_name,
                 "state_name": defaults.generator_state_name,
                 "optim_name": defaults.generator_optim_name,
+                "params_init_stddev": 0.02,
                 "adam_optimizer": {
                     "learning_rate": 0.0002,
                     "beta1": 0.5,

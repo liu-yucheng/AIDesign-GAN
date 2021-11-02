@@ -608,26 +608,44 @@ def nan_to_num_optim(optim):
                 half_float_nan_to_num(state[key])
 
 
-def find_params_init_func(params_stddev=0.02):
+def find_params_init_func(config=None):
     """Finds the parameters initialization function.
 
     Args:
-        params_stddev: the standard deviation of selected parameters
+        config: parameters initialization config
 
     Returns:
         result_func: resulting function
     """
+    c_wmean = float(0)
+    c_wstd = 0.02
+
+    bn_wmean = float(1)
+    bn_wstd = 0.02
+    bn_bmean = float(0)
+    bn_bstd = 0.0002
+
+    if config is not None:
+        c_wmean = float(config["conv"]["weight_mean"])
+        c_wstd = float(config["conv"]["weight_std"])
+
+        bn_wmean = float(config["batch_norm"]["weight_mean"])
+        bn_wstd = float(config["batch_norm"]["weight_std"])
+        bn_bmean = float(config["batch_norm"]["bias_mean"])
+        bn_bstd = float(config["batch_norm"]["bias_std"])
+    # end if
+
     def result_func(model):
         """Initializes model parameters.
 
         Args:
             model: the model
         """
-        class_name = model.__class__.__name__
+        class_name = str(model.__class__.__name__)
         if class_name.find("Conv") != -1:
-            nn.init.normal_(model.weight.data, 0.0, float(params_stddev))
+            nn.init.normal_(model.weight.data, c_wmean, c_wstd)
         elif class_name.find("BatchNorm") != -1:
-            nn.init.normal_(model.weight.data, 1.0, float(params_stddev))
-            nn.init.constant_(model.bias.data, 0)
+            nn.init.normal_(model.weight.data, bn_wmean, bn_wstd)
+            nn.init.normal_(model.bias.data, bn_bmean, bn_bstd)
 
     return result_func

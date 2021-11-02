@@ -134,11 +134,22 @@ class ModelersConfig(Config):
                 "struct_name": defaults.discriminator_struct_name,
                 "state_name": defaults.discriminator_state_name,
                 "optim_name": defaults.discriminator_optim_name,
-                "params_init_stddev": 0.02,
                 "adam_optimizer": {
                     "learning_rate": 0.0002,
                     "beta1": 0.5,
                     "beta2": 0.999
+                },
+                "params_init": {
+                    "conv": {
+                        "weight_mean": 0,
+                        "weight_std": 0.02
+                    },
+                    "batch_norm": {
+                        "weight_mean": 1,
+                        "weight_std": 0.02,
+                        "bias_mean": 0,
+                        "bias_std": 0.0002
+                    }
                 }
             },
             "generator": {
@@ -150,11 +161,22 @@ class ModelersConfig(Config):
                 "struct_name": defaults.generator_struct_name,
                 "state_name": defaults.generator_state_name,
                 "optim_name": defaults.generator_optim_name,
-                "params_init_stddev": 0.02,
                 "adam_optimizer": {
                     "learning_rate": 0.0002,
                     "beta1": 0.5,
                     "beta2": 0.999
+                },
+                "params_init": {
+                    "conv": {
+                        "weight_mean": 0,
+                        "weight_std": 0.02
+                    },
+                    "batch_norm": {
+                        "weight_mean": 1,
+                        "weight_std": 0.02,
+                        "bias_mean": 0,
+                        "bias_std": 0.0002
+                    }
                 }
             }
         }

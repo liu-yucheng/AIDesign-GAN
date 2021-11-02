@@ -110,9 +110,9 @@ class DModeler(Modeler):
         self.model = utils.parallelize_model(self.model, self.device, self.gpu_count)
 
         # Init model parameters
-        params_stddev_key = "params_init_stddev"
-        if params_stddev_key in self.config:
-            params_init_func = utils.find_params_init_func(params_stddev=self.config[params_stddev_key])
+        params_init_key = "params_init"
+        if params_init_key in self.config:
+            params_init_func = utils.find_params_init_func(self.config[params_init_key])
         else:
             params_init_func = utils.find_params_init_func()
         self.model.apply(params_init_func)
@@ -237,9 +237,9 @@ class GModeler(Modeler):
         self.model = utils.parallelize_model(self.model, self.device, self.gpu_count)
 
         # Init model parameters
-        params_stddev_key = "params_init_stddev"
-        if params_stddev_key in self.config:
-            params_init_func = utils.find_params_init_func(params_stddev=self.config[params_stddev_key])
+        params_init_key = "params_init"
+        if params_init_key in self.config:
+            params_init_func = utils.find_params_init_func(self.config[params_init_key])
         else:
             params_init_func = utils.find_params_init_func()
         self.model.apply(params_init_func)

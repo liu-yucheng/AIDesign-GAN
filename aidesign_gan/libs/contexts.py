@@ -286,7 +286,7 @@ class TrainingContext(Context):
         batch_size = config["images_per_batch"]
 
         means = [0.5 for _ in range(channel_count)]
-        sdevs = [0.5 for _ in range(channel_count)]
+        sdevs = [0.667 for _ in range(channel_count)]
         dataset = datasets.ImageFolder(
             root=path,
             transform=transforms.Compose([

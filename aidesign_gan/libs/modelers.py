@@ -65,24 +65,30 @@ class Modeler:
         if self.optim is not None:
             utils.save_optim(self.optim, optim_location)
 
-    def rollback(self, count):
-        """Rollbacks the model.
-
-        Clear the model gradients. Load the previous best model states. Reset the optimizer and halves the optimizer
-        learning rate.
-
-        Args:
-            count: the rollback count
-
-        Raises:
-            ValueError: if self.model or self.optim is None
-        """
-        if self.model is None:
-            raise ValueError("self.model cannot be None")
-        if self.optim is None:
-            raise ValueError("self.optim cannot be None")
+    def clear_grads(self):
+        """Clears the gradients by calling the zero_grad function of self.model and self.optim."""
         self.model.zero_grad()
-        self.load()
+        self.optim.zero_grad()
+
+    def predict(self):
+        """Updates self.model to the predicted state by calling the predict function of self.optim.
+
+        Let the previous state be S1, the current state be S2, the predicted state be S3. We define the predicted state
+        as: S3 = S2 + (S2 - S1) = 2 * S2 - S1.
+        """
+        self.optim.predict()
+
+    def step_optim(self):
+        """Updates self.model by calling the step function of self.optim."""
+        self.optim.step()
+
+    def restore(self):
+        """Restores self.model to the before prediction state by calling the restore function of self.optim.
+
+        Let the previous state be S1, the current state be S2, the predicted state be S3. This function restores the
+        model from S3 to S2.
+        """
+        self.optim.restore()
 
 
 class DModeler(Modeler):
@@ -131,6 +137,43 @@ class DModeler(Modeler):
     def train(self, batch, label):
         """Trains the model with a batch of data and a target label.
 
+        Set the model to training mode. Forward pass the batch. Find the loss. Backward the loss to find the gradients.
+        Return the average output and loss value. NOTE: The caller of this function needs to manually call the
+        clear_grads and step_optim functions of self to ensure the functioning of the training algorithm.
+
+        Args:
+            batch: the batch of data, can be on either the CPUs or GPUs, preferred to be on the CPUs
+            label: the target label, definitely on the CPUs
+
+        Returns:
+            out_mean: Mean(D(batch)), the average output of D, definitely on the CPUs
+            loss_val: Loss(D(batch), label), the loss of D on the batch, definitely on the CPUs
+
+        Raises:
+            ValueError: if self.optim is None
+        """
+        if self.optim is None:
+            raise ValueError("self.optim cannot be None")
+
+        model_training = self.model.training
+        self.model.train(True)
+
+        batch, labels = utils.prep_batch_and_labels(batch, label, self.device)
+        output = self.model(batch).view(-1)
+        output = output.float()
+
+        loss = self.loss_func(output, labels)
+        loss.backward()
+
+        self.model.train(model_training)
+
+        out_mean = output.mean().item()
+        loss_val = loss.item()
+        return out_mean, loss_val
+
+    def train_and_step(self, batch, label):
+        """Trains and steps the model with a batch of data and a target label.
+
         Set the model to training mode. Clear the model gradients. Forward pass the batch. Find the loss. Find the
         gradients through a backward pass. Optimize/Update the model. Return the average output and loss value.
 
@@ -148,6 +191,7 @@ class DModeler(Modeler):
         if self.optim is None:
             raise ValueError("self.optim cannot be None")
 
+        model_training = self.model.training
         self.model.train(True)
         self.model.zero_grad()
         self.optim.zero_grad()
@@ -159,6 +203,8 @@ class DModeler(Modeler):
         loss = self.loss_func(output, labels)
         loss.backward()
         self.optim.step()
+
+        self.model.train(model_training)
 
         out_mean = output.mean().item()
         loss_val = loss.item()
@@ -177,6 +223,7 @@ class DModeler(Modeler):
             out_mean: Mean(D(batch)), the average output of D, definitely on the CPUs
             loss_val: Loss(D(batch), label), the loss of D on the batch, definitely on the CPUs
         """
+        model_training = self.model.training
         self.model.train(False)
 
         batch, labels = utils.prep_batch_and_labels(batch, label, self.device)
@@ -185,6 +232,8 @@ class DModeler(Modeler):
         output = output.float()
 
         loss = self.loss_func(output, labels)
+
+        self.model.train(model_training)
 
         out_mean = output.mean().item()
         loss_val = loss.item()
@@ -201,14 +250,17 @@ class DModeler(Modeler):
         Returns:
             output: D(batch), the output of D, definitely on the CPUs
         """
+        model_training = self.model.training
         self.model.train(False)
 
         batch = batch.to(self.device)
         with _no_grad():
             output = self.model(batch).detach().view(-1)
         output = output.float()
-        output = output.cpu()
 
+        self.model.train(model_training)
+
+        output = output.cpu()
         return output
 
 
@@ -271,6 +323,54 @@ class GModeler(Modeler):
     def train(self, d_model, noises, label):
         """Trains the model with the given args.
 
+        Set the model to training mode. Generate a training batch with the given noises. Forward pass the batch to the
+        discriminator model. Find the loss. Backward the loss to find the gradients. Return the average output and the
+        loss value. NOTE: The caller of this function needs to manually call the clear_grads and step_optim functions
+        of self to ensure the functioning of the training algorithm.
+
+        Args:
+            d_model: the discriminator model, can be on either the CPUs or the GPUs, preferred to be on the GPUs; this
+                function will not change the device of d_model
+            noises: the noises used to generate the training batch, can be on either the CPUs or GPUs, preferred to be
+                on the CPUs
+            label: the target label, definitely on the CPUs
+
+        Returns:
+            out_mean: Mean(D(G(noises))), the average output of d_model, definitely on the CPUs
+            loss_val: Loss(D(G(noises)), label), the loss of the model, definitely on the CPUs
+
+        Raises:
+            ValueError: if self.optim is None
+        """
+        if self.optim is None:
+            raise ValueError("self.optim cannot be None")
+
+        model_training = self.model.training
+        self.model.train(True)
+        d_model_training = d_model.training
+        d_model.train(True)
+
+        noises = noises.to(self.device)
+        batch = self.model(noises)
+        batch = batch.float()
+
+        batch, labels = utils.prep_batch_and_labels(batch, label, self.device)
+        output = d_model(batch).view(-1)
+        output = output.float()
+
+        loss = self.loss_func(output, labels)
+        loss.backward()
+
+        self.model.train(model_training)
+        d_model.train(d_model_training)
+
+        out_mean = output.mean().item()
+        loss_val = loss.item()
+        return out_mean, loss_val
+
+    def train_and_step(self, d_model, noises, label):
+        """Trains and steps the model with the given args.
+
         Set the model to training mode. Clear the model gradients. Generate a training batch with the given noises.
         Forward pass the batch to the discriminator model. Find the loss. Find the gradients with a backward pass.
         Optimize/Update the model. Return the average output and the loss value.
@@ -292,6 +392,7 @@ class GModeler(Modeler):
         if self.optim is None:
             raise ValueError("self.optim cannot be None")
 
+        model_training = self.model.training
         self.model.train(True)
         d_model_training = d_model.training
         d_model.train(True)
@@ -310,6 +411,7 @@ class GModeler(Modeler):
         loss.backward()
         self.optim.step()
 
+        self.model.train(model_training)
         d_model.train(d_model_training)
 
         out_mean = output.mean().item()
@@ -333,6 +435,7 @@ class GModeler(Modeler):
             out_mean: Mean(D(G(noises))), the average output of d_model, definitely on the CPUs
             loss_val: Loss(D(G(noises)), label), the loss of the model, definitely on the CPUs
         """
+        model_training = self.model.training
         self.model.train(False)
         d_model_training = d_model.training
         d_model.train(False)
@@ -349,7 +452,9 @@ class GModeler(Modeler):
 
         loss = self.loss_func(output, labels)
 
+        self.model.train(model_training)
         d_model.train(d_model_training)
+
         out_mean = output.mean().item()
         loss_val = loss.item()
         return out_mean, loss_val
@@ -366,12 +471,15 @@ class GModeler(Modeler):
         Returns:
             output: G(noises): the output of the model, definitely on the CPUs
         """
+        model_training = self.model.training
         self.model.train(False)
 
         noises = noises.to(self.device)
         with _no_grad():
             output = self.model(noises).detach()
         output = output.float()
-        output = output.cpu()
 
+        self.model.train(model_training)
+
+        output = output.cpu()
         return output

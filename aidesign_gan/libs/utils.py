@@ -10,6 +10,7 @@ import asyncio
 import json
 import os
 import pathlib
+import random
 import shutil
 import sys
 import threading
@@ -649,3 +650,13 @@ def find_params_init_func(config=None):
             nn.init.normal_(model.bias.data, bn_bmean, bn_bstd)
 
     return result_func
+
+
+def rand_bool():
+    """Produce a random boolean value.
+
+    Returns:
+        result: the random boolean
+    """
+    result = bool(random.randint(0, 1))
+    return result

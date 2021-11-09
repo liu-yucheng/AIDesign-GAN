@@ -135,10 +135,8 @@ class TrainingCoord(Coord):
             self.setup_context()
 
         algo_name = self.coords_config["training"]["algorithm"]
-        if algo_name == "iter_level_algo":
-            self.algo = algos.IterLevelAlgo()
-        elif algo_name == "batch_level_algo":
-            self.algo = algos.BatchLevelAlgo()
+        if algo_name == "alt_sgd_algo":
+            self.algo = algos.AltSGDAlgo()
         elif algo_name == "pred_alt_sgd_algo":
             self.algo = algos.PredAltSGDAlgo()
         else:

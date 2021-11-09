@@ -7,6 +7,7 @@ import numpy
 
 from aidesign_gan.libs import contexts
 from aidesign_gan.libs import results
+from aidesign_gan.libs import utils
 
 _TrainingResults = results.TrainingResults
 _TrainingContext = contexts.TrainingContext
@@ -55,222 +56,58 @@ class Algo:
         raise NotImplementedError("start_training not implemented")
 
 
-class IterLevelAlgo(Algo):
-    """Algorithm that trains D and G together at iter level."""
+class AltSGDAlgo(Algo):
+    """Algorithm that trains D and G alternatively with SGD."""
 
     def __init__(self):
         """Inits self."""
         super().__init__()
 
-    def train_d(self):
-        """Trains D with the training set."""
-        r: _TrainingResults = self.results
-        c: _TrainingContext = self.context
-        r.logln("Started training D")
-        lds = []
-        c.loops.train.index = 0
+    def train_and_step_d(self, real_batch, fake_batch):
+        """Trains and steps D.
 
-        for real_batch in c.data.train.loader:
-            noises = c.mods.g.generate_noises(c.data.batch_size)
+        Args:
+            real_batch: the real batch
+            fake_batch: the fake batch
 
-            real_batch = real_batch[0]
-            fake_batch = c.mods.g.test(noises)
-
-            dx, ldr = c.mods.d.train(real_batch, c.labels.real)
-            dgz, ldf = c.mods.d.train(fake_batch, c.labels.fake)
-            ld = ldr + ldf
-
-            c.latest.dx, c.latest.dgz, c.latest.ld = dx, dgz, ld
-            lds.append(ld)
-            r.log_batch("d", "t")
-            c.loops.train.index += 1
-
-        epoch_ld = numpy.array(lds).mean()
-        c.losses.train.d.append(epoch_ld)
-        r.log_epoch_loss("td")
-
-    def valid_d(self):
-        """Validates D with the validation set."""
-        r: _TrainingResults = self.results
+        Returns:
+            dx, : the output mean of D on the real batch
+            ldr, : the loss of D on the real batch
+            dgz, : the output mean of D on the fake batch
+            ldf: the loss of D on the fake batch
+        """
         c: _TrainingContext = self.context
 
-        r.logln("Started validating D")
+        c.mods.d.clear_grads()
+        dx, ldr = c.mods.d.train(real_batch, c.labels.real)
+        c.mods.d.step_optim()
 
-        ldrs = []
-        c.loops.valid.index = 0
-        for real_batch in c.data.valid.loader:
-            real_batch = real_batch[0]
-            dx, ld = c.mods.d.valid(real_batch, c.labels.real)
-            c.latest.dx, c.latest.ld = dx, ld
-            ldrs.append(ld)
-            r.log_batch("d", "vr")
-            c.loops.valid.index += 1
+        c.mods.d.clear_grads()
+        dgz, ldf = c.mods.d.train(fake_batch, c.labels.fake)
+        c.mods.d.step_optim()
 
-        ldfs = []
-        c.loops.valid.index = 0
-        for noises in c.noises.valid:
-            fake_batch = c.mods.g.test(noises)
-            dgz, ld = c.mods.d.valid(fake_batch, c.labels.fake)
-            c.latest.dgz, c.latest.ld = dgz, ld
-            ldfs.append(ld)
-            r.log_batch("d", "vf")
-            c.loops.valid.index += 1
+        return dx, ldr, dgz, ldf
 
-        lds = []
-        for index in range(c.loops.valid.count):
-            lds.append(ldrs[index] + ldfs[index])
+    def train_and_step_g(self, noises):
+        """Trains and steps G.
 
-        epoch_ld = numpy.array(lds).mean()
-        c.losses.valid.d.append(epoch_ld)
-        r.log_epoch_loss("vd")
+        Args:
+            noises: the G input batch of noises
 
-    def save_best_d(self):
-        """Saves the D model that performs the best."""
-        r: _TrainingResults = self.results
-        c: _TrainingContext = self.context
-        r.log_best_losses("d")
-        curr_ld = c.losses.valid.d[-1]
-        if c.bests.d is None or curr_ld <= c.bests.d:
-            c.bests.d = curr_ld
-            c.mods.d.save()
-            r.log_model_action("save", "d")
-        elif c.loops.es.d < c.loops.es.max:
-            c.loops.es.d += 1
-            r.log_model_action("es", "d")
-        elif c.loops.rb.d < c.loops.rb.max:
-            c.loops.rb.d += 1
-            c.rbs.d.append((c.loops.iteration.index, c.loops.epoch.index))
-            c.loops.es.d = 0
-            c.mods.d.rollback(c.loops.rb.d)
-            r.log_model_action("rb", "d")
-        else:
-            c.mods.d.load()
-            r.log_model_action("load", "d")
-
-    def train_g(self):
-        """Trains G with the training set."""
-        r: _TrainingResults = self.results
+        Returns:
+            dgz2, : the output mean of D on G(noises)
+            lg: the loss of G on the batch
+        """
         c: _TrainingContext = self.context
 
-        r.logln("Started training G")
-        lgs = []
-        c.loops.train.index = 0
-        while c.loops.train.index < c.loops.train.count:
-            noises = c.mods.g.generate_noises(c.data.batch_size)
-            dgz, lg = c.mods.g.train(c.mods.d.model, noises, c.labels.real)
-            c.latest.dgz, c.latest.lg = dgz, lg
-            lgs.append(lg)
-            r.log_batch("g", "t")
-            c.loops.train.index += 1
+        c.mods.g.clear_grads()
+        dgz2, lg = c.mods.g.train(c.mods.d.model, noises, c.labels.real)
+        c.mods.g.step_optim()
 
-        epoch_lg = numpy.array(lgs).mean()
-        c.losses.train.g.append(epoch_lg)
-        r.log_epoch_loss("tg")
-
-    def valid_g(self):
-        """Validates G with the validation set."""
-        r: _TrainingResults = self.results
-        c: _TrainingContext = self.context
-
-        r.logln("Started validating G")
-        lgs = []
-        c.loops.valid.index = 0
-        for noises in c.noises.valid:
-            dgz, lg = c.mods.g.valid(c.mods.d.model, noises, c.labels.real)
-            c.latest.dgz, c.latest.lg = dgz, lg
-            lgs.append(lg)
-            r.log_batch("g", "v")
-            c.loops.valid.index += 1
-
-        epoch_lg = numpy.array(lgs).mean()
-        c.losses.valid.g.append(epoch_lg)
-        r.log_epoch_loss("vg")
-
-    def save_best_g(self):
-        """Saves the G model that performs the best."""
-        r: _TrainingResults = self.results
-        c: _TrainingContext = self.context
-
-        r.log_best_losses("g")
-        curr_lg = c.losses.valid.g[-1]
-        if c.bests.g is None or curr_lg <= c.bests.g:
-            c.bests.g = curr_lg
-            c.mods.g.save()
-            r.log_model_action("save", "g")
-        elif c.loops.es.g < c.loops.es.max:
-            c.loops.es.g += 1
-            r.log_model_action("es", "g")
-        elif c.loops.rb.g < c.loops.rb.max:
-            c.loops.rb.g += 1
-            c.rbs.g.append((c.loops.iteration.index, c.loops.epoch.index))
-            c.loops.es.g = 0
-            c.mods.g.rollback(c.loops.rb.g)
-            r.log_model_action("rb", "g")
-        else:
-            c.mods.g.load()
-            r.log_model_action("load", "g")
-
-    def run_d_iter(self):
-        """Runs a iter of training, validating, and saving D."""
-        r: _TrainingResults = self.results
-        c: _TrainingContext = self.context
-
-        c.loops.epoch.index = 0
-        while c.loops.epoch.index < c.loops.epoch.count:
-            r.log_epoch("Started", "d")
-            self.train_d()
-            self.valid_d()
-            self.save_best_d()
-            r.save_d_losses()
-            r.logln("-")
-            c.loops.epoch.index += 1
-
-    def run_g_iter(self):
-        """Runs a iter of training, validating, and saving G."""
-        r: _TrainingResults = self.results
-        c: _TrainingContext = self.context
-
-        c.loops.epoch.index = 0
-        while c.loops.epoch.index < c.loops.epoch.count:
-            r.log_epoch("Started", "g")
-            self.train_g()
-            self.valid_g()
-            self.save_best_g()
-            r.save_g_losses()
-            r.save_generated_images()
-            r.save_tvg()
-            r.logln("-")
-            c.loops.epoch.index += 1
-
-    def start_training(self):
-        """Starts the training algorithm."""
-        self.check_context_and_results()
-        r: _TrainingResults = self.results
-        c: _TrainingContext = self.context
-
-        r.logln("Started iter level algorithm")
-        r.logln("-")
-        r.save_training_images()
-        r.save_validation_images()
-
-        c.loops.iteration.index = 0
-        while c.loops.iteration.index < c.loops.iteration.count:
-            r.log_iter("Started")
-            self.run_d_iter()
-            self.run_g_iter()
-            r.logln("-")
-            c.loops.iteration.index += 1
-
-
-class BatchLevelAlgo(Algo):
-    """Algorithm that trains D and G together at batch level."""
-
-    def __init__(self):
-        """Inits self."""
-        super().__init__()
+        return dgz2, lg
 
     def train_both(self):
-        """Trains both D and G together."""
+        """Trains D and G together."""
         r: _TrainingResults = self.results
         c: _TrainingContext = self.context
 
@@ -280,18 +117,28 @@ class BatchLevelAlgo(Algo):
         c.collapses.batch_count = 0
         c.loops.train.index = 0
         for real_batch in c.data.train.loader:
-            # Train D on a real batch
-            real_batch = real_batch[0]
-            dx, ldr = c.mods.d.train(real_batch, c.labels.real)
+            # Prepare D training materials
+            d_real_batch = real_batch[0]
+            d_noises = c.mods.g.generate_noises(c.data.batch_size)
+            d_fake_batch = c.mods.g.test(d_noises)
 
-            # Train D on a fake batch
-            noises = c.mods.g.generate_noises(c.data.batch_size)
-            fake_batch = c.mods.g.test(noises)
-            dgz, ldf = c.mods.d.train(fake_batch, c.labels.fake)
+            # Prepare G training materials
+            g_noises = c.mods.g.generate_noises(c.data.batch_size)
 
-            # Train G on a batch generated by itself
-            noises = c.mods.g.generate_noises(c.data.batch_size)
-            dgz2, lg = c.mods.g.train(c.mods.d.model, noises, c.labels.real)
+            # Filp a coin to determine whether to reverse the training order
+            reverse_order = utils.rand_bool()
+            if reverse_order:
+                # Train G, and then train D
+                g_results = self.train_and_step_g(g_noises)
+                d_results = self.train_and_step_d(d_real_batch, d_fake_batch)
+            else:  # elif not reverse_order:
+                # Train D, and then train G (original order)
+                d_results = self.train_and_step_d(d_real_batch, d_fake_batch)
+                g_results = self.train_and_step_g(g_noises)
+
+            # Parse the training results
+            dx, ldr, dgz, ldf = d_results
+            dgz2, lg = g_results
 
             # Detect training collapse
             collapsed = bool(ldr >= c.collapses.max_loss)
@@ -307,7 +154,10 @@ class BatchLevelAlgo(Algo):
             lds.append(ld)
             lgs.append(lg)
             r.log_batch_2("t")
+
             c.loops.train.index += 1
+
+        # end for
 
         epoch_collapsed = c.collapses.batch_count >= c.collapses.max_batch_count
         if epoch_collapsed:
@@ -456,11 +306,68 @@ class BatchLevelAlgo(Algo):
 
 
 class PredAltSGDAlgo(Algo):
-    """Predictive alternating SGD, which is a "batch level algo" with prediction steps."""
+    """Predictive alternating SGD, which is a "alt SGD algo" with prediction steps."""
 
     def __init__(self):
         """Inits self."""
         super().__init__()
+
+    def train_and_step_d(self, real_batch, fake_batch):
+        """Trains and steps D with predicted G.
+
+        Args:
+            real_batch: the real batch
+            fake_batch: the fake batch
+
+        Returns:
+            dx, : the output mean of D on the real batch
+            ldr, : the loss of D on the real batch
+            dgz, : the output mean of D on the fake batch
+            ldf: the loss of D on the fake batch
+        """
+        c: _TrainingContext = self.context
+
+        not_1st_batch = bool(c.loops.train.index > 0)
+        if not_1st_batch:
+            c.mods.g.predict()
+
+        c.mods.d.clear_grads()
+        dx, ldr = c.mods.d.train(real_batch, c.labels.real)
+        c.mods.d.step_optim()
+
+        c.mods.d.clear_grads()
+        dgz, ldf = c.mods.d.train(fake_batch, c.labels.fake)
+        c.mods.d.step_optim()
+
+        if not_1st_batch:
+            c.mods.g.restore()
+
+        return dx, ldr, dgz, ldf
+
+    def train_and_step_g(self, noises):
+        """Trains and steps G with predicted D.
+
+        Args:
+            noises: the G input batch of noises
+
+        Returns:
+            dgz2, : the output mean of D on G(noises)
+            lg: the loss of G on the batch
+        """
+        c: _TrainingContext = self.context
+
+        not_1st_batch = bool(c.loops.train.index > 0)
+        if not_1st_batch:
+            c.mods.d.predict()
+
+        c.mods.g.clear_grads()
+        dgz2, lg = c.mods.g.train(c.mods.d.model, noises, c.labels.real)
+        c.mods.g.step_optim()
+
+        if not_1st_batch:
+            c.mods.d.restore()
+
+        return dgz2, lg
 
     def train_both(self):
         """Trains both D and G together."""
@@ -473,38 +380,28 @@ class PredAltSGDAlgo(Algo):
         c.collapses.batch_count = 0
         c.loops.train.index = 0
         for real_batch in c.data.train.loader:
-            # ==== Train D with predicted G ====
+            # Prepare D training materials
+            d_real_batch = real_batch[0]
+            d_noises = c.mods.g.generate_noises(c.data.batch_size)
+            d_fake_batch = c.mods.g.test(d_noises)
 
-            # If not the first batch, predict the next G state
-            if c.loops.train.index > 0:
-                c.mods.g.optim.predict()
+            # Prepare G training materials
+            g_noises = c.mods.g.generate_noises(c.data.batch_size)
 
-            # Train D on a real batch
-            real_batch = real_batch[0]
-            dx, ldr = c.mods.d.train(real_batch, c.labels.real)
-            noises = c.mods.g.generate_noises(c.data.batch_size)
+            # Filp a coin to determine whether to reverse the training order
+            reverse_order = utils.rand_bool()
+            if reverse_order:
+                # Train G, and then train D
+                g_results = self.train_and_step_g(g_noises)
+                d_results = self.train_and_step_d(d_real_batch, d_fake_batch)
+            else:  # elif not reverse order:
+                # Train D, and then train G (original order)
+                d_results = self.train_and_step_d(d_real_batch, d_fake_batch)
+                g_results = self.train_and_step_g(g_noises)
 
-            # Train D on a fake batch
-            fake_batch = c.mods.g.test(noises)
-            dgz, ldf = c.mods.d.train(fake_batch, c.labels.fake)
-
-            # If not the first batch, restore G's state
-            if c.loops.train.index > 0:
-                c.mods.g.optim.restore()
-
-            # ==== Train G with predicted D ===
-
-            # Predict the next D state
-            c.mods.d.optim.predict()
-
-            # Train G on a batch generated by itself
-            noises = c.mods.g.generate_noises(c.data.batch_size)
-            dgz2, lg = c.mods.g.train(c.mods.d.model, noises, c.labels.real)
-
-            # Restore D's state
-            c.mods.d.optim.restore()
-
-            # ==== Post-training miscs ====
+            # Parse the training results
+            dx, ldr, dgz, ldf = d_results
+            dgz2, lg = g_results
 
             # Detect training collapse
             collapsed = bool(ldr >= c.collapses.max_loss)

@@ -77,12 +77,12 @@ class CoordsConfig(Config):
         self.location = utils.find_in_path(defaults.coords_config_name, model_path)
         self.items = {
             "training": {
-                "mode": "new",
+                "mode": "resume",
                 "algorithm": "pred_alt_sgd_algo",
-                "manual_seed": 0,
+                "manual_seed": None,
                 "gpu_count": 1,
-                "iteration_count": 2,
-                "epochs_per_iteration": 2,
+                "iteration_count": 1,
+                "epochs_per_iteration": 1,
                 "max_rollbacks": 1,
                 "max_early_stops": 1,
                 "datasets": {
@@ -137,7 +137,7 @@ class ModelersConfig(Config):
                 "adam_optimizer": {
                     "learning_rate": 0.0002,
                     "beta1": 0.5,
-                    "beta2": 0.999
+                    "beta2": 0.995
                 },
                 "params_init": {
                     "conv": {
@@ -164,7 +164,7 @@ class ModelersConfig(Config):
                 "adam_optimizer": {
                     "learning_rate": 0.0002,
                     "beta1": 0.5,
-                    "beta2": 0.999
+                    "beta2": 0.995
                 },
                 "params_init": {
                     "conv": {

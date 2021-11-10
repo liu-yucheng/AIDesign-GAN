@@ -210,6 +210,69 @@ class DModeler(Modeler):
         loss_val = loss.item()
         return out_mean, loss_val
 
+    def train_fair(self, g_model, real_batch, real_label, fake_noises, fake_label):
+        """Fairly trains the model with the given args.
+
+        Set self.model and g_model to training mode. For the real batch: Forward pass the batch to self.model; Find the
+        loss. For the fake batch: Forward pass the noises to g_model to get a fake batch; Forward pass the fake batch
+        to self.model; Find the loss. After finding the 2 losses, find the loss mean (0.5 * loss_real + 0.5 *
+        loss_fake). Backward the loss mean to find the gradients. Return the results. NOTE: the caller of this function
+        needs to manually call the clear_grads and step_optim functions of self to ensure the functioning of the
+        training algorithm.
+
+        Args:
+            g_model: the generator model, can be on either the CPUs or the GPUs, preferred to be on the GPUs; this
+                function will not change the device of g_model
+            real_batch: the real batch, can be on either the CPUs or GPUs, preferred to be on the CPUs
+            real_label: the real target label wrt. D, usually be 1, definitely on the CPUs
+            fake_noises: the fake noises, can be on either the CPUs or GPUs, preferred to be on the CPUs
+            fake_label: the fake target label wrt. D, usually be 0, definitely on the CPUs
+
+        Returns:
+            dx, : Mean(D(X)), the output mean of D on the real batch, definitely on the CPUs
+            ldr, : Loss(D, X), the loss of D on the real batch, definitely on the CPUs
+            dgz, : Mean(D(G(Z))), the output mean of D on the fake batch, definitely on the CPUs
+            ldf, : Loss(D, G(Z)), the loss of D on the fake batch, definitely on the CPUs
+            ld: Loss(D), ld = 0.5 * ldf + 0.5 * ldr, definitely on the CPUs
+
+        Raises:
+            ValueError: if self.optim is None
+        """
+        if self.optim is None:
+            raise ValueError("self.optim cannot be None")
+
+        model_training = self.model.training
+        g_model_training = g_model.training
+        self.model.train(True)
+        g_model.train(True)
+
+        real_batch, real_labels = utils.prep_batch_and_labels(real_batch, real_label, self.device)
+        dxs = self.model(real_batch).view(-1)
+        dxs = dxs.float()
+        ldr = self.loss_func(dxs, real_labels)
+
+        fake_noises = fake_noises.to(self.device)
+        fake_batch = g_model(fake_noises)
+        fake_batch = fake_batch.float()
+        fake_batch, fake_labels = utils.prep_batch_and_labels(fake_batch, fake_label, self.device)
+        dgzs = self.model(fake_batch).view(-1)
+        dgzs = dgzs.float()
+        ldf = self.loss_func(dgzs, fake_labels)
+
+        ld = 0.5 * (ldr + ldf)
+        ld.backward()
+
+        dx = dxs.mean().item()
+        ldr = ldr.item()
+        dgz = dgzs.mean().item()
+        ldf = ldf.item()
+        ld = ld.item()
+
+        self.model.train(model_training)
+        g_model.train(g_model_training)
+
+        return dx, ldr, dgz, ldf, ld
+
     def valid(self, batch, label):
         """Validates the model with a batch of data and a target label.
 
@@ -238,6 +301,63 @@ class DModeler(Modeler):
         out_mean = output.mean().item()
         loss_val = loss.item()
         return out_mean, loss_val
+
+    def valid_fair(self, g_model, real_batch, real_label, fake_noises, fake_label):
+        """Fairly validates the model with the given args.
+
+        Set self.model and g_model to evaluation mode. For the real batch: Forward pass the batch to self.model; Find
+        the loss. For the fake batch: Forward pass the noises to g_model to get a fake batch; Forward pass the fake
+        batch to self.model; Find the loss. After finding the 2 losses, find the loss mean (0.5 * loss_real + 0.5 *
+        loss_fake). Return the results.
+
+        Args:
+            g_model: the generator model, can be on either the CPUs or the GPUs, preferred to be on the GPUs; this
+                function will not change the device of g_model
+            real_batch: the real batch, can be on either the CPUs or GPUs, preferred to be on the CPUs
+            real_label: the real target label wrt. D, usually 1, definitely on the CPUs
+            fake_noises: the fake noises, can be on either the CPUs or GPUs, preferred to be on the CPUs
+            fake_label: the fake target label wrt. D, usually 0, definitely on the CPUs
+
+        Returns:
+            dx, : Mean(D(X)), the output mean of D on real, definitely on the CPUs
+            ldr, : L(D, X), the loss of D on real, definitely on the CPUs
+            dgz, : Mean(D(G(Z))), the output mean of D on fake, definitely on the CPUs
+            ldf, : L(D, G(Z)), the loss of D on fake, definitely on the CPUs
+            ld: L(D), ld = 0.5 * ldr + 0.5 * ldf, definitely on the CPUs
+        """
+        model_training = self.model.training
+        g_model_training = g_model.training
+        self.model.train(False)
+        g_model.train(False)
+
+        real_batch, real_labels = utils.prep_batch_and_labels(real_batch, real_label, self.device)
+        with _no_grad():
+            dxs = self.model(real_batch).detach().view(-1)
+        dxs = dxs.float()
+        ldr = self.loss_func(dxs, real_labels)
+
+        fake_noises = fake_noises.to(self.device)
+        with _no_grad():
+            fake_batch = g_model(fake_noises).detach()
+        fake_batch = fake_batch.float()
+        fake_batch, fake_labels = utils.prep_batch_and_labels(fake_batch, fake_label, self.device)
+        with _no_grad():
+            dgzs = self.model(fake_batch).detach().view(-1)
+        dgzs = dgzs.float()
+        ldf = self.loss_func(dgzs, fake_labels)
+
+        ld = 0.5 * (ldr + ldf)
+
+        dx = dxs.mean().item()
+        ldr = ldr.item()
+        dgz = dgzs.mean().item()
+        ldf = ldf.item()
+        ld = ld.item()
+
+        self.model.train(model_training)
+        g_model.train(g_model_training)
+
+        return dx, ldr, dgz, ldf, ld
 
     def test(self, batch):
         """Tests/Uses the model with a batch of data.
@@ -418,6 +538,69 @@ class GModeler(Modeler):
         loss_val = loss.item()
         return out_mean, loss_val
 
+    def train_fair(self, d_model, real_batch, real_label, fake_noises, fake_label):
+        """Fairly trains the model with the given args.
+
+        Set self.model and d_model to training mode. For the real batch: Forward pass the batch to d_model; Find the
+        loss. For the fake batch: Forward pass the noises to self.model to get a fake batch; Forward pass the fake
+        batch to d_model; Find the loss. After finding the 2 losses, find the loss mean (0.5 * loss_real + 0.5 *
+        loss_fake). Backward the loss mean to find the gradients. Return the results. NOTE: The caller of this function
+        needs to manually call the clear_grads and step_optim functions of self to ensure the functioning of the
+        training algorithm.
+
+        Args:
+            d_model: the discriminator model, can be on either the CPUs or the GPUs, preferred to be on the GPUs; this
+                function will not change the device of d_model
+            real_batch: the real batch, can be on either the CPUs or GPUs, preferred to be on the CPUs
+            real_label: the real target label wrt. G, usually be 0, definitely on the CPUs
+            fake_noises: the fake noises, can be on either the CPUs or GPUs, preferred to be on the CPUs
+            fake_label: the fake target label wrt. G, usually be 1, definitely on the CPUs
+
+        Returns:
+            dx2, : Mean(D(X)), the mean output of D on the real batch, definitely on the CPUs
+            lgr, : Loss(G, X), the loss of G on the real batch, definitely on the CPUs
+            dgz2, : Mean(D(G(Z))), the mean output of D on the fake batch, definitely on the CPUs
+            lgf, : Loss(G, G(Z)), the loss of G on the fake batch, definitely on the CPUs
+            lg: Loss(G), lg = 0.5 * lgr + 0.5 * lgf, definitely on the CPUs
+
+        Raises:
+            ValueError: if self.optim is None
+        """
+        if self.optim is None:
+            raise ValueError("self.optim cannot be None")
+
+        model_training = self.model.training
+        d_model_training = d_model.training
+        self.model.train(True)
+        d_model.train(True)
+
+        real_batch, real_labels = utils.prep_batch_and_labels(real_batch, real_label, self.device)
+        dxs2 = d_model(real_batch).view(-1)
+        dxs2 = dxs2.float()
+        lgr = self.loss_func(dxs2, real_labels)
+
+        fake_noises = fake_noises.to(self.device)
+        fake_batch = self.model(fake_noises)
+        fake_batch = fake_batch.float()
+        fake_batch, fake_labels = utils.prep_batch_and_labels(fake_batch, fake_label, self.device)
+        dgzs2 = d_model(fake_batch).view(-1)
+        dgzs2 = dgzs2.float()
+        lgf = self.loss_func(dgzs2, fake_labels)
+
+        lg = 0.5 * (lgr + lgf)
+        lg.backward()
+
+        dx2 = dxs2.mean().item()
+        lgr = lgr.item()
+        dgz2 = dgzs2.mean().item()
+        lgf = lgf.item()
+        lg = lg.item()
+
+        self.model.train(model_training)
+        d_model.train(d_model_training)
+
+        return dx2, lgr, dgz2, lgf, lg
+
     def valid(self, d_model, noises, label):
         """Validates the model with the given args.
 
@@ -458,6 +641,63 @@ class GModeler(Modeler):
         out_mean = output.mean().item()
         loss_val = loss.item()
         return out_mean, loss_val
+
+    def valid_fair(self, d_model, real_batch, real_label, fake_noises, fake_label):
+        """Fairly validates the model with the given args.
+
+        Set self.model and d_model to evaluation mode. For the real batch: Forward pass the batch to d_model; Find the
+        loss. For the fake batch: Forward pass the noises to self.model to get a fake batch; Forward pass the fake
+        batch to d_model; Find the loss. After finding the 2 losses, find the loss mean (0.5 * loss_real + 0.5 *
+        loss_fake). Return the results.
+
+        Args:
+            d_model: the discriminator model, can be on either the CPUs or the GPUs, preferred to be on the GPUs; this
+                function will not change the device of d_model
+            real_batch: the real batch, can be on either the CPUs or GPUs, preferred to be on the CPUs
+            real_label: the real target label wrt. G, usually 0, definitely on the CPUs
+            fake_noises: the fake noises, can be on either the CPUs or GPUs, preferred to be on the CPUs
+            fake_label: the fake target label wrt. G, usually 1, definitely on the CPUs
+
+        Returns:
+            dx2, : Mean(D(X)), the output mean of D on real, definitely on the CPUs
+            lgr, : L(G, X), the loss of G on real, definitely on the CPUs
+            dgz2, : Mean(D(G(Z))), the output mean of D on fake, definitely on the CPUs
+            lgf, : L(G, G(Z)), the loss of G on fake, definitely on the CPUs
+            lg: L(G), lg = 0.5 * lgr + 0.5 * lgf, definitely on the CPUs
+        """
+        model_training = self.model.training
+        self.model.train(False)
+        d_model_training = d_model.training
+        d_model.train(False)
+
+        real_batch, real_labels = utils.prep_batch_and_labels(real_batch, real_label, self.device)
+        with _no_grad():
+            dxs2 = d_model(real_batch).detach().view(-1)
+        dxs2 = dxs2.float()
+        lgr = self.loss_func(dxs2, real_labels)
+
+        fake_noises = fake_noises.to(self.device)
+        with _no_grad():
+            fake_batch = self.model(fake_noises).detach()
+        fake_batch = fake_batch.float()
+        fake_batch, fake_labels = utils.prep_batch_and_labels(fake_batch, fake_label, self.device)
+        with _no_grad():
+            dgzs2 = d_model(fake_batch).detach().view(-1)
+        dgzs2 = dgzs2.float()
+        lgf = self.loss_func(dgzs2, fake_labels)
+
+        lg = 0.5 * (lgr + lgf)
+
+        dx2 = dxs2.mean().item()
+        lgr = lgr.item()
+        dgz2 = dgzs2.mean().item()
+        lgf = lgf.item()
+        lg = lg.item()
+
+        self.model.train(model_training)
+        d_model.train(d_model_training)
+
+        return dx2, lgr, dgz2, lgf, lg
 
     def test(self, noises):
         """Tests/Uses the model with the given args.

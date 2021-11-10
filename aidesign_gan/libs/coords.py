@@ -139,6 +139,8 @@ class TrainingCoord(Coord):
             self.algo = algos.AltSGDAlgo()
         elif algo_name == "pred_alt_sgd_algo":
             self.algo = algos.PredAltSGDAlgo()
+        elif algo_name == "fair_pred_alt_sgd_algo":
+            self.algo = algos.FairPredAltSGDAlgo()
         else:
             raise ValueError(f"Unknown algo: {algo_name}")
 

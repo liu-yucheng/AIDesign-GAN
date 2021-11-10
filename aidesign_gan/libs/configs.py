@@ -137,7 +137,7 @@ class ModelersConfig(Config):
                 "adam_optimizer": {
                     "learning_rate": 0.0002,
                     "beta1": 0.5,
-                    "beta2": 0.995
+                    "beta2": 0.999
                 },
                 "params_init": {
                     "conv": {
@@ -164,7 +164,7 @@ class ModelersConfig(Config):
                 "adam_optimizer": {
                     "learning_rate": 0.0002,
                     "beta1": 0.5,
-                    "beta2": 0.995
+                    "beta2": 0.999
                 },
                 "params_init": {
                     "conv": {

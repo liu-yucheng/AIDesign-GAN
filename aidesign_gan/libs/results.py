@@ -326,6 +326,63 @@ class TrainingResults(Results):
 
         self.logstr("\n")
 
+    def log_batch_3(self, batch_type):
+        """Logs the batch info for the batch level algo.
+
+        Args:
+            batch_type: batch type (t/v)
+        """
+        self.check_context()
+        c: _TrainingContext = self.context
+
+        needs_log = False
+        if "t" in batch_type:
+            needs_log = self.find_train_needs_log()
+        elif "v" in batch_type:
+            needs_log = self.find_valid_needs_log()
+        if not needs_log:
+            return
+
+        batch_index = None
+        batch_count = None
+        if "t" in batch_type:
+            batch_index = c.loops.train.index
+            batch_count = c.loops.train.count
+        elif "v" in batch_type:
+            batch_index = c.loops.valid.index
+            batch_count = c.loops.valid.count
+
+        self.logstr("Batch {}.{}.{}{} / ".format(
+            c.loops.iteration.index + 1,
+            c.loops.epoch.index + 1,
+            batch_type, batch_index + 1
+        ))
+        self.logstr("{}.{}.{}{}: ".format(
+            c.loops.iteration.count,
+            c.loops.epoch.count,
+            batch_type, batch_count
+        ))
+
+        self.logstr("\n")
+        self.logstr(
+            str(
+                "     D:   D(X) = {}   D(G(Z)) = {}\n"
+                "  L(D): L(D,X) = {} L(D,G(Z)) = {} L(D) = {}\n"
+            ).format(
+                f"{c.latest.dx:.6f}", f"{c.latest.dgz:.6f}",
+                f"{c.latest.ldr:.6f}", f"{c.latest.ldf:.6f}", f"{c.latest.ld:.6f}"
+            )
+        )
+        self.logstr(
+            str(
+                "     G:   D(X) = {}   D(G(Z)) = {}\n"
+                "  L(G): L(G,X) = {} L(G,G(Z)) = {} L(G) = {}\n"
+            ).format(
+                f"{c.latest.dx2:.6f}", f"{c.latest.dgz2:.6f}",
+                f"{c.latest.lgr:.6f}", f"{c.latest.lgf:.6f}", f"{c.latest.lg:.6f}"
+            )
+        )
+
     def log_epoch_loss(self, loss_type):
         """Logs the epoch loss info.
 

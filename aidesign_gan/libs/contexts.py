@@ -176,15 +176,26 @@ class TrainingContext(Context):
         """Latest batch result info."""
 
         dx = None
-        """Average D(X)."""
+        """Average D(X) while training D."""
+        ldr = None
+        """L(D, X), the loss of D on real."""
         dgz = None
-        """Average D(G(Z)) when training D."""
+        """Average D(G(Z)) while training D."""
+        ldf = None
+        """L(D, G(Z)), the loss of D on fake."""
+        ld = None
+        """L(D), the loss of D."""
+
+        dx2 = None
+        """Average D(X) while training G"""
+        lgr = None
+        """L(G, X), the loss of G on real."""
         dgz2 = None
         """Average D(G(Z)) when training G."""
-        ld = None
-        """L(D), the loss of D, with range [0, 200]."""
+        lgf = None
+        """L(G, G(Z)), the loss of G on fake."""
         lg = None
-        """L(G), the loss of G, with range [0, 100]."""
+        """L(G), the loss of G."""
 
     class Losses(_AttrDict):
         """Epoch losses info."""
@@ -423,9 +434,15 @@ class TrainingContext(Context):
             raise ValueError("self.data.size cannot be None")
 
         self.latest.dx = None
+        self.latest.ldr = None
         self.latest.dgz = None
-        self.latest.dgz2 = None
+        self.latest.ldf = None
         self.latest.ld = None
+
+        self.latest.dx2 = None
+        self.latest.lgr = None
+        self.latest.dgz2 = None
+        self.latest.lgf = None
         self.latest.lg = None
 
         self.losses.train.d = []

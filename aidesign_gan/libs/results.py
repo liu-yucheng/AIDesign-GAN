@@ -366,8 +366,8 @@ class TrainingResults(Results):
         self.logstr("\n")
         self.logstr(
             str(
-                "     D:   D(X) = {}   D(G(Z)) = {}\n"
-                "  L(D): L(D,X) = {} L(D,G(Z)) = {} L(D) = {}\n"
+                "     D:  D(X) = {}  D(G(Z)) = {}\n"
+                "  L(D):  L(D,X) = {}  L(D,G(Z)) = {}  L(D) = {}\n"
             ).format(
                 f"{c.latest.dx:.6f}", f"{c.latest.dgz:.6f}",
                 f"{c.latest.ldr:.6f}", f"{c.latest.ldf:.6f}", f"{c.latest.ld:.6f}"
@@ -375,8 +375,8 @@ class TrainingResults(Results):
         )
         self.logstr(
             str(
-                "     G:   D(X) = {}   D(G(Z)) = {}\n"
-                "  L(G): L(G,X) = {} L(G,G(Z)) = {} L(G) = {}\n"
+                "     G:  D(X) = {}  D(G(Z)) = {}\n"
+                "  L(G):  L(G,X) = {}  L(G,G(Z)) = {}  L(G) = {}\n"
             ).format(
                 f"{c.latest.dx2:.6f}", f"{c.latest.dgz2:.6f}",
                 f"{c.latest.lgr:.6f}", f"{c.latest.lgf:.6f}", f"{c.latest.lg:.6f}"

@@ -385,10 +385,22 @@ class TrainingContext(Context):
 
         self.mode = mode
 
-    def setup_labels(self):
-        """Sets up the labels."""
-        self.labels.real = float(1)
-        self.labels.fake = float(0)
+    def setup_labels(self, config=None):
+        """Sets up the labels.
+
+        Args:
+            config: the coords training labels config dict
+        """
+        if config is None:
+            self.labels.real = float(1)
+            self.labels.fake = float(0)
+        else:  # elif config is not None:
+            real = float(utils.bound_num(config["real"], 0, 1))
+            fake = float(utils.bound_num(config["fake"], 0, 1))
+
+            self.labels.real = real
+            self.labels.fake = fake
+        # end if
 
     def setup_loops(self, config):
         """Sets up the loop control variables.

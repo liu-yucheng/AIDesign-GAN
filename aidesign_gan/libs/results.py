@@ -152,6 +152,13 @@ class TrainingResults(Results):
 
         self.logln(f"Training mode: {c.mode}")
 
+    def log_labels(self):
+        """Logs the labels info."""
+        self.check_context()
+        c: _TrainingContext = self.context
+
+        self.logln("Labels:  Real = {}  Fake = {}".format(f"{c.labels.real:.3f}", f"{c.labels.fake:.3f}"))
+
     def log_algo(self, algo_name):
         """Logs the training algorithm.
 

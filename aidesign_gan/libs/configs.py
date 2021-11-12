@@ -93,6 +93,10 @@ class CoordsConfig(Config):
                     "image_channel_count": 3,
                     "training_set_weight": 9,
                     "validation_set_weight": 1
+                },
+                "labels": {
+                    "real": 1,
+                    "fake": 0
                 }
             },
             "generation": {

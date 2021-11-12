@@ -139,7 +139,7 @@ class TrainingResults(Results):
         self.logstr(
             str(
                 "D's modeler:\n"
-                "  Model:  Size: {}  Training size: {}\n"
+                "  Model:  Size: {}  Training size: {}  Struct: (See below)\n"
                 "  Adam optimizer:  Learning rate: {}\n"
                 "==== D's model struct ====\n"
                 "{}\n"
@@ -153,7 +153,7 @@ class TrainingResults(Results):
         self.logstr(
             str(
                 "G's modeler:\n"
-                "  Model:  Size: {}  Training size: {}\n"
+                "  Model:  Size: {}  Training size: {}  Struct: (See below)\n"
                 "  Adam optimizer:  Learning rate: {}\n"
                 "==== G's model struct ====\n"
                 "{}\n"

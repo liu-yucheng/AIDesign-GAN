@@ -136,14 +136,34 @@ class TrainingResults(Results):
         self.check_context()
         c: _TrainingContext = self.context
 
-        self.logln(f"D's size: {c.mods.d.size}")
-        self.logln(f"D's training size: {c.mods.d.training_size}")
-        self.logln(f"==== D's struct ====")
-        self.logln(str(c.mods.d.model))
-        self.logln(f"G's size: {c.mods.g.size}")
-        self.logln(f"G's training size: {c.mods.g.training_size}")
-        self.logln(f"==== G's struct ====")
-        self.logln(str(c.mods.g.model))
+        self.logstr(
+            str(
+                "D's modeler:\n"
+                "  Model:  Size: {}  Training size: {}\n"
+                "  Adam optimizer:  Learning rate: {}\n"
+                "==== D's model struct ====\n"
+                "{}\n"
+            ).format(
+                c.mods.d.size,
+                c.mods.d.training_size,
+                c.mods.d.config["adam_optimizer"]["learning_rate"],
+                str(c.mods.d.model)
+            )
+        )
+        self.logstr(
+            str(
+                "G's modeler:\n"
+                "  Model:  Size: {}  Training size: {}\n"
+                "  Adam optimizer:  Learning rate: {}\n"
+                "==== G's model struct ====\n"
+                "{}\n"
+            ).format(
+                c.mods.g.size,
+                c.mods.g.training_size,
+                c.mods.g.config["adam_optimizer"]["learning_rate"],
+                str(c.mods.g.model)
+            )
+        )
 
     def log_mode(self):
         """Logs the training mode info."""

@@ -438,22 +438,6 @@ def prep_batch_and_labels(batch, label, device):
     return batch, labels
 
 
-def setup_adam(model, config):
-    """Sets up an Adam optimizer with the given args.
-
-    Args:
-        model: the model, a pytorch nn module
-        config: the adam optimizer config dict
-
-    Returns:
-        adam: the Adam optimizer
-    """
-    adam = optim.Adam(
-        model.parameters(), lr=config["learning_rate"], betas=(config["beta1"], config["beta2"])
-    )
-    return adam
-
-
 def bound_num(num, bound1, bound2):
     """Bounds a number with the given args.
 
@@ -524,6 +508,22 @@ def logln(logs, line=""):
     """
     for log in logs:
         log.write(line + "\n")
+
+
+def setup_adam(model, config):
+    """Sets up an Adam optimizer with the given args.
+
+    Args:
+        model: the model, a pytorch nn module
+        config: the adam optimizer config dict
+
+    Returns:
+        adam: the Adam optimizer
+    """
+    adam = optim.Adam(
+        model.parameters(), lr=config["learning_rate"], betas=(config["beta1"], config["beta2"])
+    )
+    return adam
 
 
 def setup_pred_adam(model, config):

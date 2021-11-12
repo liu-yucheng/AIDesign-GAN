@@ -103,7 +103,6 @@ class TrainingContext(Context):
 
         class TrainValid(_AttrDict):
             """Training validation subset info."""
-
             loader = None
             """Subset data loader."""
             size = None
@@ -124,7 +123,6 @@ class TrainingContext(Context):
 
     class Mods(_AttrDict):
         """Modelers info."""
-
         d: _Union[None, _DModeler] = None
         """Discriminator modeler instance."""
         g: _Union[None, _GModeler] = None
@@ -132,7 +130,6 @@ class TrainingContext(Context):
 
     class Labels(_AttrDict):
         """Target labels info."""
-
         real = None
         """Real label."""
         fake = None
@@ -143,7 +140,6 @@ class TrainingContext(Context):
 
         class IterationEpochBatch(_AttrDict):
             """Iteration epoch batch info."""
-
             count = None
             """Count."""
             index = None
@@ -151,7 +147,6 @@ class TrainingContext(Context):
 
         class RollbackEarlystop(_AttrDict):
             """Rollback earlystop info."""
-
             max = None
             """Maximum rollback / earlystop count."""
             d = None
@@ -174,7 +169,6 @@ class TrainingContext(Context):
 
     class Latest(_AttrDict):
         """Latest batch result info."""
-
         dx = None
         """Average D(X) while training D."""
         ldr = None
@@ -202,7 +196,6 @@ class TrainingContext(Context):
 
         class Subset(_AttrDict):
             """Data subset losses info."""
-
             d = None
             """Discriminator epoch losses."""
             g = None
@@ -215,7 +208,6 @@ class TrainingContext(Context):
 
     class Bests(_AttrDict):
         """Best losses info."""
-
         d = None
         """Discriminator best loss."""
         g = None
@@ -223,7 +215,6 @@ class TrainingContext(Context):
 
     class Rbs(_AttrDict):
         """Rollback epochs info."""
-
         d = None
         """Discriminator rollback epoch number list."""
         g = None
@@ -238,7 +229,6 @@ class TrainingContext(Context):
 
     class Collapses(_AttrDict):
         """Training collapses info."""
-
         epochs = None
         """Collapses epoch number list."""
         batch_count = None

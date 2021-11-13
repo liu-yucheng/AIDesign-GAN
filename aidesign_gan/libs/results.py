@@ -177,7 +177,7 @@ class TrainingResults(Results):
         self.check_context()
         c: _TrainingContext = self.context
 
-        self.logln("Labels:  Real = {}  Fake = {}".format(f"{c.labels.real:.6f}", f"{c.labels.fake:.6f}"))
+        self.logln("Labels:  Real: {}  Fake: {}".format(f"{c.labels.real:.6f}", f"{c.labels.fake:.6f}"))
 
     def log_algo(self, algo_name):
         """Logs the training algorithm.
@@ -316,12 +316,12 @@ class TrainingResults(Results):
             batch_index = c.loops.valid.index
             batch_count = c.loops.valid.count
 
-        self.logstr("Batch {}.{}{}.{}{} / ".format(
+        self.logstr("Batch {}.{}{}.{}{} /".format(
             c.loops.iteration.index + 1,
             epoch_type, c.loops.epoch.index + 1,
             batch_type, batch_index + 1
         ))
-        self.logstr("{}.{}{}.{}{}: ".format(
+        self.logstr(" {}.{}{}.{}{}:".format(
             c.loops.iteration.count,
             epoch_type, c.loops.epoch.count,
             batch_type, batch_count
@@ -329,15 +329,15 @@ class TrainingResults(Results):
 
         if "d" in epoch_type:
             if "t" in batch_type:
-                self.logstr(f"D(X) = {c.latest.dx:.6f} D(G(Z)) = {c.latest.dgz:.6f} ")
+                self.logstr(f"  D(X): {c.latest.dx:.6f}  D(G(Z)): {c.latest.dgz:.6f}")
             elif "v" in batch_type:
                 if "r" in batch_type:
-                    self.logstr(f"D(X) = {c.latest.dx:.6f} ")
+                    self.logstr(f"  D(X): {c.latest.dx:.6f}")
                 elif "f" in batch_type:
-                    self.logstr(f"D(G(Z)) = {c.latest.dgz:.6f} ")
-            self.logstr(f"L(D) = {c.latest.ld:.6f}")
+                    self.logstr(f"  D(G(Z)): {c.latest.dgz:.6f}")
+            self.logstr(f"  L(D) = {c.latest.ld:.6f}")
         elif "g" in epoch_type:
-            self.logstr(f"D(G(Z)) = {c.latest.dgz:.6f} L(G) = {c.latest.lg:.6f}")
+            self.logstr(f"  D(G(Z)) = {c.latest.dgz:.6f} L(G) = {c.latest.lg:.6f}")
 
         self.logstr("\n")
 
@@ -367,12 +367,12 @@ class TrainingResults(Results):
             batch_index = c.loops.valid.index
             batch_count = c.loops.valid.count
 
-        self.logstr("Batch {}.{}.{}{} / ".format(
+        self.logstr("Batch {}.{}.{}{} /".format(
             c.loops.iteration.index + 1,
             c.loops.epoch.index + 1,
             batch_type, batch_index + 1
         ))
-        self.logstr("{}.{}.{}{}: ".format(
+        self.logstr(" {}.{}.{}{}:".format(
             c.loops.iteration.count,
             c.loops.epoch.count,
             batch_type, batch_count
@@ -380,16 +380,16 @@ class TrainingResults(Results):
 
         if "t" in batch_type:
             self.logstr("\n")
-            self.logstr(f"  D: D(X) = {c.latest.dx:.6f} D(G(Z)) = {c.latest.dgz:.6f} L(D) = {c.latest.ld:.6f}\n")
-            self.logstr(f"  G: D(G(Z)) = {c.latest.dgz2:.6f} L(G) = {c.latest.lg:.6f}")
+            self.logstr(f"  D:  D(X): {c.latest.dx:.6f}  D(G(Z)): {c.latest.dgz:.6f}  L(D): {c.latest.ld:.6f}\n")
+            self.logstr(f"  G:  D(G(Z)): {c.latest.dgz2:.6f}  L(G): {c.latest.lg:.6f}")
         elif "v" in batch_type:
             if "d" in batch_type:
                 if "r" in batch_type:
-                    self.logstr(f"D(X) = {c.latest.dx:.6f} L(D) = {c.latest.ld:.6f}")
+                    self.logstr(f"  D(X): {c.latest.dx:.6f}  L(D): {c.latest.ld:.6f}")
                 elif "f" in batch_type:
-                    self.logstr(f"D(G(Z)) = {c.latest.dgz:.6f} L(D) = {c.latest.ld:.6f}")
+                    self.logstr(f"  D(G(Z)): {c.latest.dgz:.6f}  L(D): {c.latest.ld:.6f}")
             elif "g" in batch_type:
-                self.logstr(f"D(G(Z)): {c.latest.dgz2:.6f} L(G) = {c.latest.lg:.6f}")
+                self.logstr(f"  D(G(Z)): {c.latest.dgz2:.6f}  L(G): {c.latest.lg:.6f}")
 
         self.logstr("\n")
 
@@ -419,12 +419,12 @@ class TrainingResults(Results):
             batch_index = c.loops.valid.index
             batch_count = c.loops.valid.count
 
-        self.logstr("Batch {}.{}.{}{} / ".format(
+        self.logstr("Batch {}.{}.{}{} /".format(
             c.loops.iteration.index + 1,
             c.loops.epoch.index + 1,
             batch_type, batch_index + 1
         ))
-        self.logstr("{}.{}.{}{}: ".format(
+        self.logstr(" {}.{}.{}{}:".format(
             c.loops.iteration.count,
             c.loops.epoch.count,
             batch_type, batch_count
@@ -433,9 +433,9 @@ class TrainingResults(Results):
         self.logstr("\n")
         self.logstr(
             str(
-                "     D:  D(X) = {}  D(G(Z)) = {}\n"
-                "  L(D):  L(D,X) = {}  L(D,G(Z)) = {}  L(D, Cluster) = {}\n"
-                "         L(D) = {}\n"
+                "     D:  D(X): {}  D(G(Z)): {}\n"
+                "  L(D):  L(D,X): {}  L(D,G(Z)): {}  L(D,Cluster): {}\n"
+                "         L(D): {}\n"
             ).format(
                 f"{c.latest.dx:.6f}", f"{c.latest.dgz:.6f}",
                 f"{c.latest.ldr:.6f}", f"{c.latest.ldf:.6f}", f"{c.latest.ldc:.6f}",
@@ -444,9 +444,9 @@ class TrainingResults(Results):
         )
         self.logstr(
             str(
-                "     G:  D(X) = {}  D(G(Z)) = {}\n"
-                "  L(G):  L(G,X) = {}  L(G,G(Z)) = {}  L(G, Cluster) = {}\n"
-                "         L(G) = {}\n"
+                "     G:  D(X): {}  D(G(Z)): {}\n"
+                "  L(G):  L(G,X): {}  L(G,G(Z)): {}  L(G,Cluster): {}\n"
+                "         L(G): {}\n"
             ).format(
                 f"{c.latest.dx2:.6f}", f"{c.latest.dgz2:.6f}",
                 f"{c.latest.lgr:.6f}", f"{c.latest.lgf:.6f}", f"{c.latest.lgc:.6f}",
@@ -473,19 +473,19 @@ class TrainingResults(Results):
         elif loss_type == "vg":
             loss = c.losses.valid.g[-1]
 
-        self.logstr("Epoch ")
+        self.logstr("Epoch")
 
         if "d" in loss_type:
-            self.logstr("D ")
+            self.logstr(" D")
         elif "g" in loss_type:
-            self.logstr("G ")
+            self.logstr(" G")
 
         if "t" in loss_type:
-            self.logstr("training ")
+            self.logstr(" training")
         elif "v" in loss_type:
-            self.logstr("validation ")
+            self.logstr(" validation")
 
-        self.logstr(f"loss = {loss:.6f}\n")
+        self.logstr(f" loss: {loss:.6f}\n")
 
     def log_best_losses(self, model_type):
         """Logs the best loss info.
@@ -499,18 +499,18 @@ class TrainingResults(Results):
         if model_type == "d":
             curr_loss = c.losses.valid.d[-1]
             prev_best = c.bests.d
-            self.logstr("D: ")
+            self.logstr("D:")
         elif model_type == "g":
             curr_loss = c.losses.valid.g[-1]
             prev_best = c.bests.g
-            self.logstr("G: ")
+            self.logstr("G:")
 
-        self.logstr(f"curr loss = {curr_loss:.6f} ")
+        self.logstr(f"  Curr loss: {curr_loss:.6f}")
 
         if prev_best is None:
-            self.logstr("prev best loss = None")
+            self.logstr("  Prev best loss: None")
         else:
-            self.logstr(f"prev best loss = {prev_best:.6f}")
+            self.logstr(f"  Prev best loss: {prev_best:.6f}")
 
         self.logstr("\n")
 

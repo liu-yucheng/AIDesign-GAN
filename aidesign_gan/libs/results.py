@@ -212,6 +212,22 @@ class TrainingResults(Results):
             )
         )
 
+    def log_pred_factor(self):
+        """Logs the prediction factor."""
+        self.check_context()
+        c: _TrainingContext = self.context
+
+        d_pred_factor = c.mods.d.optim.pred_factor
+        g_pred_factor = c.mods.g.optim.pred_factor
+
+        self.logstr(
+            str(
+                "Prediction factor:  D: {}  G: {}\n"
+            ).format(
+                f"{d_pred_factor:.6f}", f"{g_pred_factor:.6f}"
+            )
+        )
+
     def log_iter(self, prefix):
         """Logs the iter info.
 

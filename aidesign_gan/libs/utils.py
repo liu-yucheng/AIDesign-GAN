@@ -536,9 +536,18 @@ def setup_pred_adam(model, config):
     Returns:
         pred_adam: the predictive Adam optimizer
     """
-    pred_adam = optims.PredAdam(
-        model.parameters(), lr=config["learning_rate"], betas=(config["beta1"], config["beta2"])
-    )
+    pred_factor_key = "pred_factor"
+    if pred_factor_key in config:
+        pred_adam = optims.PredAdam(
+            model.parameters(),
+            lr=config["learning_rate"], betas=(config["beta1"], config["beta2"]),
+            pred_factor=config["pred_factor"]
+        )
+    else:  # elif pred_factor_key not in config:
+        pred_adam = optims.PredAdam(
+            model.parameters(),
+            lr=config["learning_rate"], betas=(config["beta1"], config["beta2"])
+        )
     return pred_adam
 
 

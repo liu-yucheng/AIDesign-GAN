@@ -93,6 +93,10 @@ class CoordsConfig(Config):
                     "image_channel_count": 3,
                     "training_set_weight": 9,
                     "validation_set_weight": 1
+                },
+                "labels": {
+                    "real": 1,
+                    "fake": 0
                 }
             },
             "generation": {
@@ -150,6 +154,11 @@ class ModelersConfig(Config):
                         "bias_mean": 0,
                         "bias_std": 0.0002
                     }
+                },
+                "fairness": {
+                    "dx_factor": 0.5,
+                    "dgz_factor": 0.5,
+                    "cluster_factor": 0
                 }
             },
             "generator": {
@@ -177,6 +186,11 @@ class ModelersConfig(Config):
                         "bias_mean": 0,
                         "bias_std": 0.0002
                     }
+                },
+                "fairness": {
+                    "dx_factor": 0.5,
+                    "dgz_factor": 0.5,
+                    "cluster_factor": 0
                 }
             }
         }

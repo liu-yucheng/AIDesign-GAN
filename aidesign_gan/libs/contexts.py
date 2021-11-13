@@ -103,7 +103,6 @@ class TrainingContext(Context):
 
         class TrainValid(_AttrDict):
             """Training validation subset info."""
-
             loader = None
             """Subset data loader."""
             size = None
@@ -124,7 +123,6 @@ class TrainingContext(Context):
 
     class Mods(_AttrDict):
         """Modelers info."""
-
         d: _Union[None, _DModeler] = None
         """Discriminator modeler instance."""
         g: _Union[None, _GModeler] = None
@@ -132,7 +130,6 @@ class TrainingContext(Context):
 
     class Labels(_AttrDict):
         """Target labels info."""
-
         real = None
         """Real label."""
         fake = None
@@ -143,7 +140,6 @@ class TrainingContext(Context):
 
         class IterationEpochBatch(_AttrDict):
             """Iteration epoch batch info."""
-
             count = None
             """Count."""
             index = None
@@ -151,7 +147,6 @@ class TrainingContext(Context):
 
         class RollbackEarlystop(_AttrDict):
             """Rollback earlystop info."""
-
             max = None
             """Maximum rollback / earlystop count."""
             d = None
@@ -174,7 +169,6 @@ class TrainingContext(Context):
 
     class Latest(_AttrDict):
         """Latest batch result info."""
-
         dx = None
         """Average D(X) while training D."""
         ldr = None
@@ -183,6 +177,8 @@ class TrainingContext(Context):
         """Average D(G(Z)) while training D."""
         ldf = None
         """L(D, G(Z)), the loss of D on fake."""
+        ldc = None
+        """L(D, Cluster), D cluster loss."""
         ld = None
         """L(D), the loss of D."""
 
@@ -194,6 +190,8 @@ class TrainingContext(Context):
         """Average D(G(Z)) when training G."""
         lgf = None
         """L(G, G(Z)), the loss of G on fake."""
+        lgc = None
+        """L(G, Cluster), G cluster loss."""
         lg = None
         """L(G), the loss of G."""
 
@@ -202,7 +200,6 @@ class TrainingContext(Context):
 
         class Subset(_AttrDict):
             """Data subset losses info."""
-
             d = None
             """Discriminator epoch losses."""
             g = None
@@ -215,7 +212,6 @@ class TrainingContext(Context):
 
     class Bests(_AttrDict):
         """Best losses info."""
-
         d = None
         """Discriminator best loss."""
         g = None
@@ -223,7 +219,6 @@ class TrainingContext(Context):
 
     class Rbs(_AttrDict):
         """Rollback epochs info."""
-
         d = None
         """Discriminator rollback epoch number list."""
         g = None
@@ -238,7 +233,6 @@ class TrainingContext(Context):
 
     class Collapses(_AttrDict):
         """Training collapses info."""
-
         epochs = None
         """Collapses epoch number list."""
         batch_count = None
@@ -385,10 +379,22 @@ class TrainingContext(Context):
 
         self.mode = mode
 
-    def setup_labels(self):
-        """Sets up the labels."""
-        self.labels.real = float(1)
-        self.labels.fake = float(0)
+    def setup_labels(self, config=None):
+        """Sets up the labels.
+
+        Args:
+            config: the coords training labels config dict
+        """
+        if config is None:
+            self.labels.real = float(1)
+            self.labels.fake = float(0)
+        else:  # elif config is not None:
+            real = float(utils.bound_num(config["real"], 0, 1))
+            fake = float(utils.bound_num(config["fake"], 0, 1))
+
+            self.labels.real = real
+            self.labels.fake = fake
+        # end if
 
     def setup_loops(self, config):
         """Sets up the loop control variables.
@@ -437,12 +443,14 @@ class TrainingContext(Context):
         self.latest.ldr = None
         self.latest.dgz = None
         self.latest.ldf = None
+        self.latest.ldc = None
         self.latest.ld = None
 
         self.latest.dx2 = None
         self.latest.lgr = None
         self.latest.dgz2 = None
         self.latest.lgf = None
+        self.latest.lgc = None
         self.latest.lg = None
 
         self.losses.train.d = []

@@ -136,14 +136,34 @@ class TrainingResults(Results):
         self.check_context()
         c: _TrainingContext = self.context
 
-        self.logln(f"D's size: {c.mods.d.size}")
-        self.logln(f"D's training size: {c.mods.d.training_size}")
-        self.logln(f"==== D's struct ====")
-        self.logln(str(c.mods.d.model))
-        self.logln(f"G's size: {c.mods.g.size}")
-        self.logln(f"G's training size: {c.mods.g.training_size}")
-        self.logln(f"==== G's struct ====")
-        self.logln(str(c.mods.g.model))
+        self.logstr(
+            str(
+                "D's modeler:\n"
+                "  Model:  Size: {}  Training size: {}  Struct: (See below)\n"
+                "  Adam optimizer:  Learning rate: {}\n"
+                "==== D's model struct ====\n"
+                "{}\n"
+            ).format(
+                c.mods.d.size,
+                c.mods.d.training_size,
+                c.mods.d.config["adam_optimizer"]["learning_rate"],
+                str(c.mods.d.model)
+            )
+        )
+        self.logstr(
+            str(
+                "G's modeler:\n"
+                "  Model:  Size: {}  Training size: {}  Struct: (See below)\n"
+                "  Adam optimizer:  Learning rate: {}\n"
+                "==== G's model struct ====\n"
+                "{}\n"
+            ).format(
+                c.mods.g.size,
+                c.mods.g.training_size,
+                c.mods.g.config["adam_optimizer"]["learning_rate"],
+                str(c.mods.g.model)
+            )
+        )
 
     def log_mode(self):
         """Logs the training mode info."""
@@ -151,6 +171,13 @@ class TrainingResults(Results):
         c: _TrainingContext = self.context
 
         self.logln(f"Training mode: {c.mode}")
+
+    def log_labels(self):
+        """Logs the labels info."""
+        self.check_context()
+        c: _TrainingContext = self.context
+
+        self.logln("Labels:  Real = {}  Fake = {}".format(f"{c.labels.real:.6f}", f"{c.labels.fake:.6f}"))
 
     def log_algo(self, algo_name):
         """Logs the training algorithm.
@@ -160,6 +187,30 @@ class TrainingResults(Results):
         """
         algo_name = str(algo_name)
         self.logln(f"Algo: {algo_name}")
+
+    def log_fairness(self):
+        """Logs the fairness config."""
+        self.check_context()
+        c: _TrainingContext = self.context
+
+        d_dx_factor = c.mods.d.config["fairness"]["dx_factor"]
+        d_dgz_factor = c.mods.d.config["fairness"]["dgz_factor"]
+        d_cluster_factor = c.mods.d.config["fairness"]["cluster_factor"]
+
+        g_dx_factor = c.mods.g.config["fairness"]["dx_factor"]
+        g_dgz_factor = c.mods.g.config["fairness"]["dgz_factor"]
+        g_cluster_factor = c.mods.g.config["fairness"]["cluster_factor"]
+
+        self.logstr(
+            str(
+                "Fairness:\n"
+                "  D:  D(X) factor: {}  D(G(Z)) factor: {}  Cluster factor: {}\n"
+                "  G:  D(X) factor: {}  D(G(Z)) factor: {}  Cluster factor: {}\n"
+            ).format(
+                f"{d_dx_factor:.6f}", f"{d_dgz_factor:.6f}", f"{d_cluster_factor:.6f}",
+                f"{g_dx_factor:.6f}", f"{g_dgz_factor:.6f}", f"{g_cluster_factor:.6f}"
+            )
+        )
 
     def log_iter(self, prefix):
         """Logs the iter info.
@@ -367,19 +418,23 @@ class TrainingResults(Results):
         self.logstr(
             str(
                 "     D:  D(X) = {}  D(G(Z)) = {}\n"
-                "  L(D):  L(D,X) = {}  L(D,G(Z)) = {}  L(D) = {}\n"
+                "  L(D):  L(D,X) = {}  L(D,G(Z)) = {}  L(D, Cluster) = {}\n"
+                "         L(D) = {}\n"
             ).format(
                 f"{c.latest.dx:.6f}", f"{c.latest.dgz:.6f}",
-                f"{c.latest.ldr:.6f}", f"{c.latest.ldf:.6f}", f"{c.latest.ld:.6f}"
+                f"{c.latest.ldr:.6f}", f"{c.latest.ldf:.6f}", f"{c.latest.ldc:.6f}",
+                f"{c.latest.ld:.6f}"
             )
         )
         self.logstr(
             str(
                 "     G:  D(X) = {}  D(G(Z)) = {}\n"
-                "  L(G):  L(G,X) = {}  L(G,G(Z)) = {}  L(G) = {}\n"
+                "  L(G):  L(G,X) = {}  L(G,G(Z)) = {}  L(G, Cluster) = {}\n"
+                "         L(G) = {}\n"
             ).format(
                 f"{c.latest.dx2:.6f}", f"{c.latest.dgz2:.6f}",
-                f"{c.latest.lgr:.6f}", f"{c.latest.lgf:.6f}", f"{c.latest.lg:.6f}"
+                f"{c.latest.lgr:.6f}", f"{c.latest.lgf:.6f}", f"{c.latest.lgc:.6f}",
+                f"{c.latest.lg:.6f}"
             )
         )
 

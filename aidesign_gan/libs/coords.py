@@ -95,31 +95,53 @@ class TrainingCoord(Coord):
             self.setup_results()
 
         self.coords_config = configs.CoordsConfig(self.model_path)
-        self.coords_config.load()
         self.modelers_config = configs.ModelersConfig(self.model_path)
+
+        self.coords_config.load()
         self.modelers_config.load()
+
         self.results.log_configs(self.coords_config, self.modelers_config)
+
         self.context = contexts.TrainingContext()
         self.results.bind_context(self.context)
-        config = self.coords_config["training"]
+
+        training_key = "training"
+        config = self.coords_config[training_key]
         self.context.setup_rand(config)
         self.results.log_rand()
+
+        config = self.coords_config[training_key]
         self.context.setup_hw(config)
         self.results.log_hw()
+
+        config = self.coords_config[training_key]
         self.context.setup_data(self.data_path, config)
         self.results.log_data()
+
         config = self.modelers_config
         self.context.setup_mods(config)
         self.results.log_mods()
-        config = self.coords_config["training"]
+
+        config = self.coords_config[training_key]
         self.context.setup_mode(config)
         self.results.log_mode()
-        self.context.setup_labels()
-        self.context.setup_loops(config)
-        self.context.setup_stats()
-        self.context.setup_noises()
-        self.context_ready = True
 
+        labels_key = "labels"
+        if labels_key in self.coords_config[training_key]:
+            config = self.coords_config[training_key][labels_key]
+            self.context.setup_labels(config=config)
+        else:  # elif "labels" not in self.coords_config[training_key]:
+            self.context.setup_labels()
+        self.results.log_labels()
+
+        config = self.coords_config[training_key]
+        self.context.setup_loops(config)
+
+        self.context.setup_stats()
+
+        self.context.setup_noises()
+
+        self.context_ready = True
         self.results.logln("Completed context setup")
 
     def setup_algo(self):

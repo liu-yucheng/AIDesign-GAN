@@ -154,6 +154,11 @@ class ModelersConfig(Config):
                         "bias_mean": 0,
                         "bias_std": 0.0002
                     }
+                },
+                "fairness": {
+                    "dx_factor": 0.5,
+                    "dgz_factor": 0.5,
+                    "cluster_factor": 0
                 }
             },
             "generator": {
@@ -181,6 +186,11 @@ class ModelersConfig(Config):
                         "bias_mean": 0,
                         "bias_std": 0.0002
                     }
+                },
+                "fairness": {
+                    "dx_factor": 0.5,
+                    "dgz_factor": 0.5,
+                    "cluster_factor": 0
                 }
             }
         }

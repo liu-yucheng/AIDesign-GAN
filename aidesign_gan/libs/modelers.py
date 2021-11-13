@@ -1,4 +1,8 @@
-"""Module of the modeler classes."""
+"""Module of the modeler classes.
+
+==== References ====
+Arjovsky, et al., 2017. Wasserstein Generative Adversarial Networks. https://arxiv.org/abs/1701.07875
+"""
 
 # Initially added by: liu-yucheng
 # Last updated by: liu-yucheng
@@ -42,6 +46,8 @@ class Modeler:
         """Total size of the model."""
         self.training_size = None
         """Training size of the model, 0 if the model is not initialized to the training mode."""
+        self.has_fairness = None
+        """Whether the modeler has a fairness config."""
 
     def load(self):
         """Loads the model and optimizer states."""
@@ -129,10 +135,13 @@ class DModeler(Modeler):
             self.model.train(True)
         self.model.train(train)
 
-        # Init self.size, self.trainable_size
+        # Init self.size, self.training_size
         size, training_size = utils.find_model_sizes(self.model)
         self.size = size
         self.training_size = training_size
+
+        # Init self.has_fairness
+        self.has_fairness = "fairness" in self.config
 
     def train(self, batch, label):
         """Trains the model with a batch of data and a target label.
@@ -215,10 +224,9 @@ class DModeler(Modeler):
 
         Set self.model and g_model to training mode. For the real batch: Forward pass the batch to self.model; Find the
         loss. For the fake batch: Forward pass the noises to g_model to get a fake batch; Forward pass the fake batch
-        to self.model; Find the loss. After finding the 2 losses, find the loss mean (0.5 * loss_real + 0.5 *
-        loss_fake). Backward the loss mean to find the gradients. Return the results. NOTE: the caller of this function
-        needs to manually call the clear_grads and step_optim functions of self to ensure the functioning of the
-        training algorithm.
+        to self.model; Find the loss. After finding the 2 losses, find the cluster loss. Find the total loss. Backward
+        the total loss to find the gradients. Return the results. NOTE: the caller of this function needs to manually
+        call the clear_grads and step_optim functions of self to ensure the functioning of the training algorithm.
 
         Args:
             g_model: the generator model, can be on either the CPUs or the GPUs, preferred to be on the GPUs; this
@@ -233,7 +241,10 @@ class DModeler(Modeler):
             ldr, : Loss(D, X), the loss of D on the real batch, definitely on the CPUs
             dgz, : Mean(D(G(Z))), the output mean of D on the fake batch, definitely on the CPUs
             ldf, : Loss(D, G(Z)), the loss of D on the fake batch, definitely on the CPUs
-            ld: Loss(D), ld = 0.5 * ldf + 0.5 * ldr, definitely on the CPUs
+            ldc, : Loss(D, Cluster), ldc = 100 * ( 1 - abs(dx - dgz) ), sort of a distance between the real and fake
+                clusters, inspired by the WGAN paper, definitely on the CPUs
+            ld: Loss(D), ld = dx_factor * ldr + dgz_factor * ldf + cluster_factor * ldc, clamped to range [0, 100],
+                definitely on the CPUs
 
         Raises:
             ValueError: if self.optim is None
@@ -259,19 +270,35 @@ class DModeler(Modeler):
         dgzs = dgzs.float()
         ldf = self.loss_func(dgzs, fake_labels)
 
-        ld = 0.5 * (ldr + ldf)
-        ld.backward()
+        dx = dxs.mean()
+        dgz = dgzs.mean()
+        ldc = 100 * (1 - torch.abs(dx - dgz))
 
-        dx = dxs.mean().item()
-        ldr = ldr.item()
-        dgz = dgzs.mean().item()
-        ldf = ldf.item()
-        ld = ld.item()
+        if self.has_fairness:
+            config = self.config["fairness"]
+            dx_factor = config["dx_factor"]
+            dgz_factor = config["dgz_factor"]
+            cluster_factor = config["cluster_factor"]
+        else:  # elif not self.has_fairness
+            dx_factor = 0.5
+            dgz_factor = 0.5
+            cluster_factor = 0
+
+        ld = dx_factor * ldr + dgz_factor * ldf + cluster_factor * ldc
+        ld.clamp_(0, 100)
+        ld.backward()
 
         self.model.train(model_training)
         g_model.train(g_model_training)
 
-        return dx, ldr, dgz, ldf, ld
+        dx = dx.item()
+        ldr = ldr.item()
+        dgz = dgz.item()
+        ldf = ldf.item()
+        ldc = ldc.item()
+        ld = ld.item()
+
+        return dx, ldr, dgz, ldf, ldc, ld
 
     def valid(self, batch, label):
         """Validates the model with a batch of data and a target label.
@@ -307,8 +334,8 @@ class DModeler(Modeler):
 
         Set self.model and g_model to evaluation mode. For the real batch: Forward pass the batch to self.model; Find
         the loss. For the fake batch: Forward pass the noises to g_model to get a fake batch; Forward pass the fake
-        batch to self.model; Find the loss. After finding the 2 losses, find the loss mean (0.5 * loss_real + 0.5 *
-        loss_fake). Return the results.
+        batch to self.model; Find the loss. After finding the 2 losses, find the cluster loss. Find the total loss.
+        Return the results.
 
         Args:
             g_model: the generator model, can be on either the CPUs or the GPUs, preferred to be on the GPUs; this
@@ -320,10 +347,13 @@ class DModeler(Modeler):
 
         Returns:
             dx, : Mean(D(X)), the output mean of D on real, definitely on the CPUs
-            ldr, : L(D, X), the loss of D on real, definitely on the CPUs
+            ldr, : Loss(D, X), the loss of D on real, definitely on the CPUs
             dgz, : Mean(D(G(Z))), the output mean of D on fake, definitely on the CPUs
-            ldf, : L(D, G(Z)), the loss of D on fake, definitely on the CPUs
-            ld: L(D), ld = 0.5 * ldr + 0.5 * ldf, definitely on the CPUs
+            ldf, : Loss(D, G(Z)), the loss of D on fake, definitely on the CPUs
+            ldc, : Loss(D, Cluster), ldc = 100 * (1 - abs(dx - dgz)), distance-like, inspired by the WGAN paper,
+                definitely on the CPUs
+            ld: Loss(D), ld = dx_factor * ldr + dgz_factor * ldf + cluster_factor * ldc, clamped to range [0, 100],
+                definitely on the CPUs
         """
         model_training = self.model.training
         g_model_training = g_model.training
@@ -346,18 +376,34 @@ class DModeler(Modeler):
         dgzs = dgzs.float()
         ldf = self.loss_func(dgzs, fake_labels)
 
-        ld = 0.5 * (ldr + ldf)
+        dx = dxs.mean()
+        dgz = dgzs.mean()
+        ldc = 100 * (1 - torch.abs(dx - dgz))
 
-        dx = dxs.mean().item()
-        ldr = ldr.item()
-        dgz = dgzs.mean().item()
-        ldf = ldf.item()
-        ld = ld.item()
+        if self.has_fairness:
+            config = self.config["fairness"]
+            dx_factor = config["dx_factor"]
+            dgz_factor = config["dgz_factor"]
+            cluster_factor = config["cluster_factor"]
+        else:  # elif not self.has_fairness
+            dx_factor = 0.5
+            dgz_factor = 0.5
+            cluster_factor = 0
+
+        ld = dx_factor * ldr + dgz_factor * ldf + cluster_factor * ldc
+        ld.clamp_(0, 100)
 
         self.model.train(model_training)
         g_model.train(g_model_training)
 
-        return dx, ldr, dgz, ldf, ld
+        dx = dx.item()
+        ldr = ldr.item()
+        dgz = dgz.item()
+        ldf = ldf.item()
+        ldc = ldc.item()
+        ld = ld.item()
+
+        return dx, ldr, dgz, ldf, ldc, ld
 
     def test(self, batch):
         """Tests/Uses the model with a batch of data.
@@ -421,10 +467,13 @@ class GModeler(Modeler):
             self.optim = utils.setup_pred_adam(self.model, self.config["adam_optimizer"])
         self.model.train(train)
 
-        # Init self.size, self.trainable_size
+        # Init self.size, self.training_size
         size, training_size = utils.find_model_sizes(self.model)
         self.size = size
         self.training_size = training_size
+
+        # Init self.has_fairness
+        self.has_fairness = "fairness" in self.config
 
     def generate_noises(self, count):
         """Generates a random set of input noises for the model.
@@ -543,10 +592,10 @@ class GModeler(Modeler):
 
         Set self.model and d_model to training mode. For the real batch: Forward pass the batch to d_model; Find the
         loss. For the fake batch: Forward pass the noises to self.model to get a fake batch; Forward pass the fake
-        batch to d_model; Find the loss. After finding the 2 losses, find the loss mean (0.5 * loss_real + 0.5 *
-        loss_fake). Backward the loss mean to find the gradients. Return the results. NOTE: The caller of this function
-        needs to manually call the clear_grads and step_optim functions of self to ensure the functioning of the
-        training algorithm.
+        batch to d_model; Find the loss. After finding the 2 losses, find the cluster loss. Find the total loss.
+        Backward the total loss to find the gradients. Return the results. NOTE: The caller of this function needs to
+        manually call the clear_grads and step_optim functions of self to ensure the functioning of the training
+        algorithm.
 
         Args:
             d_model: the discriminator model, can be on either the CPUs or the GPUs, preferred to be on the GPUs; this
@@ -561,7 +610,10 @@ class GModeler(Modeler):
             lgr, : Loss(G, X), the loss of G on the real batch, definitely on the CPUs
             dgz2, : Mean(D(G(Z))), the mean output of D on the fake batch, definitely on the CPUs
             lgf, : Loss(G, G(Z)), the loss of G on the fake batch, definitely on the CPUs
-            lg: Loss(G), lg = 0.5 * lgr + 0.5 * lgf, definitely on the CPUs
+            lgc, : Loss(G, Cluster), lgc = 100 * abs(dx2 - dgz2), sort of a distance between the real and fake
+                clusters, inspired by the WGAN paper, definitely on the CPUs
+            lg: Loss(G), lg = dx_factor * lgr + dgz_factor * lgf + cluster_factor * lgc, clamped to range [0, 100],
+                definitely on the CPUs
 
         Raises:
             ValueError: if self.optim is None
@@ -587,19 +639,35 @@ class GModeler(Modeler):
         dgzs2 = dgzs2.float()
         lgf = self.loss_func(dgzs2, fake_labels)
 
-        lg = 0.5 * (lgr + lgf)
-        lg.backward()
+        dx2 = dxs2.mean()
+        dgz2 = dgzs2.mean()
+        lgc = 100 * torch.abs(dx2 - dgz2)
 
-        dx2 = dxs2.mean().item()
-        lgr = lgr.item()
-        dgz2 = dgzs2.mean().item()
-        lgf = lgf.item()
-        lg = lg.item()
+        if self.has_fairness:
+            config = self.config["fairness"]
+            dx_factor = config["dx_factor"]
+            dgz_factor = config["dgz_factor"]
+            cluster_factor = config["cluster_factor"]
+        else:  # elif not self.has_fairness
+            dx_factor = 0.5
+            dgz_factor = 0.5
+            cluster_factor = 0
+
+        lg = dx_factor * lgr + dgz_factor * lgf + cluster_factor * lgc
+        lg.clamp_(0, 100)
+        lg.backward()
 
         self.model.train(model_training)
         d_model.train(d_model_training)
 
-        return dx2, lgr, dgz2, lgf, lg
+        dx2 = dx2.item()
+        lgr = lgr.item()
+        dgz2 = dgz2.item()
+        lgf = lgf.item()
+        lgc = lgc.item()
+        lg = lg.item()
+
+        return dx2, lgr, dgz2, lgf, lgc, lg
 
     def valid(self, d_model, noises, label):
         """Validates the model with the given args.
@@ -647,8 +715,8 @@ class GModeler(Modeler):
 
         Set self.model and d_model to evaluation mode. For the real batch: Forward pass the batch to d_model; Find the
         loss. For the fake batch: Forward pass the noises to self.model to get a fake batch; Forward pass the fake
-        batch to d_model; Find the loss. After finding the 2 losses, find the loss mean (0.5 * loss_real + 0.5 *
-        loss_fake). Return the results.
+        batch to d_model; Find the loss. After finding the 2 losses, find the cluster loss. Find the total loss. Return
+        the results.
 
         Args:
             d_model: the discriminator model, can be on either the CPUs or the GPUs, preferred to be on the GPUs; this
@@ -660,10 +728,13 @@ class GModeler(Modeler):
 
         Returns:
             dx2, : Mean(D(X)), the output mean of D on real, definitely on the CPUs
-            lgr, : L(G, X), the loss of G on real, definitely on the CPUs
+            lgr, : Loss(G, X), the loss of G on real, definitely on the CPUs
             dgz2, : Mean(D(G(Z))), the output mean of D on fake, definitely on the CPUs
-            lgf, : L(G, G(Z)), the loss of G on fake, definitely on the CPUs
-            lg: L(G), lg = 0.5 * lgr + 0.5 * lgf, definitely on the CPUs
+            lgf, : Loss(G, G(Z)), the loss of G on fake, definitely on the CPUs
+            lgc, : Loss(G, Cluster), lgc = 100 * abs(dx2 - dgz2), distance-like, inspired by the WGAN paper, definitely
+                on the CPUs
+            lg: Loss(G), lg = dx_factor * lgr + dgz_factor * lgf + cluster_factor * lgc, clamped to range [0, 100],
+                definitely on the CPUs
         """
         model_training = self.model.training
         self.model.train(False)
@@ -686,18 +757,34 @@ class GModeler(Modeler):
         dgzs2 = dgzs2.float()
         lgf = self.loss_func(dgzs2, fake_labels)
 
-        lg = 0.5 * (lgr + lgf)
+        dx2 = dxs2.mean()
+        dgz2 = dgzs2.mean()
+        lgc = 100 * torch.abs(dx2 - dgz2)
 
-        dx2 = dxs2.mean().item()
-        lgr = lgr.item()
-        dgz2 = dgzs2.mean().item()
-        lgf = lgf.item()
-        lg = lg.item()
+        if self.has_fairness:
+            config = self.config["fairness"]
+            dx_factor = config["dx_factor"]
+            dgz_factor = config["dgz_factor"]
+            cluster_factor = config["cluster_factor"]
+        else:  # elif not self.has_fairness
+            dx_factor = 0.5
+            dgz_factor = 0.5
+            cluster_factor = 0
+
+        lg = dx_factor * lgr + dgz_factor * lgf + cluster_factor * lgc
+        lg.clamp_(0, 100)
 
         self.model.train(model_training)
         d_model.train(d_model_training)
 
-        return dx2, lgr, dgz2, lgf, lg
+        dx2 = dx2.item()
+        lgr = lgr.item()
+        dgz2 = dgz2.item()
+        lgf = lgf.item()
+        lgc = lgc.item()
+        lg = lg.item()
+
+        return dx2, lgr, dgz2, lgf, lgc, lg
 
     def test(self, noises):
         """Tests/Uses the model with the given args.

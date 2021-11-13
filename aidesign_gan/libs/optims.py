@@ -19,7 +19,7 @@ class PredAdam(optim.Optimizer):
     An Adam optimizer with the predict and restore extra functions.
     """
 
-    def __init__(self, params, lr=1e-3, betas=(0.9, 0.999), eps=1e-8, weight_decay=0, amsgrad=False):
+    def __init__(self, params, lr=1e-3, betas=(0.9, 0.999), eps=1e-8, weight_decay=0, amsgrad=False, pred_factor=1):
         """ Inits self with the given args.
 
         Args:
@@ -29,6 +29,7 @@ class PredAdam(optim.Optimizer):
             eps: term added to the denominator to improve numerical stability
             weight_decay: weight decay (L2 penalty)
             amsgrad: whether to use the AMSGrad variant of this algorithm
+            pred_factor: prediction factor
         """
         if not 0.0 <= lr:
             raise ValueError(f"Invalid learning rate: {lr}")
@@ -43,6 +44,9 @@ class PredAdam(optim.Optimizer):
 
         defaults = dict(lr=lr, betas=betas, eps=eps, weight_decay=weight_decay, amsgrad=amsgrad)
         super().__init__(params, defaults)
+
+        self.pred_factor = float(pred_factor)
+        """Prediction factor."""
 
     def step(self, closure=None):
         """Performs a single optimization step.
@@ -132,6 +136,7 @@ class PredAdam(optim.Optimizer):
                 state = self.state[param]
                 # Find the pred_incr (predictive incrementation)
                 pred_incr = param.data.sub(state["restore_point"])
+                pred_incr.mul_(self.pred_factor)
                 # Save the current state as the restore point
                 state["restore_point"].copy_(param.data)
                 # Apply the pred_incr to complete the prediction

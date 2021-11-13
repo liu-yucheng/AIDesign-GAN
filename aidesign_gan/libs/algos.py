@@ -556,6 +556,9 @@ class PredAltSGDAlgo(Algo):
         c: _TrainingContext = self.context
 
         r.logln("Started predictive alternating SGD algorithm")
+
+        r.log_pred_factor()
+
         r.logln("-")
         r.save_training_images()
         r.save_validation_images()
@@ -829,6 +832,8 @@ class FairPredAltSGDAlgo(Algo):
         c: _TrainingContext = self.context
 
         r.logln("Started fair predictive alternating SGD algorithm")
+
+        r.log_pred_factor()
 
         has_fairness = c.mods.d.has_fairness
         has_fairness = has_fairness and c.mods.g.has_fairness

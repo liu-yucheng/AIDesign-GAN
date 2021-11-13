@@ -140,7 +140,7 @@ class DModeler(Modeler):
         self.size = size
         self.training_size = training_size
 
-        # Init self.has_fairness
+        # Init self.has_... attributes
         self.has_fairness = "fairness" in self.config
 
     def train(self, batch, label):
@@ -472,7 +472,7 @@ class GModeler(Modeler):
         self.size = size
         self.training_size = training_size
 
-        # Init self.has_fairness
+        # Init self.has_... attributes
         self.has_fairness = "fairness" in self.config
 
     def generate_noises(self, count):

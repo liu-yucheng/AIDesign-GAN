@@ -105,15 +105,16 @@ class TrainingCoord(Coord):
         self.context = contexts.TrainingContext()
         self.results.bind_context(self.context)
 
-        config = self.coords_config["training"]
+        training_key = "training"
+        config = self.coords_config[training_key]
         self.context.setup_rand(config)
         self.results.log_rand()
 
-        config = self.coords_config["training"]
+        config = self.coords_config[training_key]
         self.context.setup_hw(config)
         self.results.log_hw()
 
-        config = self.coords_config["training"]
+        config = self.coords_config[training_key]
         self.context.setup_data(self.data_path, config)
         self.results.log_data()
 
@@ -121,18 +122,19 @@ class TrainingCoord(Coord):
         self.context.setup_mods(config)
         self.results.log_mods()
 
-        config = self.coords_config["training"]
+        config = self.coords_config[training_key]
         self.context.setup_mode(config)
         self.results.log_mode()
 
-        if "labels" in self.coords_config["training"]:
-            config = self.coords_config["training"]["labels"]
+        labels_key = "labels"
+        if labels_key in self.coords_config[training_key]:
+            config = self.coords_config[training_key][labels_key]
             self.context.setup_labels(config=config)
-        else:  # elif "labels" not in self.coords_config["training"]:
+        else:  # elif "labels" not in self.coords_config[training_key]:
             self.context.setup_labels()
         self.results.log_labels()
 
-        config = self.coords_config["training"]
+        config = self.coords_config[training_key]
         self.context.setup_loops(config)
 
         self.context.setup_stats()

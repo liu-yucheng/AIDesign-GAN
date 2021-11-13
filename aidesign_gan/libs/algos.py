@@ -590,6 +590,7 @@ class FairPredAltSGDAlgo(Algo):
             ldr, : the loss of D on the real batch
             dgz, : the output mean of D on the fake batch
             ldf, : the loss of D on the fake batch
+            ldc, : D cluster loss
             ld: the loss of D
         """
         c: _TrainingContext = self.context
@@ -605,8 +606,8 @@ class FairPredAltSGDAlgo(Algo):
         if can_predict:
             c.mods.g.restore()
 
-        dx, ldr, dgz, ldf, ld = train_results
-        return dx, ldr, dgz, ldf, ld
+        dx, ldr, dgz, ldf, ldc, ld = train_results
+        return dx, ldr, dgz, ldf, ldc, ld
 
     def train_and_step_g(self, real_batch, fake_noises):
         """Trains and steps G with predicted D.
@@ -620,6 +621,7 @@ class FairPredAltSGDAlgo(Algo):
             lgr, : the loss of G on the real batch
             dgz2, : the output mean of D on the fake batch
             lgf, : the loss of G on the fake batch
+            lgc, : G cluster loss
             lg: the loss of G
         """
         c: _TrainingContext = self.context
@@ -635,8 +637,8 @@ class FairPredAltSGDAlgo(Algo):
         if can_predict:
             c.mods.d.restore()
 
-        dx2, lgr, dgz2, lgf, lg = train_results
-        return dx2, lgr, dgz2, lgf, lg
+        dx2, lgr, dgz2, lgf, lgc, lg = train_results
+        return dx2, lgr, dgz2, lgf, lgc, lg
 
     def train_dg(self):
         """Trains D and G together."""
@@ -665,8 +667,8 @@ class FairPredAltSGDAlgo(Algo):
                 g_results = self.train_and_step_g(real_batch, fake_noises)
 
             # Parse the training results
-            dx, ldr, dgz, ldf, ld = d_results
-            dx2, lgr, dgz2, lgf, lg = g_results
+            dx, ldr, dgz, ldf, ldc, ld = d_results
+            dx2, lgr, dgz2, lgf, lgc, lg = g_results
 
             # Detect training collapse
             collapsed = bool(ldr >= c.collapses.max_loss)
@@ -680,12 +682,14 @@ class FairPredAltSGDAlgo(Algo):
             c.latest.ldr = ldr
             c.latest.dgz = dgz
             c.latest.ldf = ldf
+            c.latest.ldc = ldc
             c.latest.ld = ld
 
             c.latest.dx2 = dx2
             c.latest.lgr = lgr
             c.latest.dgz2 = dgz2
             c.latest.lgf = lgf
+            c.latest.lgc = lgc
             c.latest.lg = lg
 
             lds.append(ld)
@@ -729,8 +733,8 @@ class FairPredAltSGDAlgo(Algo):
                 c.mods.d.model, real_batch, c.labels.fake, fake_noises, c.labels.real
             )
 
-            dx, ldr, dgz, ldf, ld = d_valid_results
-            dx2, lgr, dgz2, lgf, lg = g_valid_results
+            dx, ldr, dgz, ldf, ldc, ld = d_valid_results
+            dx2, lgr, dgz2, lgf, lgc, lg = g_valid_results
 
             lds.append(ld)
             lgs.append(lg)
@@ -739,12 +743,14 @@ class FairPredAltSGDAlgo(Algo):
             c.latest.ldr = ldr
             c.latest.dgz = dgz
             c.latest.ldf = ldf
+            c.latest.ldc = ldc
             c.latest.ld = ld
 
             c.latest.dx2 = dx2
             c.latest.lgr = lgr
             c.latest.dgz2 = dgz2
             c.latest.lgf = lgf
+            c.latest.lgc = lgc
             c.latest.lg = lg
 
             r.log_batch_3("v")
@@ -823,6 +829,12 @@ class FairPredAltSGDAlgo(Algo):
         c: _TrainingContext = self.context
 
         r.logln("Started fair predictive alternating SGD algorithm")
+
+        has_fairness = c.mods.d.has_fairness
+        has_fairness = has_fairness and c.mods.g.has_fairness
+        if has_fairness:
+            r.log_fairness()
+
         r.logln("-")
         r.save_training_images()
         r.save_validation_images()

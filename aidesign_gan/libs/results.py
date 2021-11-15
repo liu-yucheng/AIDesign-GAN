@@ -136,31 +136,40 @@ class TrainingResults(Results):
         self.check_context()
         c: _TrainingContext = self.context
 
+        d_config = c.mods.d.config["adam_optimizer"]
+        d_lr = d_config["learning_rate"]
+        d_beta1 = d_config["beta1"]
+        d_beta2 = d_config["beta2"]
         self.logstr(
             str(
                 "D's modeler:\n"
                 "  Model:  Size: {}  Training size: {}  Struct: (See below)\n"
-                "  Adam optimizer:  Learning rate: {}\n"
+                "  Adam optimizer:  Learning rate: {}  Beta 1: {}  Beta 2: {}\n"
                 "==== D's model struct ====\n"
                 "{}\n"
             ).format(
                 c.mods.d.size,
                 c.mods.d.training_size,
-                c.mods.d.config["adam_optimizer"]["learning_rate"],
+                d_lr, d_beta1, d_beta2,
                 str(c.mods.d.model)
             )
         )
+
+        g_config = c.mods.g.config["adam_optimizer"]
+        g_lr = g_config["learning_rate"]
+        g_beta1 = g_config["beta1"]
+        g_beta2 = g_config["beta2"]
         self.logstr(
             str(
                 "G's modeler:\n"
                 "  Model:  Size: {}  Training size: {}  Struct: (See below)\n"
-                "  Adam optimizer:  Learning rate: {}\n"
+                "  Adam optimizer:  Learning rate: {}  Beta 1: {}  Beta 2: {}\n"
                 "==== G's model struct ====\n"
                 "{}\n"
             ).format(
                 c.mods.g.size,
                 c.mods.g.training_size,
-                c.mods.g.config["adam_optimizer"]["learning_rate"],
+                g_lr, g_beta1, g_beta2,
                 str(c.mods.g.model)
             )
         )

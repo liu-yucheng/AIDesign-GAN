@@ -202,6 +202,7 @@ class DModeler(Modeler):
 
         model_training = self.model.training
         self.model.train(True)
+
         self.model.zero_grad()
         self.optim.zero_grad()
 
@@ -222,11 +223,12 @@ class DModeler(Modeler):
     def train_fair(self, g_model, real_batch, real_label, fake_noises, fake_label):
         """Fairly trains the model with the given args.
 
-        Set self.model and g_model to training mode. For the real batch: Forward pass the batch to self.model; Find the
-        loss. For the fake batch: Forward pass the noises to g_model to get a fake batch; Forward pass the fake batch
-        to self.model; Find the loss. After finding the 2 losses, find the cluster loss. Find the total loss. Backward
-        the total loss to find the gradients. Return the results. NOTE: the caller of this function needs to manually
-        call the clear_grads and step_optim functions of self to ensure the functioning of the training algorithm.
+        Set self.model to training mode. Set g_model to training mode. For the real batch: Forward pass the batch to
+        self.model; Find the loss. For the fake batch: Forward pass the noises to g_model to get a fake batch; Forward
+        pass the fake batch to self.model; Find the loss. After finding the 2 losses, find the cluster loss. Find the
+        total loss. Backward the total loss to find the gradients. Return the results. NOTE: the caller of this
+        function needs to manually call the clear_grads and step_optim functions of self to ensure the functioning of
+        the training algorithm.
 
         Args:
             g_model: the generator model, can be on either the CPUs or the GPUs, preferred to be on the GPUs; this
@@ -239,10 +241,10 @@ class DModeler(Modeler):
         Returns:
             dx, : Mean(D(X)), the output mean of D on the real batch, definitely on the CPUs
             ldr, : Loss(D, X), the loss of D on the real batch, definitely on the CPUs
-            dgz, : Mean(D(G(Z))), the output mean of D on the fake batch, definitely on the CPUs
+            dgz, : Mean( D(G(Z)) ), the output mean of D on the fake batch, definitely on the CPUs
             ldf, : Loss(D, G(Z)), the loss of D on the fake batch, definitely on the CPUs
-            ldc, : Loss(D, Cluster), ldc = 100 * ( 1 - abs(dx - dgz) ), sort of a distance between the real and fake
-                clusters, inspired by the WGAN paper, definitely on the CPUs
+            ldc, : Loss(D, Cluster), if dx < dgz: ldc = 100, else: ldc = 100 * (1 - (dx - dgz)), a custom defined
+                distance between the real and fake clusters, inspired by the WGAN paper, definitely on the CPUs
             ld: Loss(D), ld = dx_factor * ldr + dgz_factor * ldf + cluster_factor * ldc, clamped to range [0, 100],
                 definitely on the CPUs
 
@@ -272,7 +274,10 @@ class DModeler(Modeler):
 
         dx = dxs.mean()
         dgz = dgzs.mean()
-        ldc = 100 * (1 - torch.abs(dx - dgz))
+        if dx < dgz:
+            ldc = 100 + 0 * dx + 0 * dgz
+        else:  # elif dx >= dgz:
+            ldc = 100 * (1 - (dx - dgz))
 
         if self.has_fairness:
             config = self.config["fairness"]
@@ -348,10 +353,10 @@ class DModeler(Modeler):
         Returns:
             dx, : Mean(D(X)), the output mean of D on real, definitely on the CPUs
             ldr, : Loss(D, X), the loss of D on real, definitely on the CPUs
-            dgz, : Mean(D(G(Z))), the output mean of D on fake, definitely on the CPUs
+            dgz, : Mean( D(G(Z)) ), the output mean of D on fake, definitely on the CPUs
             ldf, : Loss(D, G(Z)), the loss of D on fake, definitely on the CPUs
-            ldc, : Loss(D, Cluster), ldc = 100 * (1 - abs(dx - dgz)), distance-like, inspired by the WGAN paper,
-                definitely on the CPUs
+            ldc, : Loss(D, Cluster), if dx < dgz: ldc = 100, else: ldc = 100 * (1 - (dx - dgz)), a custom defined
+                distance between the real and fake clusters, inspired by the WGAN paper, definitely on the CPUs
             ld: Loss(D), ld = dx_factor * ldr + dgz_factor * ldf + cluster_factor * ldc, clamped to range [0, 100],
                 definitely on the CPUs
         """
@@ -378,7 +383,10 @@ class DModeler(Modeler):
 
         dx = dxs.mean()
         dgz = dgzs.mean()
-        ldc = 100 * (1 - torch.abs(dx - dgz))
+        if dx < dgz:
+            ldc = 100 + 0 * dx + 0 * dgz
+        else:  # elif dx >= dgz:
+            ldc = 100 * (1 - (dx - dgz))
 
         if self.has_fairness:
             config = self.config["fairness"]
@@ -492,10 +500,10 @@ class GModeler(Modeler):
     def train(self, d_model, noises, label):
         """Trains the model with the given args.
 
-        Set the model to training mode. Generate a training batch with the given noises. Forward pass the batch to the
-        discriminator model. Find the loss. Backward the loss to find the gradients. Return the average output and the
-        loss value. NOTE: The caller of this function needs to manually call the clear_grads and step_optim functions
-        of self to ensure the functioning of the training algorithm.
+        Set self.model to training mode. Set d_model to training mode. Generate a training batch with the given noises.
+        Forward pass the batch to the discriminator model. Find the loss. Backward the loss to find the gradients.
+        Return the average output and the loss value. NOTE: The caller of this function needs to manually call the
+        clear_grads and step_optim functions of self to ensure the functioning of the training algorithm.
 
         Args:
             d_model: the discriminator model, can be on either the CPUs or the GPUs, preferred to be on the GPUs; this
@@ -515,8 +523,8 @@ class GModeler(Modeler):
             raise ValueError("self.optim cannot be None")
 
         model_training = self.model.training
-        self.model.train(True)
         d_model_training = d_model.training
+        self.model.train(True)
         d_model.train(True)
 
         noises = noises.to(self.device)
@@ -540,9 +548,9 @@ class GModeler(Modeler):
     def train_and_step(self, d_model, noises, label):
         """Trains and steps the model with the given args.
 
-        Set the model to training mode. Clear the model gradients. Generate a training batch with the given noises.
-        Forward pass the batch to the discriminator model. Find the loss. Find the gradients with a backward pass.
-        Optimize/Update the model. Return the average output and the loss value.
+        Set self.model to training mode. Set d_model to training mode. Clear the model gradients. Generate a training
+        batch with the given noises. Forward pass the batch to the discriminator model. Find the loss. Find the
+        gradients with a backward pass. Optimize/Update the model. Return the average output and the loss value.
 
         Args:
             d_model: the discriminator model, can be on either the CPUs or the GPUs, preferred to be on the GPUs; this
@@ -562,9 +570,10 @@ class GModeler(Modeler):
             raise ValueError("self.optim cannot be None")
 
         model_training = self.model.training
-        self.model.train(True)
         d_model_training = d_model.training
+        self.model.train(True)
         d_model.train(True)
+
         self.model.zero_grad()
         self.optim.zero_grad()
 
@@ -590,12 +599,12 @@ class GModeler(Modeler):
     def train_fair(self, d_model, real_batch, real_label, fake_noises, fake_label):
         """Fairly trains the model with the given args.
 
-        Set self.model and d_model to training mode. For the real batch: Forward pass the batch to d_model; Find the
-        loss. For the fake batch: Forward pass the noises to self.model to get a fake batch; Forward pass the fake
-        batch to d_model; Find the loss. After finding the 2 losses, find the cluster loss. Find the total loss.
-        Backward the total loss to find the gradients. Return the results. NOTE: The caller of this function needs to
-        manually call the clear_grads and step_optim functions of self to ensure the functioning of the training
-        algorithm.
+        Set self.model to training mode. Set d_model to training mode. For the real batch: Forward pass the batch to
+        d_model; Find the loss. For the fake batch: Forward pass the noises to self.model to get a fake batch; Forward
+        pass the fake batch to d_model; Find the loss. After finding the 2 losses, find the cluster loss. Find the
+        total loss. Backward the total loss to find the gradients. Return the results. NOTE: The caller of this
+        function needs to manually call the clear_grads and step_optim functions of self to ensure the functioning of
+        the training algorithm.
 
         Args:
             d_model: the discriminator model, can be on either the CPUs or the GPUs, preferred to be on the GPUs; this
@@ -608,10 +617,10 @@ class GModeler(Modeler):
         Returns:
             dx2, : Mean(D(X)), the mean output of D on the real batch, definitely on the CPUs
             lgr, : Loss(G, X), the loss of G on the real batch, definitely on the CPUs
-            dgz2, : Mean(D(G(Z))), the mean output of D on the fake batch, definitely on the CPUs
+            dgz2, : Mean( D(G(Z)) ), the mean output of D on the fake batch, definitely on the CPUs
             lgf, : Loss(G, G(Z)), the loss of G on the fake batch, definitely on the CPUs
-            lgc, : Loss(G, Cluster), lgc = 100 * abs(dx2 - dgz2), sort of a distance between the real and fake
-                clusters, inspired by the WGAN paper, definitely on the CPUs
+            lgc, : Loss(G, Cluster), if dgz2 > dx2: lgc = 0, else: lgc = 100 * (dx2 - dgz2), a custom defined distance
+                between the real and fake clusters, inspired by the WGAN paper, definitely on the CPUs
             lg: Loss(G), lg = dx_factor * lgr + dgz_factor * lgf + cluster_factor * lgc, clamped to range [0, 100],
                 definitely on the CPUs
 
@@ -641,7 +650,10 @@ class GModeler(Modeler):
 
         dx2 = dxs2.mean()
         dgz2 = dgzs2.mean()
-        lgc = 100 * torch.abs(dx2 - dgz2)
+        if dgz2 > dx2:
+            lgc = 0 + 0 * dx2 + 0 * dgz2
+        else:  # elif dx2 >= dgz2:
+            lgc = 100 * (dx2 - dgz2)
 
         if self.has_fairness:
             config = self.config["fairness"]
@@ -687,8 +699,8 @@ class GModeler(Modeler):
             loss_val: Loss(D(G(noises)), label), the loss of the model, definitely on the CPUs
         """
         model_training = self.model.training
-        self.model.train(False)
         d_model_training = d_model.training
+        self.model.train(False)
         d_model.train(False)
 
         noises = noises.to(self.device)
@@ -729,16 +741,16 @@ class GModeler(Modeler):
         Returns:
             dx2, : Mean(D(X)), the output mean of D on real, definitely on the CPUs
             lgr, : Loss(G, X), the loss of G on real, definitely on the CPUs
-            dgz2, : Mean(D(G(Z))), the output mean of D on fake, definitely on the CPUs
+            dgz2, : Mean( D(G(Z)) ), the output mean of D on fake, definitely on the CPUs
             lgf, : Loss(G, G(Z)), the loss of G on fake, definitely on the CPUs
-            lgc, : Loss(G, Cluster), lgc = 100 * abs(dx2 - dgz2), distance-like, inspired by the WGAN paper, definitely
-                on the CPUs
+            lgc, : Loss(G, Cluster), if dgz2 > dx2: lgc = 0, else: lgc = 100 * (dx2 - dgz2), a custom defined distance
+                between the real and fake clusters, inspired by the WGAN paper, definitely on the CPUs
             lg: Loss(G), lg = dx_factor * lgr + dgz_factor * lgf + cluster_factor * lgc, clamped to range [0, 100],
                 definitely on the CPUs
         """
         model_training = self.model.training
-        self.model.train(False)
         d_model_training = d_model.training
+        self.model.train(False)
         d_model.train(False)
 
         real_batch, real_labels = utils.prep_batch_and_labels(real_batch, real_label, self.device)
@@ -759,7 +771,10 @@ class GModeler(Modeler):
 
         dx2 = dxs2.mean()
         dgz2 = dgzs2.mean()
-        lgc = 100 * torch.abs(dx2 - dgz2)
+        if dgz2 > dx2:
+            lgc = 0 + 0 * dx2 + 0 * dgz2
+        else:  # elif dx2 >= dgz2:
+            lgc = 100 * (dx2 - dgz2)
 
         if self.has_fairness:
             config = self.config["fairness"]

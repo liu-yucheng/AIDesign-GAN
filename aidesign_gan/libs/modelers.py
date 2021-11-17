@@ -243,8 +243,8 @@ class DModeler(Modeler):
             ldr, : Loss(D, X), the loss of D on the real batch, definitely on the CPUs
             dgz, : Mean( D(G(Z)) ), the output mean of D on the fake batch, definitely on the CPUs
             ldf, : Loss(D, G(Z)), the loss of D on the fake batch, definitely on the CPUs
-            ldc, : Loss(D, Cluster), if dx < dgz: ldc = 100, else: ldc = 100 * (1 - (dx - dgz)), a custom defined
-                distance between the real and fake clusters, inspired by the WGAN paper, definitely on the CPUs
+            ldc, : Loss(D, Cluster), ldc = 100 * abs(dx - dgz), a custom defined distance between the real and fake
+                clusters, inspired by the WGAN paper, definitely on the CPUs
             ld: Loss(D), ld = dx_factor * ldr + dgz_factor * ldf + cluster_factor * ldc, clamped to range [0, 100],
                 definitely on the CPUs
 
@@ -274,10 +274,7 @@ class DModeler(Modeler):
 
         dx = dxs.mean()
         dgz = dgzs.mean()
-        if dx < dgz:
-            ldc = 100 + 0 * dx + 0 * dgz
-        else:  # elif dx >= dgz:
-            ldc = 100 * (1 - (dx - dgz))
+        ldc = 100 * torch.abs(dx - dgz)
 
         if self.has_fairness:
             config = self.config["fairness"]
@@ -355,8 +352,8 @@ class DModeler(Modeler):
             ldr, : Loss(D, X), the loss of D on real, definitely on the CPUs
             dgz, : Mean( D(G(Z)) ), the output mean of D on fake, definitely on the CPUs
             ldf, : Loss(D, G(Z)), the loss of D on fake, definitely on the CPUs
-            ldc, : Loss(D, Cluster), if dx < dgz: ldc = 100, else: ldc = 100 * (1 - (dx - dgz)), a custom defined
-                distance between the real and fake clusters, inspired by the WGAN paper, definitely on the CPUs
+            ldc, : Loss(D, Cluster), ldc = 100 * abs(dx - dgz), a custom defined distance between the real and fake
+                clusters, inspired by the WGAN paper, definitely on the CPUs
             ld: Loss(D), ld = dx_factor * ldr + dgz_factor * ldf + cluster_factor * ldc, clamped to range [0, 100],
                 definitely on the CPUs
         """
@@ -383,10 +380,7 @@ class DModeler(Modeler):
 
         dx = dxs.mean()
         dgz = dgzs.mean()
-        if dx < dgz:
-            ldc = 100 + 0 * dx + 0 * dgz
-        else:  # elif dx >= dgz:
-            ldc = 100 * (1 - (dx - dgz))
+        ldc = 100 * torch.abs(dx - dgz)
 
         if self.has_fairness:
             config = self.config["fairness"]
@@ -619,8 +613,8 @@ class GModeler(Modeler):
             lgr, : Loss(G, X), the loss of G on the real batch, definitely on the CPUs
             dgz2, : Mean( D(G(Z)) ), the mean output of D on the fake batch, definitely on the CPUs
             lgf, : Loss(G, G(Z)), the loss of G on the fake batch, definitely on the CPUs
-            lgc, : Loss(G, Cluster), if dgz2 > dx2: lgc = 0, else: lgc = 100 * (dx2 - dgz2), a custom defined distance
-                between the real and fake clusters, inspired by the WGAN paper, definitely on the CPUs
+            lgc, : Loss(G, Cluster), lgc = 100 * abs(dx2 - dgz2), a custom defined distance between the real and fake
+                clusters, inspired by the WGAN paper, definitely on the CPUs
             lg: Loss(G), lg = dx_factor * lgr + dgz_factor * lgf + cluster_factor * lgc, clamped to range [0, 100],
                 definitely on the CPUs
 
@@ -650,10 +644,7 @@ class GModeler(Modeler):
 
         dx2 = dxs2.mean()
         dgz2 = dgzs2.mean()
-        if dgz2 > dx2:
-            lgc = 0 + 0 * dx2 + 0 * dgz2
-        else:  # elif dx2 >= dgz2:
-            lgc = 100 * (dx2 - dgz2)
+        lgc = 100 * torch.abs(dx2 - dgz2)
 
         if self.has_fairness:
             config = self.config["fairness"]
@@ -743,8 +734,8 @@ class GModeler(Modeler):
             lgr, : Loss(G, X), the loss of G on real, definitely on the CPUs
             dgz2, : Mean( D(G(Z)) ), the output mean of D on fake, definitely on the CPUs
             lgf, : Loss(G, G(Z)), the loss of G on fake, definitely on the CPUs
-            lgc, : Loss(G, Cluster), if dgz2 > dx2: lgc = 0, else: lgc = 100 * (dx2 - dgz2), a custom defined distance
-                between the real and fake clusters, inspired by the WGAN paper, definitely on the CPUs
+            lgc, : Loss(G, Cluster), lgc = 100 * abs(dx2 - dgz2), a custom defined distance between the real and fake
+                clusters, inspired by the WGAN paper, definitely on the CPUs
             lg: Loss(G), lg = dx_factor * lgr + dgz_factor * lgf + cluster_factor * lgc, clamped to range [0, 100],
                 definitely on the CPUs
         """
@@ -771,10 +762,7 @@ class GModeler(Modeler):
 
         dx2 = dxs2.mean()
         dgz2 = dgzs2.mean()
-        if dgz2 > dx2:
-            lgc = 0 + 0 * dx2 + 0 * dgz2
-        else:  # elif dx2 >= dgz2:
-            lgc = 100 * (dx2 - dgz2)
+        lgc = 100 * torch.abs(dx2 - dgz2)
 
         if self.has_fairness:
             config = self.config["fairness"]

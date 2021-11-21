@@ -119,11 +119,14 @@ class AltSGDAlgo(Algo):
         for real_batch in c.data.train.loader:
             # Prepare D training materials
             d_real_batch = real_batch[0]
-            d_noises = c.mods.g.generate_noises(c.data.batch_size)
+            batch_size = d_real_batch.size()[0]
+            # print(f"[Debug] Batch size: {batch_size}")
+
+            d_noises = c.mods.g.generate_noises(batch_size)
             d_fake_batch = c.mods.g.test(d_noises)
 
             # Prepare G training materials
-            g_noises = c.mods.g.generate_noises(c.data.batch_size)
+            g_noises = c.mods.g.generate_noises(batch_size)
 
             # Filp a coin to determine whether to reverse the training order
             reverse_order = utils.rand_bool()
@@ -292,7 +295,7 @@ class AltSGDAlgo(Algo):
         r: _TrainingResults = self.results
         c: _TrainingContext = self.context
 
-        r.logln("Started batch level algorithm")
+        r.logln("Started alternating SGD algorithm")
         r.logln("-")
         r.save_training_images()
         r.save_validation_images()
@@ -306,7 +309,7 @@ class AltSGDAlgo(Algo):
 
 
 class PredAltSGDAlgo(Algo):
-    """Predictive alternating SGD, which is a "alt SGD algo" with prediction steps."""
+    """Predictive alternating SGD, which is an "alt SGD algo" with prediction steps."""
 
     def __init__(self):
         """Inits self."""
@@ -382,11 +385,14 @@ class PredAltSGDAlgo(Algo):
         for real_batch in c.data.train.loader:
             # Prepare D training materials
             d_real_batch = real_batch[0]
-            d_noises = c.mods.g.generate_noises(c.data.batch_size)
+            batch_size = d_real_batch.size()[0]
+            # print(f"[Debug] Batch size: {batch_size}")
+
+            d_noises = c.mods.g.generate_noises(batch_size)
             d_fake_batch = c.mods.g.test(d_noises)
 
             # Prepare G training materials
-            g_noises = c.mods.g.generate_noises(c.data.batch_size)
+            g_noises = c.mods.g.generate_noises(batch_size)
 
             # Filp a coin to determine whether to reverse the training order
             reverse_order = utils.rand_bool()
@@ -656,7 +662,10 @@ class FairPredAltSGDAlgo(Algo):
         for real_batch in c.data.train.loader:
             # Prepare training materials
             real_batch = real_batch[0]
-            fake_noises = c.mods.g.generate_noises(c.data.batch_size)
+            batch_size = real_batch.size()[0]
+            # print(f"[Debug] Batch size: {batch_size}")
+
+            fake_noises = c.mods.g.generate_noises(batch_size)
 
             # Filp a coin to determine whether to reverse the training order
             reverse_order = utils.rand_bool()

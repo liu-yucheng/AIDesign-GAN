@@ -483,8 +483,12 @@ class TrainingContext(Context):
             raise ValueError("self.mods.d cannot be None")
 
         valid = []
-        for _ in range(self.data.valid.batch_count):
-            noise_batch = self.mods.g.generate_noises(self.data.batch_size)
+        for real_batch in self.data.valid.loader:
+            real_batch = real_batch[0]
+            batch_size = real_batch.size()[0]
+            # print(f"[Debug] Batch size: {batch_size}")
+
+            noise_batch = self.mods.g.generate_noises(batch_size)
             valid.append(noise_batch)
 
         ref_batch = self.mods.g.generate_noises(self.data.batch_size)

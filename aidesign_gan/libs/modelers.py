@@ -44,6 +44,8 @@ class Modeler:
         """Optimizer, can run on GPUs if they are available."""
         self.size = None
         """Total size of the model."""
+        self.eps = 1e-5
+        """Epsilon, a small dummy value of 1 / inf to avoid NaNs in computation."""
         self.training_size = None
         """Training size of the model, 0 if the model is not initialized to the training mode."""
         self.has_fairness = None
@@ -243,8 +245,8 @@ class DModeler(Modeler):
             ldr, : Loss(D, X), the loss of D on the real batch, definitely on the CPUs
             dgz, : Mean( D(G(Z)) ), the output mean of D on the fake batch, definitely on the CPUs
             ldf, : Loss(D, G(Z)), the loss of D on the fake batch, definitely on the CPUs
-            ldc, : Loss(D, Cluster), ldc = 100 * abs(dx - dgz), a custom defined distance between the real and fake
-                clusters, inspired by the WGAN paper, definitely on the CPUs
+            ldc, : Loss(D, Cluster), ldc = 100 * tanh(Mean( logit(dgzs) - logit(dxs) )), tanh'ed Wasserstein 1 metric
+                mean from the fake to the real cluster, based on the WGAN paper, definitely on the CPUs
             ld: Loss(D), ld = dx_factor * ldr + dgz_factor * ldf + cluster_factor * ldc, clamped to range [0, 100],
                 definitely on the CPUs
 
@@ -272,9 +274,11 @@ class DModeler(Modeler):
         dgzs = dgzs.float()
         ldf = self.loss_func(dgzs, fake_labels)
 
-        dx = dxs.mean()
-        dgz = dgzs.mean()
-        ldc = 100 * torch.abs(dx - dgz)
+        logit_dxs = torch.logit(dxs, eps=self.eps)
+        logit_dgzs = torch.logit(dgzs, eps=self.eps)
+        w_metric = logit_dgzs - logit_dxs
+        w_metric_mean = w_metric.mean()
+        ldc = 100 * torch.tanh(w_metric_mean)
 
         if self.has_fairness:
             config = self.config["fairness"]
@@ -292,6 +296,9 @@ class DModeler(Modeler):
 
         self.model.train(model_training)
         g_model.train(g_model_training)
+
+        dx = dxs.mean()
+        dgz = dgzs.mean()
 
         dx = dx.item()
         ldr = ldr.item()
@@ -352,8 +359,8 @@ class DModeler(Modeler):
             ldr, : Loss(D, X), the loss of D on real, definitely on the CPUs
             dgz, : Mean( D(G(Z)) ), the output mean of D on fake, definitely on the CPUs
             ldf, : Loss(D, G(Z)), the loss of D on fake, definitely on the CPUs
-            ldc, : Loss(D, Cluster), ldc = 100 * abs(dx - dgz), a custom defined distance between the real and fake
-                clusters, inspired by the WGAN paper, definitely on the CPUs
+            ldc, : Loss(D, Cluster), ldc = 100 * tanh(Mean( logit(dgzs) - logit(dxs) )), tanh'ed Wasserstein 1 metric
+                mean from the fake to the real cluster, based on the WGAN paper, definitely on the CPUs
             ld: Loss(D), ld = dx_factor * ldr + dgz_factor * ldf + cluster_factor * ldc, clamped to range [0, 100],
                 definitely on the CPUs
         """
@@ -378,9 +385,11 @@ class DModeler(Modeler):
         dgzs = dgzs.float()
         ldf = self.loss_func(dgzs, fake_labels)
 
-        dx = dxs.mean()
-        dgz = dgzs.mean()
-        ldc = 100 * torch.abs(dx - dgz)
+        logit_dxs = torch.logit(dxs, eps=self.eps)
+        logit_dgzs = torch.logit(dgzs, eps=self.eps)
+        w_metric = logit_dgzs - logit_dxs
+        w_metric_mean = w_metric.mean()
+        ldc = 100 * torch.tanh(w_metric_mean)
 
         if self.has_fairness:
             config = self.config["fairness"]
@@ -397,6 +406,9 @@ class DModeler(Modeler):
 
         self.model.train(model_training)
         g_model.train(g_model_training)
+
+        dx = dxs.mean()
+        dgz = dgzs.mean()
 
         dx = dx.item()
         ldr = ldr.item()
@@ -613,8 +625,8 @@ class GModeler(Modeler):
             lgr, : Loss(G, X), the loss of G on the real batch, definitely on the CPUs
             dgz2, : Mean( D(G(Z)) ), the mean output of D on the fake batch, definitely on the CPUs
             lgf, : Loss(G, G(Z)), the loss of G on the fake batch, definitely on the CPUs
-            lgc, : Loss(G, Cluster), lgc = 100 * abs(dx2 - dgz2), a custom defined distance between the real and fake
-                clusters, inspired by the WGAN paper, definitely on the CPUs
+            lgc, : Loss(G, Cluster), lgc = 100 * tanh(Mean( logit(dxs2) - logit(dgzs2) )), tanh'ed Wasserstein 1 metric
+                mean from the fake to the real cluster, based on the WGAN paper, definitely on the CPUs
             lg: Loss(G), lg = dx_factor * lgr + dgz_factor * lgf + cluster_factor * lgc, clamped to range [0, 100],
                 definitely on the CPUs
 
@@ -642,9 +654,11 @@ class GModeler(Modeler):
         dgzs2 = dgzs2.float()
         lgf = self.loss_func(dgzs2, fake_labels)
 
-        dx2 = dxs2.mean()
-        dgz2 = dgzs2.mean()
-        lgc = 100 * torch.abs(dx2 - dgz2)
+        logit_dxs2 = torch.logit(dxs2, eps=self.eps)
+        logit_dgzs2 = torch.logit(dgzs2, eps=self.eps)
+        w_metric = logit_dxs2 - logit_dgzs2
+        w_metric_mean = w_metric.mean()
+        lgc = 100 * torch.tanh(w_metric_mean)
 
         if self.has_fairness:
             config = self.config["fairness"]
@@ -662,6 +676,9 @@ class GModeler(Modeler):
 
         self.model.train(model_training)
         d_model.train(d_model_training)
+
+        dx2 = dxs2.mean()
+        dgz2 = dgzs2.mean()
 
         dx2 = dx2.item()
         lgr = lgr.item()
@@ -734,8 +751,8 @@ class GModeler(Modeler):
             lgr, : Loss(G, X), the loss of G on real, definitely on the CPUs
             dgz2, : Mean( D(G(Z)) ), the output mean of D on fake, definitely on the CPUs
             lgf, : Loss(G, G(Z)), the loss of G on fake, definitely on the CPUs
-            lgc, : Loss(G, Cluster), lgc = 100 * abs(dx2 - dgz2), a custom defined distance between the real and fake
-                clusters, inspired by the WGAN paper, definitely on the CPUs
+            lgc, : Loss(G, Cluster), lgc = 100 * tanh(Mean( logit(dxs2) - logit(dgzs2) )), tanh'ed Wasserstein 1 metric
+                mean from the fake to the real cluster, based on the WGAN paper, definitely on the CPUs
             lg: Loss(G), lg = dx_factor * lgr + dgz_factor * lgf + cluster_factor * lgc, clamped to range [0, 100],
                 definitely on the CPUs
         """
@@ -760,9 +777,11 @@ class GModeler(Modeler):
         dgzs2 = dgzs2.float()
         lgf = self.loss_func(dgzs2, fake_labels)
 
-        dx2 = dxs2.mean()
-        dgz2 = dgzs2.mean()
-        lgc = 100 * torch.abs(dx2 - dgz2)
+        logit_dxs2 = torch.logit(dxs2, eps=self.eps)
+        logit_dgzs2 = torch.logit(dgzs2, eps=self.eps)
+        w_metric = logit_dxs2 - logit_dgzs2
+        w_metric_mean = w_metric.mean()
+        lgc = 100 * torch.tanh(w_metric_mean)
 
         if self.has_fairness:
             config = self.config["fairness"]
@@ -779,6 +798,9 @@ class GModeler(Modeler):
 
         self.model.train(model_training)
         d_model.train(d_model_training)
+
+        dx2 = dxs2.mean()
+        dgz2 = dgzs2.mean()
 
         dx2 = dx2.item()
         lgr = lgr.item()

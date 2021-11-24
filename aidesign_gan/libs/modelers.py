@@ -44,12 +44,23 @@ class Modeler:
         """Optimizer, can run on GPUs if they are available."""
         self.size = None
         """Total size of the model."""
-        self.eps = 1e-5
-        """Epsilon, a small dummy value of 1 / inf to avoid NaNs in computation."""
         self.training_size = None
         """Training size of the model, 0 if the model is not initialized to the training mode."""
         self.has_fairness = None
         """Whether the modeler has a fairness config."""
+        self.eps = 1e-5
+        """Epsilon, a small dummy value used to avoid NaNs in computation.
+
+        Typically used to replace the result of 1 / inf.
+        """
+        self.wmm_factor = 0.231
+        """Wasserstein metric mean factor.
+
+        Used to time the w_metric_mean before feeding it to the tanh function.
+        Makes the w_metric_mean value more sensible to the tanh function.
+        Possible values:
+            When eps is 1e-5: 0.231
+        """
 
     def load(self):
         """Loads the model and optimizer states."""
@@ -245,8 +256,9 @@ class DModeler(Modeler):
             ldr, : Loss(D, X), the loss of D on the real batch, definitely on the CPUs
             dgz, : Mean( D(G(Z)) ), the output mean of D on the fake batch, definitely on the CPUs
             ldf, : Loss(D, G(Z)), the loss of D on the fake batch, definitely on the CPUs
-            ldc, : Loss(D, Cluster), ldc = 100 * tanh(Mean( logit(dgzs) - logit(dxs) )), tanh'ed Wasserstein 1 metric
-                mean from the fake to the real cluster, based on the WGAN paper, definitely on the CPUs
+            ldc, : Loss(D, Cluster), ldc = 100 * tanh(wmm_factor * Mean( logit(dgzs) - logit(dxs) )), tanh'ed
+                Wasserstein 1 metric mean from the fake to the real cluster, based on the WGAN paper, definitely on the
+                CPUs
             ld: Loss(D), ld = dx_factor * ldr + dgz_factor * ldf + cluster_factor * ldc, clamped to range [0, 100],
                 definitely on the CPUs
 
@@ -278,7 +290,7 @@ class DModeler(Modeler):
         logit_dgzs = torch.logit(dgzs, eps=self.eps)
         w_metric = logit_dgzs - logit_dxs
         w_metric_mean = w_metric.mean()
-        ldc = 100 * torch.tanh(w_metric_mean)
+        ldc = 100 * torch.tanh(self.wmm_factor * w_metric_mean)
 
         if self.has_fairness:
             config = self.config["fairness"]
@@ -359,8 +371,9 @@ class DModeler(Modeler):
             ldr, : Loss(D, X), the loss of D on real, definitely on the CPUs
             dgz, : Mean( D(G(Z)) ), the output mean of D on fake, definitely on the CPUs
             ldf, : Loss(D, G(Z)), the loss of D on fake, definitely on the CPUs
-            ldc, : Loss(D, Cluster), ldc = 100 * tanh(Mean( logit(dgzs) - logit(dxs) )), tanh'ed Wasserstein 1 metric
-                mean from the fake to the real cluster, based on the WGAN paper, definitely on the CPUs
+            ldc, : Loss(D, Cluster), ldc = 100 * tanh(wmm_factor * Mean( logit(dgzs) - logit(dxs) )), tanh'ed
+                Wasserstein 1 metric mean from the fake to the real cluster, based on the WGAN paper, definitely on the
+                CPUs
             ld: Loss(D), ld = dx_factor * ldr + dgz_factor * ldf + cluster_factor * ldc, clamped to range [0, 100],
                 definitely on the CPUs
         """
@@ -389,7 +402,7 @@ class DModeler(Modeler):
         logit_dgzs = torch.logit(dgzs, eps=self.eps)
         w_metric = logit_dgzs - logit_dxs
         w_metric_mean = w_metric.mean()
-        ldc = 100 * torch.tanh(w_metric_mean)
+        ldc = 100 * torch.tanh(self.wmm_factor * w_metric_mean)
 
         if self.has_fairness:
             config = self.config["fairness"]
@@ -625,8 +638,9 @@ class GModeler(Modeler):
             lgr, : Loss(G, X), the loss of G on the real batch, definitely on the CPUs
             dgz2, : Mean( D(G(Z)) ), the mean output of D on the fake batch, definitely on the CPUs
             lgf, : Loss(G, G(Z)), the loss of G on the fake batch, definitely on the CPUs
-            lgc, : Loss(G, Cluster), lgc = 100 * tanh(Mean( logit(dxs2) - logit(dgzs2) )), tanh'ed Wasserstein 1 metric
-                mean from the fake to the real cluster, based on the WGAN paper, definitely on the CPUs
+            lgc, : Loss(G, Cluster), lgc = 100 * tanh(wmm_factor * Mean( logit(dxs2) - logit(dgzs2) )), tanh'ed
+                Wasserstein 1 metric mean from the fake to the real cluster, based on the WGAN paper, definitely on the
+                CPUs
             lg: Loss(G), lg = dx_factor * lgr + dgz_factor * lgf + cluster_factor * lgc, clamped to range [0, 100],
                 definitely on the CPUs
 
@@ -658,7 +672,7 @@ class GModeler(Modeler):
         logit_dgzs2 = torch.logit(dgzs2, eps=self.eps)
         w_metric = logit_dxs2 - logit_dgzs2
         w_metric_mean = w_metric.mean()
-        lgc = 100 * torch.tanh(w_metric_mean)
+        lgc = 100 * torch.tanh(self.wmm_factor * w_metric_mean)
 
         if self.has_fairness:
             config = self.config["fairness"]
@@ -751,8 +765,9 @@ class GModeler(Modeler):
             lgr, : Loss(G, X), the loss of G on real, definitely on the CPUs
             dgz2, : Mean( D(G(Z)) ), the output mean of D on fake, definitely on the CPUs
             lgf, : Loss(G, G(Z)), the loss of G on fake, definitely on the CPUs
-            lgc, : Loss(G, Cluster), lgc = 100 * tanh(Mean( logit(dxs2) - logit(dgzs2) )), tanh'ed Wasserstein 1 metric
-                mean from the fake to the real cluster, based on the WGAN paper, definitely on the CPUs
+            lgc, : Loss(G, Cluster), lgc = 100 * tanh(wmm_factor * Mean( logit(dxs2) - logit(dgzs2) )), tanh'ed
+                Wasserstein 1 metric mean from the fake to the real cluster, based on the WGAN paper, definitely on the
+                CPUs
             lg: Loss(G), lg = dx_factor * lgr + dgz_factor * lgf + cluster_factor * lgc, clamped to range [0, 100],
                 definitely on the CPUs
         """
@@ -781,7 +796,7 @@ class GModeler(Modeler):
         logit_dgzs2 = torch.logit(dgzs2, eps=self.eps)
         w_metric = logit_dxs2 - logit_dgzs2
         w_metric_mean = w_metric.mean()
-        lgc = 100 * torch.tanh(w_metric_mean)
+        lgc = 100 * torch.tanh(self.wmm_factor * w_metric_mean)
 
         if self.has_fairness:
             config = self.config["fairness"]

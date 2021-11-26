@@ -45,7 +45,7 @@ generate:
 reset:
     When:   You want to reset the app data, which contains the command statuses.
     How-to: gan reset
-    Notes:  You will lose the current command statuses after the reset
+    Notes:  You will lose the current command statuses after the reset.
 welcome:
     When:   You want to display the welcome message.
     How-to: gan welcome

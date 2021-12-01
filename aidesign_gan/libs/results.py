@@ -204,20 +204,26 @@ class TrainingResults(Results):
 
         d_dx_factor = c.mods.d.config["fairness"]["dx_factor"]
         d_dgz_factor = c.mods.d.config["fairness"]["dgz_factor"]
-        d_cluster_factor = c.mods.d.config["fairness"]["cluster_factor"]
+        d_cluster_dx_factor = c.mods.d.config["fairness"]["cluster_dx_factor"]
+        d_cluster_dgz_factor = c.mods.d.config["fairness"]["cluster_dgz_factor"]
 
         g_dx_factor = c.mods.g.config["fairness"]["dx_factor"]
         g_dgz_factor = c.mods.g.config["fairness"]["dgz_factor"]
-        g_cluster_factor = c.mods.g.config["fairness"]["cluster_factor"]
+        g_cluster_dx_factor = c.mods.g.config["fairness"]["cluster_dx_factor"]
+        g_cluster_dgz_factor = c.mods.g.config["fairness"]["cluster_dgz_factor"]
 
         self.logstr(
             str(
                 "Fairness:\n"
-                "  D:  D(X) factor: {}  D(G(Z)) factor: {}  Cluster factor: {}\n"
-                "  G:  D(X) factor: {}  D(G(Z)) factor: {}  Cluster factor: {}\n"
+                "  D:  D(X) factor: {}  D(G(Z)) factor: {}\n"
+                "      Cluster D(X) factor: {}  Cluster D(G(Z)) factor: {}\n"
+                "  G:  D(X) factor: {}  D(G(Z)) factor: {}\n"
+                "      Cluster D(X) factor: {}  Cluster D(G(Z)) factor: {}\n"
             ).format(
-                f"{d_dx_factor:.6f}", f"{d_dgz_factor:.6f}", f"{d_cluster_factor:.6f}",
-                f"{g_dx_factor:.6f}", f"{g_dgz_factor:.6f}", f"{g_cluster_factor:.6f}"
+                f"{d_dx_factor:.6f}", f"{d_dgz_factor:.6f}",
+                f"{d_cluster_dx_factor:.6f}", f"{d_cluster_dgz_factor:.6f}",
+                f"{g_dx_factor:.6f}", f"{g_dgz_factor:.6f}",
+                f"{g_cluster_dx_factor:.6f}", f"{g_cluster_dgz_factor:.6f}"
             )
         )
 
@@ -443,22 +449,26 @@ class TrainingResults(Results):
         self.logstr(
             str(
                 "     D:  D(X): {}  D(G(Z)): {}\n"
-                "  L(D):  L(D,X): {}  L(D,G(Z)): {}  L(D,Cluster): {}\n"
+                "  L(D):  L(D,X): {}  L(D,G(Z)): {}\n"
+                "         L(D,Cluster,X): {}  L(D,Cluster,G(Z)): {}\n"
                 "         L(D): {}\n"
             ).format(
                 f"{c.latest.dx:.6f}", f"{c.latest.dgz:.6f}",
-                f"{c.latest.ldr:.6f}", f"{c.latest.ldf:.6f}", f"{c.latest.ldc:.6f}",
+                f"{c.latest.ldr:.6f}", f"{c.latest.ldf:.6f}",
+                f"{c.latest.ldcr:.6f}", f"{c.latest.ldcf:.6f}",
                 f"{c.latest.ld:.6f}"
             )
         )
         self.logstr(
             str(
                 "     G:  D(X): {}  D(G(Z)): {}\n"
-                "  L(G):  L(G,X): {}  L(G,G(Z)): {}  L(G,Cluster): {}\n"
+                "  L(G):  L(G,X): {}  L(G,G(Z)): {}\n"
+                "         L(G,Cluster,X): {}  L(G,Cluster,G(Z)): {}\n"
                 "         L(G): {}\n"
             ).format(
                 f"{c.latest.dx2:.6f}", f"{c.latest.dgz2:.6f}",
-                f"{c.latest.lgr:.6f}", f"{c.latest.lgf:.6f}", f"{c.latest.lgc:.6f}",
+                f"{c.latest.lgr:.6f}", f"{c.latest.lgf:.6f}",
+                f"{c.latest.lgcr:.6f}", f"{c.latest.lgcf:.6f}",
                 f"{c.latest.lg:.6f}"
             )
         )

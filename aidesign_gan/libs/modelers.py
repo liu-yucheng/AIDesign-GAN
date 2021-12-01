@@ -292,8 +292,8 @@ class DModeler(Modeler):
 
         logit_dxs = _logit(dxs, eps=self.eps)
         logit_dgzs = _logit(dgzs, eps=self.eps)
-        ldcr = 100 * _tanh(-1 * logit_dxs.mean())
-        ldcf = 100 * _tanh(logit_dgzs.mean())
+        ldcr = 100 * _tanh(self.wmm_factor * -1 * logit_dxs.mean())
+        ldcf = 100 * _tanh(self.wmm_factor * logit_dgzs.mean())
 
         if self.has_fairness:
             config = self.config["fairness"]
@@ -417,8 +417,8 @@ class DModeler(Modeler):
 
         logit_dxs = _logit(dxs, eps=self.eps)
         logit_dgzs = _logit(dgzs, eps=self.eps)
-        ldcr = 100 * _tanh(-1 * logit_dxs.mean())
-        ldcf = 100 * _tanh(logit_dgzs.mean())
+        ldcr = 100 * _tanh(self.wmm_factor * -1 * logit_dxs.mean())
+        ldcf = 100 * _tanh(self.wmm_factor * logit_dgzs.mean())
 
         if self.has_fairness:
             config = self.config["fairness"]
@@ -700,8 +700,8 @@ class GModeler(Modeler):
 
         logit_dxs2 = _logit(dxs2, eps=self.eps)
         logit_dgzs2 = _logit(dgzs2, eps=self.eps)
-        lgcr = 100 * _tanh(logit_dxs2.mean())
-        lgcf = 100 * _tanh(-1 * logit_dgzs2.mean())
+        lgcr = 100 * _tanh(self.wmm_factor * logit_dxs2.mean())
+        lgcf = 100 * _tanh(self.wmm_factor * -1 * logit_dgzs2.mean())
 
         if self.has_fairness:
             config = self.config["fairness"]
@@ -837,8 +837,8 @@ class GModeler(Modeler):
 
         logit_dxs2 = _logit(dxs2, eps=self.eps)
         logit_dgzs2 = _logit(dgzs2, eps=self.eps)
-        lgcr = 100 * _tanh(logit_dxs2.mean())
-        lgcf = 100 * _tanh(-1 * logit_dgzs2.mean())
+        lgcr = 100 * _tanh(self.wmm_factor * logit_dxs2.mean())
+        lgcf = 100 * _tanh(self.wmm_factor * -1 * logit_dgzs2.mean())
 
         if self.has_fairness:
             config = self.config["fairness"]

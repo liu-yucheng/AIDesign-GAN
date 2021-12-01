@@ -595,11 +595,12 @@ class FairPredAltSGDAlgo(Algo):
             fake_noises: the fake noises
 
         Returns:
-            dx, : the output mean of D on the real batch
-            ldr, : the loss of D on the real batch
-            dgz, : the output mean of D on the fake batch
-            ldf, : the loss of D on the fake batch
-            ldc, : D cluster loss
+            dx, : the output mean of D on real
+            dgz, : the output mean of D on fake
+            ldr, : the loss of D on real
+            ldf, : the loss of D on fake
+            ldcr, : D cluster loss on real
+            ldcf, : D cluster loss on fake
             ld: the loss of D
         """
         c: _TrainingContext = self.context
@@ -615,8 +616,7 @@ class FairPredAltSGDAlgo(Algo):
         if can_predict:
             c.mods.g.restore()
 
-        dx, ldr, dgz, ldf, ldc, ld = train_results
-        return dx, ldr, dgz, ldf, ldc, ld
+        return train_results
 
     def train_and_step_g(self, real_batch, fake_noises):
         """Trains and steps G with predicted D.
@@ -626,11 +626,12 @@ class FairPredAltSGDAlgo(Algo):
             fake_noises: the fake noises
 
         Returns:
-            dx2, : the output mean of D on the real batch
-            lgr, : the loss of G on the real batch
-            dgz2, : the output mean of D on the fake batch
-            lgf, : the loss of G on the fake batch
-            lgc, : G cluster loss
+            dx2, : the output mean of D on real
+            dgz2, : the output mean of D on fake
+            lgr, : the loss of G on real
+            lgf, : the loss of G on fake
+            lgcr, : G cluster loss on real
+            lgcf, : G cluster loss on fake
             lg: the loss of G
         """
         c: _TrainingContext = self.context
@@ -646,8 +647,7 @@ class FairPredAltSGDAlgo(Algo):
         if can_predict:
             c.mods.d.restore()
 
-        dx2, lgr, dgz2, lgf, lgc, lg = train_results
-        return dx2, lgr, dgz2, lgf, lgc, lg
+        return train_results
 
     def train_dg(self):
         """Trains D and G together."""
@@ -679,8 +679,8 @@ class FairPredAltSGDAlgo(Algo):
                 g_results = self.train_and_step_g(real_batch, fake_noises)
 
             # Parse the training results
-            dx, ldr, dgz, ldf, ldc, ld = d_results
-            dx2, lgr, dgz2, lgf, lgc, lg = g_results
+            dx, dgz, ldr, ldf, ldcr, ldcf, ld = d_results
+            dx2, dgz2, lgr, lgf, lgcr, lgcf, lg = g_results
 
             # Detect training collapse
             collapsed = bool(ldr >= c.collapses.max_loss)
@@ -691,17 +691,19 @@ class FairPredAltSGDAlgo(Algo):
 
             # Update the statistics
             c.latest.dx = dx
-            c.latest.ldr = ldr
             c.latest.dgz = dgz
+            c.latest.ldr = ldr
             c.latest.ldf = ldf
-            c.latest.ldc = ldc
+            c.latest.ldcr = ldcr
+            c.latest.ldcf = ldcf
             c.latest.ld = ld
 
             c.latest.dx2 = dx2
-            c.latest.lgr = lgr
             c.latest.dgz2 = dgz2
+            c.latest.lgr = lgr
             c.latest.lgf = lgf
-            c.latest.lgc = lgc
+            c.latest.lgcr = lgcr
+            c.latest.lgcf = lgcf
             c.latest.lg = lg
 
             lds.append(ld)
@@ -745,8 +747,8 @@ class FairPredAltSGDAlgo(Algo):
                 c.mods.d.model, real_batch, c.labels.fake, fake_noises, c.labels.real
             )
 
-            dx, ldr, dgz, ldf, ldc, ld = d_valid_results
-            dx2, lgr, dgz2, lgf, lgc, lg = g_valid_results
+            dx, dgz, ldr, ldf, ldcr, ldcf, ld = d_valid_results
+            dx2, dgz2, lgr, lgf, lgcr, lgcf, lg = g_valid_results
 
             lds.append(ld)
             lgs.append(lg)
@@ -755,14 +757,16 @@ class FairPredAltSGDAlgo(Algo):
             c.latest.ldr = ldr
             c.latest.dgz = dgz
             c.latest.ldf = ldf
-            c.latest.ldc = ldc
+            c.latest.ldcr = ldcr
+            c.latest.ldcf = ldcf
             c.latest.ld = ld
 
             c.latest.dx2 = dx2
             c.latest.lgr = lgr
             c.latest.dgz2 = dgz2
             c.latest.lgf = lgf
-            c.latest.lgc = lgc
+            c.latest.lgcr = lgcr
+            c.latest.lgcf = lgcf
             c.latest.lg = lg
 
             r.log_batch_3("v")

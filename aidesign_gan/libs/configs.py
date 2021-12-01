@@ -159,7 +159,8 @@ class ModelersConfig(Config):
                 "fairness": {
                     "dx_factor": 0.5,
                     "dgz_factor": 0.5,
-                    "cluster_factor": 0
+                    "cluster_dx_factor": 0,
+                    "cluster_dgz_factor": 0
                 }
             },
             "generator": {
@@ -192,7 +193,8 @@ class ModelersConfig(Config):
                 "fairness": {
                     "dx_factor": 0.5,
                     "dgz_factor": 0.5,
-                    "cluster_factor": 0
+                    "cluster_dx_factor": 0,
+                    "cluster_dgz_factor": 0
                 }
             }
         }

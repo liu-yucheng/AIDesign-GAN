@@ -177,8 +177,10 @@ class TrainingContext(Context):
         """Average D(G(Z)) while training D."""
         ldf = None
         """L(D, G(Z)), the loss of D on fake."""
-        ldc = None
-        """L(D, Cluster), D cluster loss."""
+        ldcr = None
+        """L(D, Cluster, X), D cluster loss on real."""
+        ldcf = None
+        """L(D, Cluster, G(Z)), D cluster loss on fake."""
         ld = None
         """L(D), the loss of D."""
 
@@ -190,8 +192,10 @@ class TrainingContext(Context):
         """Average D(G(Z)) when training G."""
         lgf = None
         """L(G, G(Z)), the loss of G on fake."""
-        lgc = None
-        """L(G, Cluster), G cluster loss."""
+        lgcr = None
+        """L(G, Cluster, X), G cluster loss on real."""
+        lgcf = None
+        """L(G, Cluster, G(Z)), G cluster loss on fake."""
         lg = None
         """L(G), the loss of G."""
 
@@ -443,14 +447,16 @@ class TrainingContext(Context):
         self.latest.ldr = None
         self.latest.dgz = None
         self.latest.ldf = None
-        self.latest.ldc = None
+        self.latest.ldcr = None
+        self.latest.ldcf = None
         self.latest.ld = None
 
         self.latest.dx2 = None
         self.latest.lgr = None
         self.latest.dgz2 = None
         self.latest.lgf = None
-        self.latest.lgc = None
+        self.latest.lgcr = None
+        self.latest.lgcf = None
         self.latest.lg = None
 
         self.losses.train.d = []

@@ -12,7 +12,10 @@ import torch
 from aidesign_gan.libs import structs
 from aidesign_gan.libs import utils
 
+_logit = torch.logit
 _no_grad = torch.no_grad
+_Tensor = torch.Tensor
+_tanh = torch.tanh
 
 
 class Modeler:
@@ -253,14 +256,15 @@ class DModeler(Modeler):
 
         Returns:
             dx, : Mean(D(X)), the output mean of D on the real batch, definitely on the CPUs
-            ldr, : Loss(D, X), the loss of D on the real batch, definitely on the CPUs
             dgz, : Mean( D(G(Z)) ), the output mean of D on the fake batch, definitely on the CPUs
+            ldr, : Loss(D, X), the loss of D on the real batch, definitely on the CPUs
             ldf, : Loss(D, G(Z)), the loss of D on the fake batch, definitely on the CPUs
-            ldc, : Loss(D, Cluster), ldc = 100 * tanh(wmm_factor * Mean( logit(dgzs) - logit(dxs) )), tanh'ed
-                Wasserstein 1 metric mean from the fake to the real cluster, based on the WGAN paper, definitely on the
-                CPUs
-            ld: Loss(D), ld = dx_factor * ldr + dgz_factor * ldf + cluster_factor * ldc, clamped to range [0, 100],
-                definitely on the CPUs
+            ldcr, : Loss(D, Cluster, X), ldcr = 100 * tanh(wmm_factor * Mean( -1 * logit(dxs) )), tanh'ed Wasserstein 1
+                metric mean, based on the WGAN paper, definitely on the CPUs
+            ldcf, : Loss(D, Cluster, G(Z)), ldcf = 100 * tanh(wmm_factor * Mean( logit(dgzs) )), tanh'ed Wasserstein 1
+                metric mean, based on the WGAN paper, definitely on the CPUs
+            ld: Loss(D), ld = dx_factor * ldr + dgz_factor * ldf + cluster_dx_factor * ldcr + cluster_dgz_factor *
+                ldcf, clamped to range [0, 100], definitely on the CPUs
 
         Raises:
             ValueError: if self.optim is None
@@ -274,35 +278,40 @@ class DModeler(Modeler):
         g_model.train(True)
 
         real_batch, real_labels = utils.prep_batch_and_labels(real_batch, real_label, self.device)
-        dxs = self.model(real_batch).view(-1)
+        dxs: _Tensor = self.model(real_batch).view(-1)
         dxs = dxs.float()
-        ldr = self.loss_func(dxs, real_labels)
+        ldr: _Tensor = self.loss_func(dxs, real_labels)
 
         fake_noises = fake_noises.to(self.device)
         fake_batch = g_model(fake_noises)
         fake_batch = fake_batch.float()
         fake_batch, fake_labels = utils.prep_batch_and_labels(fake_batch, fake_label, self.device)
-        dgzs = self.model(fake_batch).view(-1)
+        dgzs: _Tensor = self.model(fake_batch).view(-1)
         dgzs = dgzs.float()
-        ldf = self.loss_func(dgzs, fake_labels)
+        ldf: _Tensor = self.loss_func(dgzs, fake_labels)
 
-        logit_dxs = torch.logit(dxs, eps=self.eps)
-        logit_dgzs = torch.logit(dgzs, eps=self.eps)
-        w_metric = logit_dgzs - logit_dxs
-        w_metric_mean = w_metric.mean()
-        ldc = 100 * torch.tanh(self.wmm_factor * w_metric_mean)
+        logit_dxs = _logit(dxs, eps=self.eps)
+        logit_dgzs = _logit(dgzs, eps=self.eps)
+        ldcr = 100 * _tanh(-1 * logit_dxs.mean())
+        ldcf = 100 * _tanh(logit_dgzs.mean())
 
         if self.has_fairness:
             config = self.config["fairness"]
             dx_factor = config["dx_factor"]
             dgz_factor = config["dgz_factor"]
-            cluster_factor = config["cluster_factor"]
+            cluster_dx_factor = config["cluster_dx_factor"]
+            cluster_dgz_factor = config["cluster_dgz_factor"]
         else:  # elif not self.has_fairness
             dx_factor = 0.5
             dgz_factor = 0.5
-            cluster_factor = 0
+            cluster_dx_factor = float(0)
+            cluster_dgz_factor = float(0)
 
-        ld = dx_factor * ldr + dgz_factor * ldf + cluster_factor * ldc
+        ld: _Tensor = \
+            dx_factor * ldr + \
+            dgz_factor * ldf + \
+            cluster_dx_factor * ldcr + \
+            cluster_dgz_factor * ldcf
         ld.clamp_(0, 100)
         ld.backward()
 
@@ -313,13 +322,20 @@ class DModeler(Modeler):
         dgz = dgzs.mean()
 
         dx = dx.item()
-        ldr = ldr.item()
         dgz = dgz.item()
+        ldr = ldr.item()
         ldf = ldf.item()
-        ldc = ldc.item()
+        ldcr = ldcr.item()
+        ldcf = ldcf.item()
         ld = ld.item()
 
-        return dx, ldr, dgz, ldf, ldc, ld
+        result = (
+            dx, dgz,
+            ldr, ldf,
+            ldcr, ldcf,
+            ld
+        )
+        return result
 
     def valid(self, batch, label):
         """Validates the model with a batch of data and a target label.
@@ -368,14 +384,15 @@ class DModeler(Modeler):
 
         Returns:
             dx, : Mean(D(X)), the output mean of D on real, definitely on the CPUs
-            ldr, : Loss(D, X), the loss of D on real, definitely on the CPUs
             dgz, : Mean( D(G(Z)) ), the output mean of D on fake, definitely on the CPUs
+            ldr, : Loss(D, X), the loss of D on real, definitely on the CPUs
             ldf, : Loss(D, G(Z)), the loss of D on fake, definitely on the CPUs
-            ldc, : Loss(D, Cluster), ldc = 100 * tanh(wmm_factor * Mean( logit(dgzs) - logit(dxs) )), tanh'ed
-                Wasserstein 1 metric mean from the fake to the real cluster, based on the WGAN paper, definitely on the
-                CPUs
-            ld: Loss(D), ld = dx_factor * ldr + dgz_factor * ldf + cluster_factor * ldc, clamped to range [0, 100],
-                definitely on the CPUs
+            ldcr, : Loss(D, Cluster, X), ldcr = 100 * tanh(wmm_factor * Mean( -1 * logit(dxs) )), tanh'ed Wasserstein 1
+                metric mean, based on the WGAN paper, definitely on the CPUs
+            ldcf, : Loss(D, Cluster, G(Z)), ldcf = 100 * tanh(wmm_factor * Mean( logit(dgzs) )), tanh'ed Wasserstein 1
+                metric mean, based on the WGAN paper, definitely on the CPUs
+            ld: Loss(D), ld = dx_factor * ldr + dgz_factor * ldf + cluster_dx_factor * ldcr + cluster_dgz_factor *
+                ldcf, clamped to range [0, 100], definitely on the CPUs
         """
         model_training = self.model.training
         g_model_training = g_model.training
@@ -384,9 +401,9 @@ class DModeler(Modeler):
 
         real_batch, real_labels = utils.prep_batch_and_labels(real_batch, real_label, self.device)
         with _no_grad():
-            dxs = self.model(real_batch).detach().view(-1)
+            dxs: _Tensor = self.model(real_batch).detach().view(-1)
         dxs = dxs.float()
-        ldr = self.loss_func(dxs, real_labels)
+        ldr: _Tensor = self.loss_func(dxs, real_labels)
 
         fake_noises = fake_noises.to(self.device)
         with _no_grad():
@@ -394,27 +411,32 @@ class DModeler(Modeler):
         fake_batch = fake_batch.float()
         fake_batch, fake_labels = utils.prep_batch_and_labels(fake_batch, fake_label, self.device)
         with _no_grad():
-            dgzs = self.model(fake_batch).detach().view(-1)
+            dgzs: _Tensor = self.model(fake_batch).detach().view(-1)
         dgzs = dgzs.float()
-        ldf = self.loss_func(dgzs, fake_labels)
+        ldf: _Tensor = self.loss_func(dgzs, fake_labels)
 
-        logit_dxs = torch.logit(dxs, eps=self.eps)
-        logit_dgzs = torch.logit(dgzs, eps=self.eps)
-        w_metric = logit_dgzs - logit_dxs
-        w_metric_mean = w_metric.mean()
-        ldc = 100 * torch.tanh(self.wmm_factor * w_metric_mean)
+        logit_dxs = _logit(dxs, eps=self.eps)
+        logit_dgzs = _logit(dgzs, eps=self.eps)
+        ldcr = 100 * _tanh(-1 * logit_dxs.mean())
+        ldcf = 100 * _tanh(logit_dgzs.mean())
 
         if self.has_fairness:
             config = self.config["fairness"]
             dx_factor = config["dx_factor"]
             dgz_factor = config["dgz_factor"]
-            cluster_factor = config["cluster_factor"]
+            cluster_dx_factor = config["cluster_dx_factor"]
+            cluster_dgz_factor = config["cluster_dgz_factor"]
         else:  # elif not self.has_fairness
             dx_factor = 0.5
             dgz_factor = 0.5
-            cluster_factor = 0
+            cluster_dx_factor = float(0)
+            cluster_dgz_factor = float(0)
 
-        ld = dx_factor * ldr + dgz_factor * ldf + cluster_factor * ldc
+        ld: _Tensor = \
+            dx_factor * ldr + \
+            dgz_factor * ldf + \
+            cluster_dx_factor * ldcr + \
+            cluster_dgz_factor * ldcf
         ld.clamp_(0, 100)
 
         self.model.train(model_training)
@@ -424,13 +446,20 @@ class DModeler(Modeler):
         dgz = dgzs.mean()
 
         dx = dx.item()
-        ldr = ldr.item()
         dgz = dgz.item()
+        ldr = ldr.item()
         ldf = ldf.item()
-        ldc = ldc.item()
+        ldcr = ldcr.item()
+        ldcf = ldcf.item()
         ld = ld.item()
 
-        return dx, ldr, dgz, ldf, ldc, ld
+        result = (
+            dx, dgz,
+            ldr, ldf,
+            ldcr, ldcf,
+            ld
+        )
+        return result
 
     def test(self, batch):
         """Tests/Uses the model with a batch of data.
@@ -635,14 +664,15 @@ class GModeler(Modeler):
 
         Returns:
             dx2, : Mean(D(X)), the mean output of D on the real batch, definitely on the CPUs
-            lgr, : Loss(G, X), the loss of G on the real batch, definitely on the CPUs
             dgz2, : Mean( D(G(Z)) ), the mean output of D on the fake batch, definitely on the CPUs
+            lgr, : Loss(G, X), the loss of G on the real batch, definitely on the CPUs
             lgf, : Loss(G, G(Z)), the loss of G on the fake batch, definitely on the CPUs
-            lgc, : Loss(G, Cluster), lgc = 100 * tanh(wmm_factor * Mean( logit(dxs2) - logit(dgzs2) )), tanh'ed
-                Wasserstein 1 metric mean from the fake to the real cluster, based on the WGAN paper, definitely on the
-                CPUs
-            lg: Loss(G), lg = dx_factor * lgr + dgz_factor * lgf + cluster_factor * lgc, clamped to range [0, 100],
-                definitely on the CPUs
+            lgcr, : Loss(G, Cluster, X), lgcr = 100 * tanh(wmm_factor * Mean( logit(dxs2) )), tanh'ed Wasserstein 1
+                metric mean, based on the WGAN paper, definitely on the CPUs
+            lgcf, : Loss(G, Cluster, G(Z)), lgcf = 100 * tanh(wmm_factor * Mean( -1 * logit(dgzs2) )), tanh'ed
+                Wasserstein 1 metric mean, based on the WGAN paper, definitely on the CPUs
+            lg: Loss(G), lg = dx_factor * lgr + dgz_factor * lgf + cluster_dx_factor * lgcr + cluster_dgz_factor *
+                lgcf, clamped to range [0, 100], definitely on the CPUs
 
         Raises:
             ValueError: if self.optim is None
@@ -656,35 +686,40 @@ class GModeler(Modeler):
         d_model.train(True)
 
         real_batch, real_labels = utils.prep_batch_and_labels(real_batch, real_label, self.device)
-        dxs2 = d_model(real_batch).view(-1)
+        dxs2: _Tensor = d_model(real_batch).view(-1)
         dxs2 = dxs2.float()
-        lgr = self.loss_func(dxs2, real_labels)
+        lgr: _Tensor = self.loss_func(dxs2, real_labels)
 
         fake_noises = fake_noises.to(self.device)
         fake_batch = self.model(fake_noises)
         fake_batch = fake_batch.float()
         fake_batch, fake_labels = utils.prep_batch_and_labels(fake_batch, fake_label, self.device)
-        dgzs2 = d_model(fake_batch).view(-1)
+        dgzs2: _Tensor = d_model(fake_batch).view(-1)
         dgzs2 = dgzs2.float()
-        lgf = self.loss_func(dgzs2, fake_labels)
+        lgf: _Tensor = self.loss_func(dgzs2, fake_labels)
 
-        logit_dxs2 = torch.logit(dxs2, eps=self.eps)
-        logit_dgzs2 = torch.logit(dgzs2, eps=self.eps)
-        w_metric = logit_dxs2 - logit_dgzs2
-        w_metric_mean = w_metric.mean()
-        lgc = 100 * torch.tanh(self.wmm_factor * w_metric_mean)
+        logit_dxs2 = _logit(dxs2, eps=self.eps)
+        logit_dgzs2 = _logit(dgzs2, eps=self.eps)
+        lgcr = 100 * _tanh(logit_dxs2.mean())
+        lgcf = 100 * _tanh(-1 * logit_dgzs2.mean())
 
         if self.has_fairness:
             config = self.config["fairness"]
             dx_factor = config["dx_factor"]
             dgz_factor = config["dgz_factor"]
-            cluster_factor = config["cluster_factor"]
+            cluster_dx_factor = config["cluster_dx_factor"]
+            cluster_dgz_factor = config["cluster_dgz_factor"]
         else:  # elif not self.has_fairness
             dx_factor = 0.5
             dgz_factor = 0.5
-            cluster_factor = 0
+            cluster_dx_factor = float(0)
+            cluster_dgz_factor = float(0)
 
-        lg = dx_factor * lgr + dgz_factor * lgf + cluster_factor * lgc
+        lg: _Tensor = \
+            dx_factor * lgr + \
+            dgz_factor * lgf + \
+            cluster_dx_factor * lgcr + \
+            cluster_dgz_factor * lgcf
         lg.clamp_(0, 100)
         lg.backward()
 
@@ -695,13 +730,20 @@ class GModeler(Modeler):
         dgz2 = dgzs2.mean()
 
         dx2 = dx2.item()
-        lgr = lgr.item()
         dgz2 = dgz2.item()
+        lgr = lgr.item()
         lgf = lgf.item()
-        lgc = lgc.item()
+        lgcr = lgcr.item()
+        lgcf = lgcf.item()
         lg = lg.item()
 
-        return dx2, lgr, dgz2, lgf, lgc, lg
+        result = (
+            dx2, dgz2,
+            lgr, lgf,
+            lgcr, lgcf,
+            lg
+        )
+        return result
 
     def valid(self, d_model, noises, label):
         """Validates the model with the given args.
@@ -762,14 +804,15 @@ class GModeler(Modeler):
 
         Returns:
             dx2, : Mean(D(X)), the output mean of D on real, definitely on the CPUs
-            lgr, : Loss(G, X), the loss of G on real, definitely on the CPUs
             dgz2, : Mean( D(G(Z)) ), the output mean of D on fake, definitely on the CPUs
+            lgr, : Loss(G, X), the loss of G on real, definitely on the CPUs
             lgf, : Loss(G, G(Z)), the loss of G on fake, definitely on the CPUs
-            lgc, : Loss(G, Cluster), lgc = 100 * tanh(wmm_factor * Mean( logit(dxs2) - logit(dgzs2) )), tanh'ed
-                Wasserstein 1 metric mean from the fake to the real cluster, based on the WGAN paper, definitely on the
-                CPUs
-            lg: Loss(G), lg = dx_factor * lgr + dgz_factor * lgf + cluster_factor * lgc, clamped to range [0, 100],
-                definitely on the CPUs
+            lgcr, : Loss(G, Cluster, X), lgcr = 100 * tanh(wmm_factor * Mean( logit(dxs2) )), tanh'ed Wasserstein 1
+                metric mean, based on the WGAN paper, definitely on the CPUs
+            lgcf, : Loss(G, Cluster, G(Z)), lgcf = 100 * tanh(wmm_factor * Mean( -1 * logit(dgzs2) )), tanh'ed
+                Wasserstein 1 metric mean, based on the WGAN paper, definitely on the CPUs
+            lg: Loss(G), lg = dx_factor * lgr + dgz_factor * lgf + cluster_dx_factor * lgcr + cluster_dgz_factor *
+                lgcf, clamped to range [0, 100], definitely on the CPUs
         """
         model_training = self.model.training
         d_model_training = d_model.training
@@ -778,9 +821,9 @@ class GModeler(Modeler):
 
         real_batch, real_labels = utils.prep_batch_and_labels(real_batch, real_label, self.device)
         with _no_grad():
-            dxs2 = d_model(real_batch).detach().view(-1)
+            dxs2: _Tensor = d_model(real_batch).detach().view(-1)
         dxs2 = dxs2.float()
-        lgr = self.loss_func(dxs2, real_labels)
+        lgr: _Tensor = self.loss_func(dxs2, real_labels)
 
         fake_noises = fake_noises.to(self.device)
         with _no_grad():
@@ -788,27 +831,32 @@ class GModeler(Modeler):
         fake_batch = fake_batch.float()
         fake_batch, fake_labels = utils.prep_batch_and_labels(fake_batch, fake_label, self.device)
         with _no_grad():
-            dgzs2 = d_model(fake_batch).detach().view(-1)
+            dgzs2: _Tensor = d_model(fake_batch).detach().view(-1)
         dgzs2 = dgzs2.float()
-        lgf = self.loss_func(dgzs2, fake_labels)
+        lgf: _Tensor = self.loss_func(dgzs2, fake_labels)
 
-        logit_dxs2 = torch.logit(dxs2, eps=self.eps)
-        logit_dgzs2 = torch.logit(dgzs2, eps=self.eps)
-        w_metric = logit_dxs2 - logit_dgzs2
-        w_metric_mean = w_metric.mean()
-        lgc = 100 * torch.tanh(self.wmm_factor * w_metric_mean)
+        logit_dxs2 = _logit(dxs2, eps=self.eps)
+        logit_dgzs2 = _logit(dgzs2, eps=self.eps)
+        lgcr = 100 * _tanh(logit_dxs2.mean())
+        lgcf = 100 * _tanh(-1 * logit_dgzs2.mean())
 
         if self.has_fairness:
             config = self.config["fairness"]
             dx_factor = config["dx_factor"]
             dgz_factor = config["dgz_factor"]
-            cluster_factor = config["cluster_factor"]
+            cluster_dx_factor = config["cluster_dx_factor"]
+            cluster_dgz_factor = config["cluster_dgz_factor"]
         else:  # elif not self.has_fairness
             dx_factor = 0.5
             dgz_factor = 0.5
-            cluster_factor = 0
+            cluster_dx_factor = float(0)
+            cluster_dgz_factor = float(0)
 
-        lg = dx_factor * lgr + dgz_factor * lgf + cluster_factor * lgc
+        lg: _Tensor = \
+            dx_factor * lgr + \
+            dgz_factor * lgf + \
+            cluster_dx_factor * lgcr + \
+            cluster_dgz_factor * lgcf
         lg.clamp_(0, 100)
 
         self.model.train(model_training)
@@ -818,13 +866,20 @@ class GModeler(Modeler):
         dgz2 = dgzs2.mean()
 
         dx2 = dx2.item()
-        lgr = lgr.item()
         dgz2 = dgz2.item()
+        lgr = lgr.item()
         lgf = lgf.item()
-        lgc = lgc.item()
+        lgcr = lgcr.item()
+        lgcf = lgcf.item()
         lg = lg.item()
 
-        return dx2, lgr, dgz2, lgf, lgc, lg
+        result = (
+            dx2, dgz2,
+            lgr, lgf,
+            lgcr, lgcf,
+            lg
+        )
+        return result
 
     def test(self, noises):
         """Tests/Uses the model with the given args.

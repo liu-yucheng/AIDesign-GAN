@@ -81,25 +81,25 @@ fm = self.config["feature_map_size"]
 self.model = nn.Sequential(
     # Layer group 1. input group; in res 64
     nn.Conv2d(ic, fm, 5, stride=1, padding=2, bias=False),
-    nn.Upsample(size=ir // 2, mode="bicubic", align_corners=False),
+    nn.Upsample(size=int(ir // 2), mode="bicubic", align_corners=False),
     nn.LeakyReLU(0.2, inplace=True),
     # 2. in res 32
-    nn.Conv2d(fm, 3 * fm, 3, stride=1, padding=1, bias=False),
-    nn.Upsample(size=ir // 4, mode="bilinear", align_corners=False),
-    nn.BatchNorm2d(3 * fm),
+    nn.Conv2d(fm, int(3 * fm), 3, stride=1, padding=1, bias=False),
+    nn.Upsample(size=int(ir // 4), mode="bilinear", align_corners=False),
+    nn.BatchNorm2d(int(3 * fm)),
     nn.LeakyReLU(0.2, inplace=True),
     # 3. in res 16
-    nn.Conv2d(3 * fm, 5 * fm, 3, stride=1, padding=1, bias=False),
-    nn.Upsample(size=ir // 8, mode="bilinear", align_corners=False),
-    nn.BatchNorm2d(5 * fm),
+    nn.Conv2d(int(3 * fm), int(5 * fm), 3, stride=1, padding=1, bias=False),
+    nn.Upsample(size=int(ir // 8), mode="bilinear", align_corners=False),
+    nn.BatchNorm2d(int(5 * fm)),
     nn.LeakyReLU(0.2, inplace=True),
     # 4. in res 8
-    nn.Conv2d(5 * fm, 7 * fm, 3, stride=1, padding=1, bias=False),
-    nn.Upsample(size=ir // 16, mode="bilinear", align_corners=False),
-    nn.BatchNorm2d(7 * fm),
+    nn.Conv2d(int(5 * fm), int(7 * fm), 3, stride=1, padding=1, bias=False),
+    nn.Upsample(size=int(ir // 16), mode="bilinear", align_corners=False),
+    nn.BatchNorm2d(int(7 * fm)),
     nn.LeakyReLU(0.2, inplace=True),
     # 5. output group; in res 4; out res 1
-    nn.Conv2d(7 * fm, 1, 3, stride=1, padding=1, bias=False),
+    nn.Conv2d(int(7 * fm), 1, 3, stride=1, padding=1, bias=False),
     nn.Upsample(size=1, mode="bicubic", align_corners=False),
     nn.Sigmoid()
 )
@@ -140,22 +140,22 @@ fm = self.config["feature_map_size"]
 self.model = nn.Sequential(
     # Layer group 1. input group; in res zr
     nn.Upsample(size=4, mode="bicubic", align_corners=False),
-    nn.ConvTranspose2d(zc, 7 * fm, 3, stride=1, padding=1, bias=False),
-    nn.BatchNorm2d(7 * fm),
+    nn.ConvTranspose2d(zc, int(7 * fm), 3, stride=1, padding=1, bias=False),
+    nn.BatchNorm2d(int(7 * fm)),
     nn.ReLU(True),
     # 2. in res 4
-    nn.Upsample(size=ir // 8, mode="bilinear", align_corners=False),
-    nn.ConvTranspose2d(7 * fm, 5 * fm, 3, stride=1, padding=1, bias=False),
-    nn.BatchNorm2d(5 * fm),
+    nn.Upsample(size=int(ir // 8), mode="bilinear", align_corners=False),
+    nn.ConvTranspose2d(int(7 * fm), int(5 * fm), 3, stride=1, padding=1, bias=False),
+    nn.BatchNorm2d(int(5 * fm)),
     nn.ReLU(True),
     # 3. in res 8
-    nn.Upsample(size=ir // 4, mode="bilinear", align_corners=False),
-    nn.ConvTranspose2d(5 * fm, 3 * fm, 3, stride=1, padding=1, bias=False),
-    nn.BatchNorm2d(3 * fm),
+    nn.Upsample(size=int(ir // 4), mode="bilinear", align_corners=False),
+    nn.ConvTranspose2d(int(5 * fm), int(3 * fm), 3, stride=1, padding=1, bias=False),
+    nn.BatchNorm2d(int(3 * fm)),
     nn.ReLU(True),
     # 4. in res 16
-    nn.Upsample(size=ir // 2, mode="bilinear", align_corners=False),
-    nn.ConvTranspose2d(3 * fm, fm, 3, stride=1, padding=1, bias=False),
+    nn.Upsample(size=int(ir // 2), mode="bilinear", align_corners=False),
+    nn.ConvTranspose2d(int(3 * fm), fm, 3, stride=1, padding=1, bias=False),
     nn.BatchNorm2d(fm),
     nn.ReLU(True),
     # 5. output group; in res 32; out res 64

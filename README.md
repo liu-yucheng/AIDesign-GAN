@@ -1,6 +1,5 @@
 [//]: # "Initially added by: liu-yucheng"
 [//]: # "Last updated by: liu-yucheng"
-
 # AIDesign-GAN
 
 AIDesign GAN modeling application.
@@ -43,4 +42,3 @@ Odena, et al., 2016. *Deconvolution and Checkerboard Artifacts.* https://distill
 Radford, et al., 2016. *Unsupervised Representation Learning With Deep Convolutional Generative Adversarial Networks.* https://arxiv.org/pdf/1511.06434.pdf
 
 Yadav, et al., 2018. *Stabilizing Adversarial Nets With Prediction Methods.* https://openreview.net/pdf?id=Skj8Kag0Z
-

@@ -259,10 +259,10 @@ class DModeler(Modeler):
             dgz, : Mean( D(G(Z)) ), the output mean of D on the fake batch, definitely on the CPUs
             ldr, : Loss(D, X), the loss of D on the real batch, definitely on the CPUs
             ldf, : Loss(D, G(Z)), the loss of D on the fake batch, definitely on the CPUs
-            ldcr, : Loss(D, Cluster, X), ldcr = 100 * tanh(wmm_factor * Mean( -1 * logit(dxs) )), tanh'ed Wasserstein 1
-                metric mean, based on the WGAN paper, definitely on the CPUs
-            ldcf, : Loss(D, Cluster, G(Z)), ldcf = 100 * tanh(wmm_factor * Mean( logit(dgzs) )), tanh'ed Wasserstein 1
-                metric mean, based on the WGAN paper, definitely on the CPUs
+            ldcr, : Loss(D, Cluster, X), ldcr = 50 + 50 * tanh(wmm_factor * Mean( -1 * logit(dxs) )), tanh'ed
+                Wasserstein 1 metric mean, based on the WGAN paper, definitely on the CPUs
+            ldcf, : Loss(D, Cluster, G(Z)), ldcf = 50 + 50 * tanh(wmm_factor * Mean( logit(dgzs) )), tanh'ed
+                Wasserstein 1 metric mean, based on the WGAN paper, definitely on the CPUs
             ld: Loss(D), ld = dx_factor * ldr + dgz_factor * ldf + cluster_dx_factor * ldcr + cluster_dgz_factor *
                 ldcf, clamped to range [0, 100], definitely on the CPUs
 
@@ -292,8 +292,8 @@ class DModeler(Modeler):
 
         logit_dxs = _logit(dxs, eps=self.eps)
         logit_dgzs = _logit(dgzs, eps=self.eps)
-        ldcr = 100 * _tanh(self.wmm_factor * -1 * logit_dxs.mean())
-        ldcf = 100 * _tanh(self.wmm_factor * logit_dgzs.mean())
+        ldcr = 50 + 50 * _tanh(self.wmm_factor * -1 * logit_dxs.mean())
+        ldcf = 50 + 50 * _tanh(self.wmm_factor * logit_dgzs.mean())
 
         if self.has_fairness:
             config = self.config["fairness"]
@@ -387,10 +387,10 @@ class DModeler(Modeler):
             dgz, : Mean( D(G(Z)) ), the output mean of D on fake, definitely on the CPUs
             ldr, : Loss(D, X), the loss of D on real, definitely on the CPUs
             ldf, : Loss(D, G(Z)), the loss of D on fake, definitely on the CPUs
-            ldcr, : Loss(D, Cluster, X), ldcr = 100 * tanh(wmm_factor * Mean( -1 * logit(dxs) )), tanh'ed Wasserstein 1
-                metric mean, based on the WGAN paper, definitely on the CPUs
-            ldcf, : Loss(D, Cluster, G(Z)), ldcf = 100 * tanh(wmm_factor * Mean( logit(dgzs) )), tanh'ed Wasserstein 1
-                metric mean, based on the WGAN paper, definitely on the CPUs
+            ldcr, : Loss(D, Cluster, X), ldcr = 50 + 50 * tanh(wmm_factor * Mean( -1 * logit(dxs) )), tanh'ed
+                Wasserstein 1 metric mean, based on the WGAN paper, definitely on the CPUs
+            ldcf, : Loss(D, Cluster, G(Z)), ldcf = 50 + 50 * tanh(wmm_factor * Mean( logit(dgzs) )), tanh'ed
+                Wasserstein 1 metric mean, based on the WGAN paper, definitely on the CPUs
             ld: Loss(D), ld = dx_factor * ldr + dgz_factor * ldf + cluster_dx_factor * ldcr + cluster_dgz_factor *
                 ldcf, clamped to range [0, 100], definitely on the CPUs
         """
@@ -417,8 +417,8 @@ class DModeler(Modeler):
 
         logit_dxs = _logit(dxs, eps=self.eps)
         logit_dgzs = _logit(dgzs, eps=self.eps)
-        ldcr = 100 * _tanh(self.wmm_factor * -1 * logit_dxs.mean())
-        ldcf = 100 * _tanh(self.wmm_factor * logit_dgzs.mean())
+        ldcr = 50 + 50 * _tanh(self.wmm_factor * -1 * logit_dxs.mean())
+        ldcf = 50 + 50 * _tanh(self.wmm_factor * logit_dgzs.mean())
 
         if self.has_fairness:
             config = self.config["fairness"]
@@ -667,9 +667,9 @@ class GModeler(Modeler):
             dgz2, : Mean( D(G(Z)) ), the mean output of D on the fake batch, definitely on the CPUs
             lgr, : Loss(G, X), the loss of G on the real batch, definitely on the CPUs
             lgf, : Loss(G, G(Z)), the loss of G on the fake batch, definitely on the CPUs
-            lgcr, : Loss(G, Cluster, X), lgcr = 100 * tanh(wmm_factor * Mean( logit(dxs2) )), tanh'ed Wasserstein 1
+            lgcr, : Loss(G, Cluster, X), lgcr = 50 + 50 * tanh(wmm_factor * Mean( logit(dxs2) )), tanh'ed Wasserstein 1
                 metric mean, based on the WGAN paper, definitely on the CPUs
-            lgcf, : Loss(G, Cluster, G(Z)), lgcf = 100 * tanh(wmm_factor * Mean( -1 * logit(dgzs2) )), tanh'ed
+            lgcf, : Loss(G, Cluster, G(Z)), lgcf = 50 + 50 * tanh(wmm_factor * Mean( -1 * logit(dgzs2) )), tanh'ed
                 Wasserstein 1 metric mean, based on the WGAN paper, definitely on the CPUs
             lg: Loss(G), lg = dx_factor * lgr + dgz_factor * lgf + cluster_dx_factor * lgcr + cluster_dgz_factor *
                 lgcf, clamped to range [0, 100], definitely on the CPUs
@@ -700,8 +700,8 @@ class GModeler(Modeler):
 
         logit_dxs2 = _logit(dxs2, eps=self.eps)
         logit_dgzs2 = _logit(dgzs2, eps=self.eps)
-        lgcr = 100 * _tanh(self.wmm_factor * logit_dxs2.mean())
-        lgcf = 100 * _tanh(self.wmm_factor * -1 * logit_dgzs2.mean())
+        lgcr = 50 + 50 * _tanh(self.wmm_factor * logit_dxs2.mean())
+        lgcf = 50 + 50 * _tanh(self.wmm_factor * -1 * logit_dgzs2.mean())
 
         if self.has_fairness:
             config = self.config["fairness"]
@@ -807,9 +807,9 @@ class GModeler(Modeler):
             dgz2, : Mean( D(G(Z)) ), the output mean of D on fake, definitely on the CPUs
             lgr, : Loss(G, X), the loss of G on real, definitely on the CPUs
             lgf, : Loss(G, G(Z)), the loss of G on fake, definitely on the CPUs
-            lgcr, : Loss(G, Cluster, X), lgcr = 100 * tanh(wmm_factor * Mean( logit(dxs2) )), tanh'ed Wasserstein 1
+            lgcr, : Loss(G, Cluster, X), lgcr = 50 + 50 * tanh(wmm_factor * Mean( logit(dxs2) )), tanh'ed Wasserstein 1
                 metric mean, based on the WGAN paper, definitely on the CPUs
-            lgcf, : Loss(G, Cluster, G(Z)), lgcf = 100 * tanh(wmm_factor * Mean( -1 * logit(dgzs2) )), tanh'ed
+            lgcf, : Loss(G, Cluster, G(Z)), lgcf = 50 + 50 * tanh(wmm_factor * Mean( -1 * logit(dgzs2) )), tanh'ed
                 Wasserstein 1 metric mean, based on the WGAN paper, definitely on the CPUs
             lg: Loss(G), lg = dx_factor * lgr + dgz_factor * lgf + cluster_dx_factor * lgcr + cluster_dgz_factor *
                 lgcf, clamped to range [0, 100], definitely on the CPUs
@@ -837,8 +837,8 @@ class GModeler(Modeler):
 
         logit_dxs2 = _logit(dxs2, eps=self.eps)
         logit_dgzs2 = _logit(dgzs2, eps=self.eps)
-        lgcr = 100 * _tanh(self.wmm_factor * logit_dxs2.mean())
-        lgcf = 100 * _tanh(self.wmm_factor * -1 * logit_dgzs2.mean())
+        lgcr = 50 + 50 * _tanh(self.wmm_factor * logit_dxs2.mean())
+        lgcf = 50 + 50 * _tanh(self.wmm_factor * -1 * logit_dgzs2.mean())
 
         if self.has_fairness:
             config = self.config["fairness"]

@@ -28,7 +28,7 @@ def _make_default_app_data():
 def main():
     setuptools.setup(
         name="aidesign-gan",
-        version="0.44.0",
+        version="0.44.1",
         description="AIDesign GAN Modeling Application",
         author="The AIDesign Team",
         packages=setuptools.find_packages(),
@@ -36,8 +36,8 @@ def main():
             "console_scripts": [
                 "gan = aidesign_gan.exes.gan:main"
             ]
-        },
-        test_suite="aidesign_gan.tests"
+        }  # ,
+        # test_suite="aidesign_gan.tests"
     )
     _make_default_app_data()
     print("Commands available: gan")

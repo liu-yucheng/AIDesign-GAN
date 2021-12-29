@@ -1,11 +1,10 @@
-"""Tests for the aidesign.exes package."""
+"""Executable that tests the app as a blackbox."""
 
 # Initially added by: liu-yucheng
 # Last updated by: liu-yucheng
 
 import asyncio
 import unittest
-from unittest import result
 
 _create_subprocess_shell = asyncio.create_subprocess_shell
 _PIPE = asyncio.subprocess.PIPE

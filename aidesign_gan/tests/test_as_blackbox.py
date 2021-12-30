@@ -14,7 +14,7 @@ _TestCase = unittest.TestCase
 _Thread = threading.Thread
 
 
-_timeout = float(0.001)
+_timeout = float(30)
 
 
 async def _async_run_cmd(cmd):

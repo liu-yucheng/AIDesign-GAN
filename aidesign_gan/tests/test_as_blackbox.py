@@ -4,20 +4,20 @@
 # Last updated by: liu-yucheng
 
 import asyncio
+import threading
 import unittest
 
 _create_subprocess_shell = asyncio.create_subprocess_shell
 _PIPE = asyncio.subprocess.PIPE
 _run = asyncio.run
 _TestCase = unittest.TestCase
-_TimeoutError = asyncio.TimeoutError
-_wait_for = asyncio.wait_for
+_Thread = threading.Thread
 
 
-_timeout = float(30)
+_timeout = float(0.001)
 
 
-async def _run_cmd(cmd):
+async def _async_run_cmd(cmd):
     cmd = str(cmd)
 
     subproc = await _create_subprocess_shell(cmd=cmd, stdin=_PIPE, stdout=_PIPE, stderr=_PIPE)
@@ -25,29 +25,54 @@ async def _run_cmd(cmd):
     return result
 
 
-async def _timed_run_cmd(cmd, timeout):
+def _run_cmd(cmd):
     cmd = str(cmd)
-    timeout = float(timeout)
 
-    try:
-        exit_code = await _wait_for(_run_cmd(cmd), timeout=timeout)
-        timed_out = False
-    except _TimeoutError:
-        exit_code = None
-        timed_out = True
-
-    result = exit_code, timed_out
+    result = _run(_async_run_cmd(cmd))
     return result
 
 
-class GAN(_TestCase):
-    """Tests for the exes.gan module."""
+class _FuncThread(_Thread):
+    def __init__(self, group=None, target=None, name=None, args=(), kwargs={}, *, daemon=None):
+        super().__init__(group=group, target=target, name=name, args=args, kwargs=kwargs, daemon=daemon)
+        self._target = target
+        self._args = args
+        self._kwargs = kwargs
+        self._result = None
 
-    def test_cmd(self):
-        """Tests the "gan" command."""
+    def run(self):
+        """Runs the thread."""
+        # Adopted from CPython standard library threading source code
+        # Ref: https://github.com/python/cpython/blob/main/Lib/threading.py
+        try:
+            if self._target is not None:
+                self._result = self._target(*self._args, **self._kwargs)
+        finally:
+            # Avoid reference cycles
+            del self._target
+            del self._args
+            del self._kwargs
+
+    def join(self, timeout=None):
+        """Joins the thread.
+
+        Returns:
+            self._result: the result
+        """
+        super().join(timeout=timeout)
+        return self._result
+
+
+class TestGANCmd(_TestCase):
+    """Tests for the "gan" command."""
+
+    def test_normal(self):
+        """Tests normal use case."""
         cmd = "gan"
-        outcome = _run(_timed_run_cmd(cmd, _timeout))
-        exit_code, timed_out = outcome
+        thread = _FuncThread(target=_run_cmd, args=[cmd])
+        thread.start()
+        exit_code = thread.join(_timeout)
+        timed_out = thread.is_alive()
 
         fail_msg = "Running \"{}\" results in an timeout".format(cmd)
         self.assertTrue(timed_out is False, fail_msg)

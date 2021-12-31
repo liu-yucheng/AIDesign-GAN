@@ -7,11 +7,13 @@ import asyncio
 import os
 import pathlib
 import threading
+import typing
 import unittest
 
 from os import path
 
 _create_subprocess_shell = asyncio.create_subprocess_shell
+_IO = typing.IO
 _join = path.join
 _makedirs = os.makedirs
 _Path = pathlib.Path
@@ -30,6 +32,15 @@ _aidesign_gan_test_data_path = _join(_aidesign_gan_repo_path, ".aidesign_gan_tes
 _logloc = _join(_aidesign_gan_test_data_path, "log.txt")
 
 
+def _fix_newline_format(instr):
+    instr = str(instr)
+
+    result = instr
+    result = result.replace("\r\n", "\n")
+    result = result.replace("\r", "\n")
+    return result
+
+
 async def _async_run_cmd(cmd, instr=""):
     cmd = str(cmd)
     instr = str(instr)
@@ -39,8 +50,10 @@ async def _async_run_cmd(cmd, instr=""):
     out, err = await subproc.communicate(inbytes)
     exit_code = await subproc.wait()
 
-    out = out.decode("utf-8", "replace").rstrip()
-    err = err.decode("utf-8", "replace").rstrip()
+    out = out.decode("utf-8", "replace")
+    out = _fix_newline_format(out)
+    err = err.decode("utf-8", "replace")
+    err = _fix_newline_format(err)
     result = exit_code, out, err
     return result
 
@@ -83,18 +96,15 @@ class _FuncThread(_Thread):
         super().join(timeout=timeout)
         return self._result
 
-# End of private attributes.
-# Public attributes.
 
-
-class TestGANCmd(_TestCase):
-    """Tests for the "gan" command."""
+class _TestCmd(_TestCase):
 
     def __init__(self, methodName=""):
         super().__init__(methodName=methodName)
-        self._log = None
+        self._log: _IO = None
 
     def setUp(self):
+        """Sets up the test case."""
         super().setUp()
         _makedirs(_aidesign_gan_test_data_path, exist_ok=True)
         self._log = open(_logloc, "a+")
@@ -106,9 +116,34 @@ class TestGANCmd(_TestCase):
         ).format(type(self).__name__)
         self._log.write(start_info)
 
-    def test_normal(self):
-        """Tests normal use case."""
-        start_info = "-- Test method {}\n".format(self.test_normal.__name__)
+    def tearDown(self):
+        """Tears down the test case."""
+        super().tearDown()
+        end_info = str(
+            "\n"
+            "- End of test case {}\n"
+            "\n"
+        ).format(type(self).__name__)
+        self._log.write(end_info)
+
+        self._log.flush()
+        self._log.close()
+
+
+# End of private attributes.
+# Public attributes.
+
+
+class TestGAN(_TestCmd):
+    """Tests for the "gan" command."""
+
+    def __init__(self, methodName=""):
+        super().__init__(methodName=methodName)
+        self._log = None
+
+    def test_norm(self):
+        """Tests "gan" normal use case."""
+        start_info = "-- Test method {}\n".format(self.test_norm.__name__)
         self._log.write(start_info)
 
         cmd = "gan"
@@ -145,25 +180,63 @@ class TestGANCmd(_TestCase):
         fail_msg = "Running \"{}\" results in an unexpected exit code: {}".format(cmd, exit_code)
         self.assertTrue(exit_code == 0, fail_msg)
 
-        end_info = "-- End of test method {}\n".format(self.test_normal.__name__)
+        end_info = "-- End of test method {}\n".format(self.test_norm.__name__)
         self._log.write(end_info)
 
-    def tearDown(self):
-        super().tearDown()
-        end_info = str(
-            "\n"
-            "- End of test case {}\n"
-            "\n"
-        ).format(type(self).__name__)
-        self._log.write(end_info)
 
-        self._log.flush()
-        self._log.close()
+class TestGANHelp(_TestCmd):
+    """Tests for the "gan help" command."""
+
+    def __init__(self, methodName=""):
+        super().__init__(methodName=methodName)
+        self._log = None
+
+    def test_norm(self):
+        """Tests "gan help" normal use case."""
+        start_info = "-- Test method {}\n".format(self.test_norm.__name__)
+        self._log.write(start_info)
+
+        cmd = "gan help"
+        thread = _FuncThread(target=_run_cmd, args=[cmd, ""])
+        thread.start()
+        exit_code, out, err = thread.join(_timeout)
+        timed_out = thread.is_alive()
+
+        out_info = str(
+            "--- \"{}\" stdout\n"
+            "{}\n"
+            "--- End of \"{}\" stdout\n"
+        ).format(
+            cmd,
+            out,
+            cmd
+        )
+        self._log.write(out_info)
+
+        err_info = str(
+            "--- \"{}\" stderr\n"
+            "{}\n"
+            "--- End of \"{}\" stderr\n"
+        ).format(
+            cmd,
+            err,
+            cmd
+        )
+        self._log.write(err_info)
+
+        fail_msg = "Running \"{}\" results in an timeout".format(cmd)
+        self.assertTrue(timed_out is False, fail_msg)
+
+        fail_msg = "Running \"{}\" results in an unexpected exit code: {}".format(cmd, exit_code)
+        self.assertTrue(exit_code == 0, fail_msg)
+
+        end_info = "-- End of test method {}\n".format(self.test_norm.__name__)
+        self._log.write(end_info)
 
 
 def main():
     """Runs this module as an executable."""
-    unittest.main()
+    unittest.main(verbosity=1)
 
 
 if __name__ == "__main__":

@@ -1,6 +1,6 @@
 # Project specific ignored files
 **/.aidesign_gan_app_data/
-**/.aidesign_gan_tests/
+**/.aidesign_gan_test_data/
 
 # Byte-compiled / optimized / DLL files
 **/__pycache__/

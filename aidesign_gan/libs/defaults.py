@@ -5,12 +5,12 @@
 
 import pathlib
 
-Path = pathlib.Path
+_Path = pathlib.Path
 
-_aidesign_gan_libs_path = str(Path(__file__).parent)
-_aidesign_gan_repo_path = str(Path(_aidesign_gan_libs_path).parent.parent)
+_aidesign_gan_libs_path = str(_Path(__file__).parent)
+_aidesign_gan_repo_path = str(_Path(_aidesign_gan_libs_path).parent.parent)
 
-app_data_path: str = str(Path(_aidesign_gan_repo_path + "/.aidesign_gan_app_data").absolute())
+app_data_path: str = str(_Path(_aidesign_gan_repo_path + "/.aidesign_gan_app_data").absolute())
 """App data folder's full path."""
 
 gan_train_status_name: str = "gan_train_status.json"

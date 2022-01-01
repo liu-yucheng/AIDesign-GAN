@@ -6,6 +6,7 @@
 import asyncio
 import os
 import pathlib
+import shutil
 import threading
 import typing
 import unittest
@@ -15,21 +16,32 @@ from os import path
 _create_subprocess_shell = asyncio.create_subprocess_shell
 _IO = typing.IO
 _join = path.join
+_listdir = os.listdir
 _makedirs = os.makedirs
 _Path = pathlib.Path
 _PIPE = asyncio.subprocess.PIPE
+_rmtree = shutil.rmtree
 _run = asyncio.run
 _TestCase = unittest.TestCase
 _Thread = threading.Thread
 
 # Private attributes.
 
-_timeout = float(30)
+_timeout = float(60)
 
 _aidesign_gan_tests_path = str(_Path(__file__).parent)
 _aidesign_gan_repo_path = str(_Path(_aidesign_gan_tests_path).parent.parent)
 _aidesign_gan_test_data_path = _join(_aidesign_gan_repo_path, ".aidesign_gan_test_data")
-_logloc = _join(_aidesign_gan_test_data_path, "log.txt")
+
+_log_loc = _join(_aidesign_gan_test_data_path, "log.txt")
+_model_path = _join(_aidesign_gan_test_data_path, "test_model")
+_model_fnames = [
+    "coords_config.json",
+    "discriminator_struct.py",
+    "format_config.json",
+    "generator_struct.py",
+    "modelers_config.json"
+]
 
 
 def _fix_newline_format(instr):
@@ -107,7 +119,7 @@ class _TestCmd(_TestCase):
         """Sets up the test case."""
         super().setUp()
         _makedirs(_aidesign_gan_test_data_path, exist_ok=True)
-        self._log = open(_logloc, "a+")
+        self._log = open(_log_loc, "a+")
 
         start_info = str(
             "\n"
@@ -129,109 +141,181 @@ class _TestCmd(_TestCase):
         self._log.flush()
         self._log.close()
 
+    def _logstr(self, str_to_log):
+        str_to_log = str(str_to_log)
+
+        if self._log is not None:
+            self._log.write(str_to_log)
+
+    def _log_method_start(self, method_name):
+        method_name = str(method_name)
+
+        info = "-- Test method {}\n".format(method_name)
+        self._logstr(info)
+
+    def _log_method_end(self, method_name):
+        method_name = str(method_name)
+
+        info = "-- End of test method {}\n".format(method_name)
+        self._logstr(info)
+
+    def _log_cmdout_start(self, cmd, stream_name):
+        cmd = str(cmd)
+        stream_name = str(stream_name)
+
+        info = "--- \"{}\" {}\n".format(cmd, stream_name)
+        self._logstr(info)
+
+    def _log_cmdout_end(self, cmd, stream_name):
+        cmd = str(cmd)
+        stream_name = str(stream_name)
+
+        info = "--- End of \"{}\" {}\n".format(cmd, stream_name)
+        self._logstr(info)
+
+
+class _TestSimpleCmd(_TestCmd):
+
+    def _test_cmd_norm(self, cmd, instr=""):
+        cmd = str(cmd)
+        instr = str(instr)
+
+        thread = _FuncThread(target=_run_cmd, args=[cmd, instr])
+        thread.start()
+        exit_code, out, err = thread.join(_timeout)
+        timed_out = thread.is_alive()
+
+        self._log_cmdout_start(cmd, "stdout")
+        outinfo = "{}\n".format(out)
+        self._logstr(outinfo)
+        self._log_cmdout_end(cmd, "stdout")
+
+        self._log_cmdout_start(cmd, "stderr")
+        errinfo = "{}\n".format(err)
+        self._logstr(errinfo)
+        self._log_cmdout_end(cmd, "stderr")
+
+        fail_msg = "Running \"{}\" results in a timeout".format(cmd)
+        self.assertTrue(timed_out is False, fail_msg)
+
+        fail_msg = "Running \"{}\" results in an unexpected exit code: {}".format(cmd, exit_code)
+        self.assertTrue(exit_code == 0, fail_msg)
 
 # End of private attributes.
 # Public attributes.
 
 
-class TestGAN(_TestCmd):
+class TestGAN(_TestSimpleCmd):
     """Tests for the "gan" command."""
 
-    def __init__(self, methodName=""):
-        super().__init__(methodName=methodName)
-        self._log = None
-
     def test_norm(self):
-        """Tests "gan" normal use case."""
-        start_info = "-- Test method {}\n".format(self.test_norm.__name__)
-        self._log.write(start_info)
-
+        """Tests the normal use case."""
+        method_name = self.test_norm.__name__
         cmd = "gan"
-        thread = _FuncThread(target=_run_cmd, args=[cmd, ""])
-        thread.start()
-        exit_code, out, err = thread.join(_timeout)
-        timed_out = thread.is_alive()
-
-        out_info = str(
-            "--- \"{}\" stdout\n"
-            "{}\n"
-            "--- End of \"{}\" stdout\n"
-        ).format(
-            cmd,
-            out,
-            cmd
-        )
-        self._log.write(out_info)
-
-        err_info = str(
-            "--- \"{}\" stderr\n"
-            "{}\n"
-            "--- End of \"{}\" stderr\n"
-        ).format(
-            cmd,
-            err,
-            cmd
-        )
-        self._log.write(err_info)
-
-        fail_msg = "Running \"{}\" results in an timeout".format(cmd)
-        self.assertTrue(timed_out is False, fail_msg)
-
-        fail_msg = "Running \"{}\" results in an unexpected exit code: {}".format(cmd, exit_code)
-        self.assertTrue(exit_code == 0, fail_msg)
-
-        end_info = "-- End of test method {}\n".format(self.test_norm.__name__)
-        self._log.write(end_info)
+        instr = ""
+        self._log_method_start(method_name)
+        self._test_cmd_norm(cmd, instr)
+        self._log_method_end(method_name)
 
 
-class TestGANHelp(_TestCmd):
+class TestGANHelp(_TestSimpleCmd):
     """Tests for the "gan help" command."""
 
-    def __init__(self, methodName=""):
-        super().__init__(methodName=methodName)
-        self._log = None
+    def test_norm(self):
+        """Tests the normal use case."""
+        method_name = self.test_norm.__name__
+        cmd = "gan help"
+        instr = ""
+        self._log_method_start(method_name)
+        self._test_cmd_norm(cmd, instr)
+        self._log_method_end(method_name)
+
+
+class TestGANStatus(_TestSimpleCmd):
+    """Tests for the "gan status" command."""
 
     def test_norm(self):
-        """Tests "gan help" normal use case."""
-        start_info = "-- Test method {}\n".format(self.test_norm.__name__)
-        self._log.write(start_info)
+        """Tests the normal use case."""
+        method_name = self.test_norm.__name__
+        cmd = "gan status"
+        instr = ""
+        self._log_method_start(method_name)
+        self._test_cmd_norm(cmd, instr)
+        self._log_method_end(method_name)
 
-        cmd = "gan help"
-        thread = _FuncThread(target=_run_cmd, args=[cmd, ""])
+
+class TestGANReset(_TestSimpleCmd):
+    """Tests for the "gan reset" command."""
+
+    def test_norm(self):
+        """Tests the normal use case."""
+        method_name = self.test_norm.__name__
+        cmd = "gan reset"
+        instr = ""
+        self._log_method_start(method_name)
+        self._test_cmd_norm(cmd, instr)
+        self._log_method_end(method_name)
+
+
+class TestGANWelcome(_TestSimpleCmd):
+    """Tests for the "gan welcome" command."""
+
+    def test_norm(self):
+        """Tests the normal use case."""
+        method_name = self.test_norm.__name__
+        cmd = "gan welcome"
+        instr = ""
+        self._log_method_start(method_name)
+        self._test_cmd_norm(cmd, instr)
+        self._log_method_end(method_name)
+
+
+class TestGANCreate(_TestCmd):
+    """Tests for the "gan create" command."""
+
+    def setUp(self):
+        """Sets up the test case."""
+        super().setUp()
+        _rmtree(_model_path, ignore_errors=True)
+
+    def test_norm(self):
+        method_name = self.test_norm.__name__
+        cmd = "gan create {}".format(_model_path)
+        instr = ""
+        self._log_method_start(method_name)
+
+        thread = _FuncThread(target=_run_cmd, args=[cmd, instr])
         thread.start()
         exit_code, out, err = thread.join(_timeout)
         timed_out = thread.is_alive()
 
-        out_info = str(
-            "--- \"{}\" stdout\n"
-            "{}\n"
-            "--- End of \"{}\" stdout\n"
-        ).format(
-            cmd,
-            out,
-            cmd
-        )
-        self._log.write(out_info)
+        self._log_cmdout_start(cmd, "stdout")
+        outinfo = "{}\n".format(out)
+        self._logstr(outinfo)
+        self._log_cmdout_end(cmd, "stdout")
 
-        err_info = str(
-            "--- \"{}\" stderr\n"
-            "{}\n"
-            "--- End of \"{}\" stderr\n"
-        ).format(
-            cmd,
-            err,
-            cmd
-        )
-        self._log.write(err_info)
+        self._log_cmdout_start(cmd, "stderr")
+        errinfo = "{}\n".format(err)
+        self._logstr(errinfo)
+        self._log_cmdout_end(cmd, "stderr")
 
-        fail_msg = "Running \"{}\" results in an timeout".format(cmd)
+        fail_msg = "Running \"{}\" results in a timeout".format(cmd)
         self.assertTrue(timed_out is False, fail_msg)
 
         fail_msg = "Running \"{}\" results in an unexpected exit code: {}".format(cmd, exit_code)
         self.assertTrue(exit_code == 0, fail_msg)
 
-        end_info = "-- End of test method {}\n".format(self.test_norm.__name__)
-        self._log.write(end_info)
+        contents = _listdir(_model_path)
+        for fname in _model_fnames:
+            fail_msg = "{} is not in {}; model not created correctly".format(fname, _model_path)
+            self.assertTrue(fname in contents, fail_msg)
+
+        self._log_method_end(method_name)
+
+    def tearDown(self):
+        """Tears down the test case."""
+        super().tearDown()
+        _rmtree(_model_path, ignore_errors=True)
 
 
 def main():

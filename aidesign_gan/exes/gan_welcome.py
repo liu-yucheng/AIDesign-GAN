@@ -22,7 +22,7 @@ Help: gan help"""
 # ... Private attributes
 # Nominal info strings ...
 
-info = fr"""Welcome to AIDesign-GAN {_version}! :-)
+info = fr"""(-; Welcome to AIDesign-GAN {_version}! ;-)
 """
 """The primary info to display."""
 

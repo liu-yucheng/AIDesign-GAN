@@ -1,5 +1,6 @@
 [//]: # "Initially added by: liu-yucheng"
 [//]: # "Last updated by: liu-yucheng"
+[//]: # "liu-yucheng's email: liu.r.yucheng@gmail.com"
 # AIDesign-GAN
 
 AIDesign GAN modeling application.

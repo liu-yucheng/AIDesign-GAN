@@ -4,6 +4,7 @@
 # Last updated by: liu-yucheng
 
 import asyncio
+import json
 import os
 import pathlib
 import shutil
@@ -13,12 +14,15 @@ import unittest
 
 from os import path
 
+_copytree = shutil.copytree
 _create_subprocess_shell = asyncio.create_subprocess_shell
+_dump = json.dump
 _IO = typing.IO
 _isdir = path.isdir
 _isfile = path.isfile
 _join = path.join
 _listdir = os.listdir
+_load = json.load
 _makedirs = os.makedirs
 _Path = pathlib.Path
 _PIPE = asyncio.subprocess.PIPE
@@ -31,19 +35,22 @@ _Thread = threading.Thread
 
 _timeout = float(60)
 
-_aidesign_gan_tests_path = str(_Path(__file__).parent)
-_aidesign_gan_repo_path = str(_Path(_aidesign_gan_tests_path).parent.parent)
-_aidesign_gan_test_data_path = _join(_aidesign_gan_repo_path, ".aidesign_gan_test_data")
+_tests_path = str(_Path(__file__).parent)
+_repo_path = str(_Path(_tests_path).parent.parent)
+_test_data_path = _join(_repo_path, ".aidesign_gan_test_data")
 
-_log_loc = _join(_aidesign_gan_test_data_path, "log.txt")
-_model_path = _join(_aidesign_gan_test_data_path, "test_model")
-_model_fnames = [
-    "coords_config.json",
-    "discriminator_struct.py",
-    "format_config.json",
-    "generator_struct.py",
-    "modelers_config.json"
-]
+_default_configs_path = _join(_repo_path, "aidesign_gan_default_configs")
+_default_test_data_path = _join(_default_configs_path, "test_data")
+
+_app_data_path = _join(_repo_path, ".aidesign_gan_app_data")
+
+_log_loc = _join(_test_data_path, "log.txt")
+_model_path = _join(_test_data_path, "test_model")
+_dataset_path = _join(_test_data_path, "test_dataset")
+_default_model_path = _join(_default_test_data_path, "test_model")
+_default_dataset_path = _join(_default_test_data_path, "test_dataset")
+_gan_train_status_loc = _join(_app_data_path, "gan_train_status.json")
+_gan_generate_status_loc = _join(_app_data_path, "gan_generate_status.json")
 
 
 def _fix_newline_format(instr):
@@ -118,9 +125,9 @@ class _TestCmd(_TestCase):
         self._log: _IO = None
 
     def setUp(self):
-        """Sets up the test case."""
+        """Sets up before the tests."""
         super().setUp()
-        _makedirs(_aidesign_gan_test_data_path, exist_ok=True)
+        _makedirs(_test_data_path, exist_ok=True)
         self._log = open(_log_loc, "a+")
 
         start_info = str(
@@ -131,7 +138,7 @@ class _TestCmd(_TestCase):
         self._log.write(start_info)
 
     def tearDown(self):
-        """Tears down the test case."""
+        """Tears down after the tests."""
         super().tearDown()
         end_info = str(
             "\n"
@@ -175,6 +182,18 @@ class _TestCmd(_TestCase):
         info = "--- End of \"{}\" {}\n".format(cmd, stream_name)
         self._logstr(info)
 
+    def _log_cmdout(self, cmd, stream_name, out):
+        cmd = str(cmd)
+        stream_name = str(stream_name)
+        out = str(out)
+
+        self._log_cmdout_start(cmd, stream_name)
+
+        out_info = "{}\n".format(out)
+        self._logstr(out_info)
+
+        self._log_cmdout_end(cmd, stream_name)
+
 
 class _TestSimpleCmd(_TestCmd):
 
@@ -187,21 +206,34 @@ class _TestSimpleCmd(_TestCmd):
         exit_code, out, err = thread.join(_timeout)
         timed_out = thread.is_alive()
 
-        self._log_cmdout_start(cmd, "stdout")
-        outinfo = "{}\n".format(out)
-        self._logstr(outinfo)
-        self._log_cmdout_end(cmd, "stdout")
-
-        self._log_cmdout_start(cmd, "stderr")
-        errinfo = "{}\n".format(err)
-        self._logstr(errinfo)
-        self._log_cmdout_end(cmd, "stderr")
+        self._log_cmdout(cmd, "stdout", out)
+        self._log_cmdout(cmd, "stderr", err)
 
         fail_msg = "Running \"{}\" results in a timeout".format(cmd)
         self.assertTrue(timed_out is False, fail_msg)
 
         fail_msg = "Running \"{}\" results in an unexpected exit code: {}".format(cmd, exit_code)
         self.assertTrue(exit_code == 0, fail_msg)
+
+
+def _load_json(from_loc):
+    from_loc = str(from_loc)
+
+    file = open(from_loc, "r")
+    result = _load(file)
+    file.close()
+
+    result = dict(result)
+    return result
+
+
+def _save_json(from_dict, to_loc):
+    from_dict = dict(from_dict)
+    to_loc = str(to_loc)
+
+    file = open(to_loc, "w+")
+    _dump(from_dict, file, indent=4)
+    file.close()
 
 # End of private attributes.
 # Public attributes.
@@ -276,30 +308,29 @@ class TestGANCreate(_TestCmd):
     """Tests for the "gan create" command."""
 
     def setUp(self):
-        """Sets up the test case."""
+        """Sets up before the tests."""
         super().setUp()
         _rmtree(_model_path, ignore_errors=True)
 
+    def tearDown(self):
+        """Tears down after the tests."""
+        super().tearDown()
+        _rmtree(_model_path, ignore_errors=True)
+
     def test_norm(self):
+        """Tests the normal use case."""
         method_name = self.test_norm.__name__
-        cmd = "gan create {}".format(_model_path)
-        instr = ""
         self._log_method_start(method_name)
 
+        cmd = "gan create {}".format(_model_path)
+        instr = ""
         thread = _FuncThread(target=_run_cmd, args=[cmd, instr])
         thread.start()
         exit_code, out, err = thread.join(_timeout)
         timed_out = thread.is_alive()
 
-        self._log_cmdout_start(cmd, "stdout")
-        outinfo = "{}\n".format(out)
-        self._logstr(outinfo)
-        self._log_cmdout_end(cmd, "stdout")
-
-        self._log_cmdout_start(cmd, "stderr")
-        errinfo = "{}\n".format(err)
-        self._logstr(errinfo)
-        self._log_cmdout_end(cmd, "stderr")
+        self._log_cmdout(cmd, "stdout", out)
+        self._log_cmdout(cmd, "stderr", err)
 
         fail_msg = "Running \"{}\" results in a timeout".format(cmd)
         self.assertTrue(timed_out is False, fail_msg)
@@ -313,8 +344,15 @@ class TestGANCreate(_TestCmd):
         fail_msg = "{} is not a directory; {}".format(_model_path, format_incorrect_info)
         self.assertTrue(isdir, fail_msg)
 
+        model_fnames = [
+            "coords_config.json",
+            "discriminator_struct.py",
+            "format_config.json",
+            "generator_struct.py",
+            "modelers_config.json"
+        ]
         contents = _listdir(_model_path)
-        for fname in _model_fnames:
+        for fname in model_fnames:
             exists = fname in contents
             fail_msg = "{} is not in {}; {}".format(fname, _model_path, format_incorrect_info)
             self.assertTrue(exists, fail_msg)
@@ -326,10 +364,111 @@ class TestGANCreate(_TestCmd):
 
         self._log_method_end(method_name)
 
+
+class TestGANModel(_TestCmd):
+    """Tests for the "gan model" command."""
+
+    def setUp(self):
+        """Sets up before the tests."""
+        super().setUp()
+        _rmtree(_model_path, ignore_errors=True)
+        _copytree(_default_model_path, _model_path, dirs_exist_ok=True)
+
     def tearDown(self):
-        """Tears down the test case."""
+        """Tears down after the tests."""
         super().tearDown()
         _rmtree(_model_path, ignore_errors=True)
+
+    def test_norm(self):
+        """Tests the normal use case."""
+        method_name = self.test_norm.__name__
+        self._log_method_start(method_name)
+
+        cmd = "gan model {}".format(_model_path)
+        instr = ""
+        thread = _FuncThread(target=_run_cmd, args=[cmd, instr])
+        thread.start()
+        exit_code, out, err = thread.join(_timeout)
+        timed_out = thread.is_alive()
+
+        self._log_cmdout(cmd, "stdout", out)
+        self._log_cmdout(cmd, "stderr", err)
+
+        fail_msg = "Running \"{}\" results in a timeout".format(cmd)
+        self.assertTrue(timed_out is False, fail_msg)
+
+        fail_msg = "Running \"{}\" results in an unexpected exit code: {}".format(cmd, exit_code)
+        self.assertTrue(exit_code == 0, fail_msg)
+
+        status = _load_json(_gan_train_status_loc)
+        key = "model_path"
+        value = status[key]
+        value = str(value)
+        path_correct = value == _model_path
+        fail_msg = "Config {} key {} has value {} but not the expected {}".format(
+            _gan_train_status_loc, key, value, _model_path
+        )
+        self.assertTrue(path_correct, fail_msg)
+
+        status = _load_json(_gan_generate_status_loc)
+        key = "model_path"
+        value = status[key]
+        value = str(value)
+        path_correct = value == _model_path
+        fail_msg = "Config {} key {} has value {} but not the expected {}".format(
+            _gan_generate_status_loc, key, value, _model_path
+        )
+        self.assertTrue(path_correct, fail_msg)
+
+        self._log_method_end(method_name)
+
+
+class TestGANDataset(_TestCmd):
+    """Tests for the "gan dataset" command."""
+
+    def setUp(self):
+        """Sets up before the tests."""
+        super().setUp()
+        _rmtree(_dataset_path, ignore_errors=True)
+        _copytree(_default_dataset_path, _dataset_path, dirs_exist_ok=True)
+
+    def tearDown(self):
+        """Tears down after the tests."""
+        super().tearDown()
+        _rmtree(_dataset_path, ignore_errors=True)
+
+    def test_norm(self):
+        """Tests the normal use case."""
+        method_name = self.test_norm.__name__
+        self._log_method_start(method_name)
+
+        cmd = "gan dataset {}".format(_dataset_path)
+        instr = ""
+        thread = _FuncThread(target=_run_cmd, args=[cmd, instr])
+        thread.start()
+        exit_code, out, err = thread.join(_timeout)
+        timed_out = thread.is_alive()
+
+        self._log_cmdout(cmd, "stdout", out)
+        self._log_cmdout(cmd, "stderr", err)
+
+        fail_msg = "Running \"{}\" results in a timeout".format(cmd)
+        self.assertTrue(timed_out is False, fail_msg)
+
+        fail_msg = "Running \"{}\" results in an unexpected exit code: {}".format(cmd, exit_code)
+        self.assertTrue(exit_code == 0, fail_msg)
+
+        status = _load_json(_gan_train_status_loc)
+        key = "dataset_path"
+        value = status[key]
+        value = str(value)
+        path_correct = value == _dataset_path
+        fail_msg = "Config {} key {} has value {} but not the expected {}".format(
+            _gan_train_status_loc, key, value, _dataset_path
+        )
+        self.assertTrue(path_correct, fail_msg)
+
+        self._log_method_end(method_name)
 
 
 def main():

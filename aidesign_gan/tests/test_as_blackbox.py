@@ -15,6 +15,8 @@ from os import path
 
 _create_subprocess_shell = asyncio.create_subprocess_shell
 _IO = typing.IO
+_isdir = path.isdir
+_isfile = path.isfile
 _join = path.join
 _listdir = os.listdir
 _makedirs = os.makedirs
@@ -305,10 +307,22 @@ class TestGANCreate(_TestCmd):
         fail_msg = "Running \"{}\" results in an unexpected exit code: {}".format(cmd, exit_code)
         self.assertTrue(exit_code == 0, fail_msg)
 
+        format_incorrect_info = "model format incorrect"
+
+        isdir = _isdir(_model_path)
+        fail_msg = "{} is not a directory; {}".format(_model_path, format_incorrect_info)
+        self.assertTrue(isdir, fail_msg)
+
         contents = _listdir(_model_path)
         for fname in _model_fnames:
-            fail_msg = "{} is not in {}; model not created correctly".format(fname, _model_path)
-            self.assertTrue(fname in contents, fail_msg)
+            exists = fname in contents
+            fail_msg = "{} is not in {}; {}".format(fname, _model_path, format_incorrect_info)
+            self.assertTrue(exists, fail_msg)
+
+            loc = _join(_model_path, fname)
+            isfile = _isfile(loc)
+            fail_msg = "{} is not a file; {}".format(loc, format_incorrect_info)
+            self.assertTrue(isfile, fail_msg)
 
         self._log_method_end(method_name)
 

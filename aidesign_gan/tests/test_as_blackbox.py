@@ -231,7 +231,7 @@ class _TestCmd(_TestCase):
 
         if _exists(_train_status_backup_loc):
             _remove(_train_status_backup_loc)
-        if _exists(_train_status_backup_loc):
+        if _exists(_generate_status_backup_loc):
             _remove(_generate_status_backup_loc)
 
 

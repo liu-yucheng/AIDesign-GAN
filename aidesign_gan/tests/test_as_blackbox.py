@@ -17,6 +17,7 @@ from os import path
 _copytree = shutil.copytree
 _create_subprocess_shell = asyncio.create_subprocess_shell
 _dump = json.dump
+_exists = path.exists
 _IO = typing.IO
 _isdir = path.isdir
 _isfile = path.isfile
@@ -26,6 +27,7 @@ _load = json.load
 _makedirs = os.makedirs
 _Path = pathlib.Path
 _PIPE = asyncio.subprocess.PIPE
+_remove = os.remove
 _rmtree = shutil.rmtree
 _run = asyncio.run
 _TestCase = unittest.TestCase
@@ -49,8 +51,10 @@ _model_path = _join(_test_data_path, "test_model")
 _dataset_path = _join(_test_data_path, "test_dataset")
 _default_model_path = _join(_default_test_data_path, "test_model")
 _default_dataset_path = _join(_default_test_data_path, "test_dataset")
-_gan_train_status_loc = _join(_app_data_path, "gan_train_status.json")
-_gan_generate_status_loc = _join(_app_data_path, "gan_generate_status.json")
+_train_status_loc = _join(_app_data_path, "gan_train_status.json")
+_generate_status_loc = _join(_app_data_path, "gan_generate_status.json")
+_train_status_backup_loc = _join(_test_data_path, "gan_train_status_backup.json")
+_generate_status_backup_loc = _join(_test_data_path, "gan_generate_status_backup.json")
 
 
 def _fix_newline_format(instr):
@@ -89,6 +93,17 @@ def _run_cmd(cmd, instr=""):
 
 class _FuncThread(_Thread):
     def __init__(self, group=None, target=None, name=None, args=(), kwargs={}, *, daemon=None):
+        """Inits self with the given args.
+
+        Args:
+            group: Group.
+            target: Target.
+            name: Name.
+            args: Arguments
+            kwargs: Keyword arguments.
+            *: Variable arguments.
+            daemon: Daemon thread switch.
+        """
         super().__init__(group=group, target=target, name=name, args=args, kwargs=kwargs, daemon=daemon)
         self._target = target
         self._args = args
@@ -111,6 +126,9 @@ class _FuncThread(_Thread):
     def join(self, timeout=None):
         """Joins the thread.
 
+        Args:
+            timeout: Timeout length in seconds.
+
         Returns:
             self._result: the result
         """
@@ -121,6 +139,11 @@ class _FuncThread(_Thread):
 class _TestCmd(_TestCase):
 
     def __init__(self, methodName=""):
+        """Inits self with the given args.
+
+        Args:
+            methodName: Method name.
+        """
         super().__init__(methodName=methodName)
         self._log: _IO = None
 
@@ -193,6 +216,23 @@ class _TestCmd(_TestCase):
         self._logstr(out_info)
 
         self._log_cmdout_end(cmd, stream_name)
+
+    def _backup_app_data(self):
+        train_status = _load_json(_train_status_loc)
+        generate_status = _load_json(_generate_status_loc)
+        _save_json(train_status, _train_status_backup_loc)
+        _save_json(generate_status, _generate_status_backup_loc)
+
+    def _restore_app_data(self):
+        train_status = _load_json(_train_status_backup_loc)
+        generate_status = _load_json(_generate_status_backup_loc)
+        _save_json(train_status, _train_status_loc)
+        _save_json(generate_status, _generate_status_loc)
+
+        if _exists(_train_status_backup_loc):
+            _remove(_train_status_backup_loc)
+        if _exists(_train_status_backup_loc):
+            _remove(_generate_status_backup_loc)
 
 
 class _TestSimpleCmd(_TestCmd):
@@ -280,6 +320,16 @@ class TestGANStatus(_TestSimpleCmd):
 
 class TestGANReset(_TestSimpleCmd):
     """Tests for the "gan reset" command."""
+
+    def setUp(self):
+        """Sets up before the tests."""
+        super().setUp()
+        self._backup_app_data()
+
+    def tearDown(self):
+        """Tears down after the tests."""
+        super().tearDown()
+        self._restore_app_data()
 
     def test_norm(self):
         """Tests the normal use case."""
@@ -373,11 +423,13 @@ class TestGANModel(_TestCmd):
         super().setUp()
         _rmtree(_model_path, ignore_errors=True)
         _copytree(_default_model_path, _model_path, dirs_exist_ok=True)
+        self._backup_app_data()
 
     def tearDown(self):
         """Tears down after the tests."""
         super().tearDown()
         _rmtree(_model_path, ignore_errors=True)
+        self._restore_app_data()
 
     def test_norm(self):
         """Tests the normal use case."""
@@ -400,23 +452,23 @@ class TestGANModel(_TestCmd):
         fail_msg = "Running \"{}\" results in an unexpected exit code: {}".format(cmd, exit_code)
         self.assertTrue(exit_code == 0, fail_msg)
 
-        status = _load_json(_gan_train_status_loc)
+        status = _load_json(_train_status_loc)
         key = "model_path"
         value = status[key]
         value = str(value)
         path_correct = value == _model_path
         fail_msg = "Config {} key {} has value {} but not the expected {}".format(
-            _gan_train_status_loc, key, value, _model_path
+            _train_status_loc, key, value, _model_path
         )
         self.assertTrue(path_correct, fail_msg)
 
-        status = _load_json(_gan_generate_status_loc)
+        status = _load_json(_generate_status_loc)
         key = "model_path"
         value = status[key]
         value = str(value)
         path_correct = value == _model_path
         fail_msg = "Config {} key {} has value {} but not the expected {}".format(
-            _gan_generate_status_loc, key, value, _model_path
+            _generate_status_loc, key, value, _model_path
         )
         self.assertTrue(path_correct, fail_msg)
 
@@ -431,11 +483,13 @@ class TestGANDataset(_TestCmd):
         super().setUp()
         _rmtree(_dataset_path, ignore_errors=True)
         _copytree(_default_dataset_path, _dataset_path, dirs_exist_ok=True)
+        self._backup_app_data()
 
     def tearDown(self):
         """Tears down after the tests."""
         super().tearDown()
         _rmtree(_dataset_path, ignore_errors=True)
+        self._restore_app_data()
 
     def test_norm(self):
         """Tests the normal use case."""
@@ -458,13 +512,13 @@ class TestGANDataset(_TestCmd):
         fail_msg = "Running \"{}\" results in an unexpected exit code: {}".format(cmd, exit_code)
         self.assertTrue(exit_code == 0, fail_msg)
 
-        status = _load_json(_gan_train_status_loc)
+        status = _load_json(_train_status_loc)
         key = "dataset_path"
         value = status[key]
         value = str(value)
         path_correct = value == _dataset_path
         fail_msg = "Config {} key {} has value {} but not the expected {}".format(
-            _gan_train_status_loc, key, value, _dataset_path
+            _train_status_loc, key, value, _dataset_path
         )
         self.assertTrue(path_correct, fail_msg)
 

@@ -1,9 +1,9 @@
 {
-    "aidesign_gan_version": "0.47.0",
-    "aidesign_gan_repo_tag": "v0.47.0",
-    "coords_config_version": "0.47.0",
-    "discriminator_struct_version": "0.47.0",
-    "format_config_version": "0.47.0",
-    "generator_struct_version": "0.47.0",
-    "modelers_config_version": "0.47.0"
+    "aidesign_gan_version": "unknown",
+    "aidesign_gan_repo_tag": "unknown",
+    "coords_config_version": "unknown",
+    "discriminator_struct_version": "unknown",
+    "format_config_version": "unknown",
+    "generator_struct_version": "unknown",
+    "modelers_config_version": "unknown"
 }

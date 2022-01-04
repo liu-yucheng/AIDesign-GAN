@@ -10,7 +10,7 @@
         "max_early_stops": 1,
         "datasets": {
             "loader_worker_count": 0,
-            "percents_to_use": 1,
+            "percents_to_use": 100,
             "images_per_batch": 32,
             "image_resolution": 64,
             "image_channel_count": 3,
@@ -25,11 +25,11 @@
     "generation": {
         "manual_seed": null,
         "gpu_count": 1,
-        "image_count": 256,
+        "image_count": 32,
         "images_per_batch": 32,
         "grid_mode": {
             "enabled": true,
-            "images_per_grid": 64,
+            "images_per_grid": 16,
             "padding": 2
         }
     }

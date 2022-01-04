@@ -12,16 +12,18 @@ import threading
 import typing
 import unittest
 
-from os import path
+from os import path as ospath
+
+# Aliases
 
 _copytree = shutil.copytree
 _create_subprocess_shell = asyncio.create_subprocess_shell
 _dump = json.dump
-_exists = path.exists
+_exists = ospath.exists
 _IO = typing.IO
-_isdir = path.isdir
-_isfile = path.isfile
-_join = path.join
+_isdir = ospath.isdir
+_isfile = ospath.isfile
+_join = ospath.join
 _listdir = os.listdir
 _load = json.load
 _makedirs = os.makedirs
@@ -33,7 +35,8 @@ _run = asyncio.run
 _TestCase = unittest.TestCase
 _Thread = threading.Thread
 
-# Private attributes.
+# End of aliases
+# Private attributes
 
 _timeout = float(60)
 
@@ -275,8 +278,8 @@ def _save_json(from_dict, to_loc):
     _dump(from_dict, file, indent=4)
     file.close()
 
-# End of private attributes.
-# Public attributes.
+# End of private attributes
+# Public attributes
 
 
 class TestGAN(_TestSimpleCmd):
@@ -525,6 +528,215 @@ class TestGANDataset(_TestCmd):
         self._log_method_end(method_name)
 
 
+class TestGANTrain(_TestCmd):
+    """Tests for the "gan train" command."""
+
+    def setUp(self):
+        """Sets up before the tests."""
+        super().setUp()
+        self._backup_app_data()
+
+        _rmtree(_dataset_path, ignore_errors=True)
+        _rmtree(_model_path, ignore_errors=True)
+        _copytree(_default_dataset_path, _dataset_path)
+        _copytree(_default_model_path, _model_path)
+
+        _train_status = _load_json(_train_status_loc)
+        _train_status["dataset_path"] = _dataset_path
+        _train_status["model_path"] = _model_path
+        _save_json(_train_status, _train_status_loc)
+
+    def tearDown(self):
+        """Tears down after the tests."""
+        super().tearDown()
+        self._restore_app_data()
+
+        _rmtree(_dataset_path, ignore_errors=True)
+        _rmtree(_model_path, ignore_errors=True)
+
+    def test_normal(self):
+        """Tests the normal use case."""
+        method_name = self.test_normal.__name__
+        self._log_method_start(method_name)
+
+        cmd = "gan train"
+        instr = "\n"
+        thread = _FuncThread(target=_run_cmd, args=[cmd, instr])
+        thread.start()
+        exit_code, out, err = thread.join(_timeout)
+        timed_out = thread.is_alive()
+
+        self._log_cmdout(cmd, "stdout", out)
+        self._log_cmdout(cmd, "stderr", err)
+
+        fail_msg = "Running \"{}\" results in a timeout".format(cmd)
+        self.assertTrue(timed_out is False, fail_msg)
+
+        fail_msg = "Running \"{}\" results in an unexpected exit code: {}".format(cmd, exit_code)
+        self.assertTrue(exit_code == 0, fail_msg)
+
+        format_incorrect_info = "training saves and results format incorrect"
+
+        isdir = _isdir(_model_path)
+        fail_msg = "{} is not a directory; {}".format(_model_path, format_incorrect_info)
+        self.assertTrue(isdir, fail_msg)
+
+        model_dnames = ["Training-Results"]
+        model_fnames = [
+            "coords_config.json",
+            "discriminator_optim.pt",
+            "discriminator_state.pt",
+            "discriminator_struct.py",
+            "format_config.json",
+            "generator_optim.pt",
+            "generator_state.pt",
+            "generator_struct.py",
+            "log.txt",
+            "modelers_config.json"
+        ]
+
+        contents = _listdir(_model_path)
+
+        for dname in model_dnames:
+            exists = dname in contents
+            fail_msg = "{} is not in {}; {}".format(dname, _model_path, format_incorrect_info)
+            self.assertTrue(exists, fail_msg)
+
+            path = _join(_model_path, dname)
+            isdir = _isdir(path)
+            fail_msg = "{} is not a directory; {}".format(path, format_incorrect_info)
+            self.assertTrue(isdir, fail_msg)
+
+        for fname in model_fnames:
+            exists = fname in contents
+            fail_msg = "{} is not in {}; {}".format(fname, _model_path, format_incorrect_info)
+            self.assertTrue(exists, fail_msg)
+
+            loc = _join(_model_path, fname)
+            isfile = _isfile(loc)
+            fail_msg = "{} is not a file; {}".format(loc, format_incorrect_info)
+            self.assertTrue(isfile, fail_msg)
+
+        self._log_method_end(method_name)
+
+
+class TestGANGenerate(_TestCmd):
+    """Tests for the "gan generate" command.
+
+    NOTE:
+        Relies on the correctly working "gan train" command.
+        If "gan train" works incorrectly, the testing result is undefined.
+    """
+
+    def setUp(self):
+        """Sets up before the tests."""
+        super().setUp()
+        self._backup_app_data()
+
+        _rmtree(_dataset_path, ignore_errors=True)
+        _rmtree(_model_path, ignore_errors=True)
+        _copytree(_default_dataset_path, _dataset_path)
+        _copytree(_default_model_path, _model_path)
+
+        _train_status = _load_json(_train_status_loc)
+        _train_status["dataset_path"] = _dataset_path
+        _train_status["model_path"] = _model_path
+        _save_json(_train_status, _train_status_loc)
+
+        _generate_status = _load_json(_generate_status_loc)
+        _generate_status["model_path"] = _model_path
+        _save_json(_generate_status, _generate_status_loc)
+
+    def tearDown(self):
+        """Tears down after the tests."""
+        super().tearDown()
+        self._restore_app_data()
+
+        _rmtree(_dataset_path, ignore_errors=True)
+        _rmtree(_model_path, ignore_errors=True)
+
+    def test_normal(self):
+        """Tests the normal use case."""
+        method_name = self.test_normal.__name__
+        self._log_method_start(method_name)
+
+        # Run "gan train" first
+
+        cmd = "gan train"
+        instr = "\n"
+        thread = _FuncThread(target=_run_cmd, args=[cmd, instr])
+        thread.start()
+        exit_code, out, err = thread.join(_timeout)
+        timed_out = thread.is_alive()
+
+        self._log_cmdout(cmd, "stdout", out)
+        self._log_cmdout(cmd, "stderr", err)
+
+        # Run "gan generate" after running "gan train"
+
+        cmd = "gan generate"
+        instr = "\n"
+        thread = _FuncThread(target=_run_cmd, args=[cmd, instr])
+        thread.start()
+        exit_code, out, err = thread.join(_timeout)
+        timed_out = thread.is_alive()
+
+        self._log_cmdout(cmd, "stdout", out)
+        self._log_cmdout(cmd, "stderr", err)
+
+        # Test "gan generate" results"
+
+        fail_msg = "Running \"{}\" results in a timeout".format(cmd)
+        self.assertTrue(timed_out is False, fail_msg)
+
+        fail_msg = "Running \"{}\" results in an unexpected exit code: {}".format(cmd, exit_code)
+        self.assertTrue(exit_code == 0, fail_msg)
+
+        format_incorrect_info = "Generation results format incorrect"
+
+        isdir = _isdir(_model_path)
+        fail_msg = "{} is not a directory; {}".format(_model_path, format_incorrect_info)
+        self.assertTrue(isdir, fail_msg)
+
+        model_dnames = ["Generation-Results"]
+        model_fnames = [
+            "coords_config.json",
+            "discriminator_optim.pt",
+            "discriminator_state.pt",
+            "discriminator_struct.py",
+            "format_config.json",
+            "generator_optim.pt",
+            "generator_state.pt",
+            "generator_struct.py",
+            "log.txt",
+            "modelers_config.json"
+        ]
+
+        contents = _listdir(_model_path)
+
+        for dname in model_dnames:
+            exists = dname in contents
+            fail_msg = "{} is not in {}; {}".format(dname, _model_path, format_incorrect_info)
+            self.assertTrue(exists, fail_msg)
+
+            path = _join(_model_path, dname)
+            isdir = _isdir(path)
+            fail_msg = "{} is not a directory; {}".format(path, format_incorrect_info)
+            self.assertTrue(isdir, fail_msg)
+
+        for fname in model_fnames:
+            exists = fname in contents
+            fail_msg = "{} is not in {}; {}".format(fname, _model_path, format_incorrect_info)
+            self.assertTrue(exists, fail_msg)
+
+            loc = _join(_model_path, fname)
+            isfile = _isfile(loc)
+            fail_msg = "{} is not a file; {}".format(loc, format_incorrect_info)
+            self.assertTrue(isfile, fail_msg)
+
+        self._log_method_end(method_name)
+
+
 def main():
     """Runs this module as an executable."""
     unittest.main(verbosity=1)
@@ -533,4 +745,4 @@ def main():
 if __name__ == "__main__":
     main()
 
-# End of public attributes.
+# End of public attributes

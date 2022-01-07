@@ -14,7 +14,8 @@ import unittest
 
 from os import path as ospath
 
-# Aliases
+# - Private attributes
+# -- Aliases
 
 _copytree = shutil.copytree
 _create_subprocess_shell = asyncio.create_subprocess_shell
@@ -35,8 +36,7 @@ _run = asyncio.run
 _TestCase = unittest.TestCase
 _Thread = threading.Thread
 
-# End of aliases
-# Private attributes
+# -- End of aliases
 
 _timeout = float(60)
 
@@ -133,7 +133,7 @@ class _FuncThread(_Thread):
             timeout: Timeout length in seconds.
 
         Returns:
-            self._result: the result
+            self._result: Result. Return value.
         """
         super().join(timeout=timeout)
         return self._result
@@ -278,8 +278,8 @@ def _save_json(from_dict, to_loc):
     _dump(from_dict, file, indent=4)
     file.close()
 
-# End of private attributes
-# Public attributes
+# - End of private attributes
+# - Public attributes
 
 
 class TestGAN(_TestSimpleCmd):
@@ -623,9 +623,8 @@ class TestGANTrain(_TestCmd):
 class TestGANGenerate(_TestCmd):
     """Tests for the "gan generate" command.
 
-    NOTE:
-        Relies on the correctly working "gan train" command.
-        If "gan train" works incorrectly, the testing result is undefined.
+    NOTE: Relies on the correctly working "gan train" command.
+    NOTE: If "gan train" works incorrectly, the testing result is undefined.
     """
 
     def setUp(self):
@@ -741,8 +740,11 @@ def main():
     """Runs this module as an executable."""
     unittest.main(verbosity=1)
 
+# - End of public attributes
+# - Top level code
+
 
 if __name__ == "__main__":
     main()
 
-# End of public attributes
+# - End of top level code

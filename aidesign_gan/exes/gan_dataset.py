@@ -1,108 +1,156 @@
-"""Executable module for the "gan dataset" command."""
+""""gan dataset" command executable.
+
+Child command of "gan."
+Can be executed directly.
+"""
 
 # Initially added by: liu-yucheng
 # Last updated by: liu-yucheng
 
 import copy
-import os
 import pathlib
 import sys
 
+from os import path as ospath
+
 from aidesign_gan.libs import statuses
 
-# Private attributes ...
+# Aliases
 
-_brief_usage = "gan dataset <path-to-dataset>"
-_usage = fr"""Usage: {_brief_usage}
-Help: gan help"""
+_argv = sys.argv
+_deepcopy = copy.deepcopy
+_exists = ospath.exists
+_isdir = ospath.isdir
+_Path = pathlib.Path
+_stderr = sys.stderr
 
-# ... Private attributes
-# Nominal info strings ...
+_GANTrainStatus = statuses.GANTrainStatus
 
-info = r"""Selected the dataset at: {}
+# End of aliases
+
+brief_usage = "gan dataset <path-to-dataset>"
+"""Brief usage."""
+
+usage = fr"""
+
+Usage: {brief_usage}
+Help: gan help
+
+"""
+"""Usage."""
+usage = usage.strip()
+
+# Nominal info strings
+
+info = fr"""
+
+Selected the dataset at: {{}}
 Applied the selection to "gan train"
+
 """
-"""The primary info to display."""
+"""Primary info to display."""
+info = info.strip()
 
-# ... Nominal info strings
-# Error info strings ...
+# End of nominal info strings
+# Error info strings
 
-too_few_args_info = f"\"{_brief_usage}\""r""" gets too few arguments
-Expects 1 arguments; Gets {} arguments"""fr"""
-{_usage}
+too_few_args_info = fr"""
+
+"{brief_usage}" gets too few arguments
+Expects 1 arguments; Gets {{}} arguments
+{usage}
+
 """
-"""The info to display when the executable gets too few arguments."""
+"""Info to display when getting too few arguments."""
+too_few_args_info = too_few_args_info.strip()
 
-too_many_args_info = f"\"{_brief_usage}\""r""" gets too many arguments
-Expects 1 arguments; Gets {} arguments"""fr"""
-{_usage}
+too_many_args_info = fr"""
+
+"{brief_usage}" gets too many arguments
+Expects 1 arguments; Gets {{}} arguments
+{usage}
+
 """
-"""The info to display when the executable gets too many arguments."""
+too_many_args_info = too_many_args_info.strip()
+"""Info to display when getting too many arguments."""
 
-dataset_does_not_exist_info = f"\"{_brief_usage}\""r""" cannot find the dataset
-Please check if the dataset is present at: {}"""fr"""
-{_usage}
+dataset_does_not_exist_info = fr"""
+
+"{brief_usage}" cannot find the dataset
+Please check if the dataset is present at: {{}}
+{usage}
+
 """
-"""The info to display when the selected dataset does not exist."""
+"""Info to display when the selected dataset does not exist."""
+dataset_does_not_exist_info = dataset_does_not_exist_info.strip()
 
-dataset_is_not_dir_info = f"\"{_brief_usage}\""r""" finds that the dataset is not a directory
-Please check if the dataset appears as a directory at: {}"""fr"""
-{_usage}
+dataset_is_not_dir_info = fr"""
+
+"{brief_usage}" finds that the dataset is not a directory
+Please check if the dataset appears as a directory at: {{}}
+{usage}
+
 """
-"""The info to display when the selected dataset is not a directory."""
+"""Info to display when the selected dataset is not a directory."""
+dataset_is_not_dir_info = dataset_is_not_dir_info.strip()
 
-# ... Error info strings
-# Other public attributes ...
+# End of error info strings
 
 argv_copy = None
-"""A consumable copy of sys.argv."""
-
-# ... Other public attributes
+"""Consumable copy of sys.argv."""
 
 
 def run():
     """Runs the executable as a command."""
     global argv_copy
     argv_copy_length = len(argv_copy)
-    assert argv_copy_length >= 0
+
     if argv_copy_length < 1:
-        print(too_few_args_info.format(argv_copy_length), end="")
+        print(too_few_args_info.format(argv_copy_length), file=_stderr)
         exit(1)
     elif argv_copy_length == 1:
-        path_to_dataset = "./" + argv_copy.pop(0)
-        path_to_dataset = str(pathlib.Path(path_to_dataset).resolve())
+        path_to_dataset = argv_copy.pop(0)
+        path_to_dataset = str(path_to_dataset)
+        path_to_dataset = "./" + path_to_dataset
+        path_to_dataset = str(_Path(path_to_dataset).resolve())
 
-        if not os.path.exists(path_to_dataset):
-            print(dataset_does_not_exist_info.format(path_to_dataset), end="")
+        if not _exists(path_to_dataset):
+            print(dataset_does_not_exist_info.format(path_to_dataset), file=_stderr)
             exit(1)
-        if not os.path.isdir(path_to_dataset):
-            print(dataset_is_not_dir_info.format(path_to_dataset), end="")
+        if not _isdir(path_to_dataset):
+            print(dataset_is_not_dir_info.format(path_to_dataset), file=_stderr)
             exit(1)
 
-        gan_train_status = statuses.GANTrainStatus()
+        gan_train_status = _GANTrainStatus()
         gan_train_status.load()
 
         gan_train_status["dataset_path"] = path_to_dataset
         gan_train_status.save()
 
-        print(info.format(path_to_dataset), end="")
+        print(info.format(path_to_dataset))
         exit(0)
-    # elif argv_copy_length > 1
+    # elif argv_copy_length > 1:
     else:
-        print(too_many_args_info.format(argv_copy_length), end="")
+        print(too_many_args_info.format(argv_copy_length), file=_stderr)
         exit(1)
+    # end if
 
 
 def main():
     """Starts the executable."""
     global argv_copy
-    argv_length = len(sys.argv)
+    argv_length = len(_argv)
+
     assert argv_length >= 1
-    argv_copy = copy.deepcopy(sys.argv)
+
+    argv_copy = _deepcopy(_argv)
     argv_copy.pop(0)
     run()
 
+# Top level code
 
-# Let main be the script entry point
+
 if __name__ == "__main__":
     main()
+
+# End of top level code

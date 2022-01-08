@@ -30,7 +30,7 @@ def _make_default_app_data():
 def main():
     setuptools.setup(
         name="aidesign-gan",
-        version="0.55.0",
+        version="0.56.0",
         description="AIDesign GAN Modeling Application",
         author="The AIDesign Team",
         packages=setuptools.find_packages(),

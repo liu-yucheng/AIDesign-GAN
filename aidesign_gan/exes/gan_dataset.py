@@ -1,7 +1,7 @@
 """"gan dataset" command executable.
 
 Child command of "gan."
-Can be executed directly.
+Can be launched directly.
 """
 
 # Initially added by: liu-yucheng
@@ -129,8 +129,7 @@ def run():
 
         print(info.format(path_to_dataset))
         exit(0)
-    # elif argv_copy_length > 1:
-    else:
+    else:  # elif argv_copy_length > 1:
         print(too_many_args_info.format(argv_copy_length), file=_stderr)
         exit(1)
     # end if

@@ -1,7 +1,7 @@
 """"gan help" command executable.
 
 Child command of "gan."
-Can be executed directly.
+Can be launched directly.
 """
 
 # Initially added by: liu-yucheng
@@ -102,8 +102,7 @@ def run():
     if argv_copy_length == 0:
         print(info)
         exit(0)
-    # elif argv_copy_length > 0:
-    else:
+    else:  # elif argv_copy_length > 0:
         print(too_many_args_info.format(argv_copy_length), file=_stderr)
         exit(1)
 

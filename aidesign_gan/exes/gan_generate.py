@@ -1,7 +1,7 @@
 """"gan generate" command executable.
 
 Child command of "gan."
-Can be executed directly.
+Can be launched directly.
 """
 
 # Initially added by: liu-yucheng
@@ -256,14 +256,12 @@ def run():
             # end try
 
             print(completed_session_info.format(log_loc))
-        # elif answer.lower() == "no" or answer.lower() == "n" or any other answer:
-        else:
+        else:  # elif answer.lower() == "no" or answer.lower() == "n" or any other answer:
             print(aborted_session_info)
         # end if
 
         exit(0)
-    # elif argv_copy_length > 0:
-    else:
+    else:  # elif argv_copy_length > 0:
         print(too_many_args_info.format(argv_copy_length), file=_stderr)
         exit(1)
     # end if

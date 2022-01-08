@@ -1,7 +1,7 @@
 """"gan reset" command executable.
 
 Child command of "gan."
-Can be executed directly.
+Can be launched directly.
 """
 
 # Initially added by: liu-yucheng
@@ -83,8 +83,7 @@ def run():
 
         print(info.format(defaults.app_data_path))
         exit(0)
-    # elif argv_copy_length > 0:
-    else:
+    else:  # elif argv_copy_length > 0:
         print(too_many_args_info.format(argv_copy_length), file=_stderr)
         exit(1)
 
@@ -99,9 +98,11 @@ def main():
     argv_copy = _deepcopy(_argv)
     argv_copy.pop(0)
     run()
-    exit(0)
+
+# Top level code
 
 
-# Let main be the script entry point
 if __name__ == "__main__":
     main()
+
+# End of top level code

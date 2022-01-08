@@ -1,4 +1,8 @@
-"""Executable module for the "gan help" command."""
+""""gan help" command executable.
+
+Child command of "gan."
+Can be executed directly.
+"""
 
 # Initially added by: liu-yucheng
 # Last updated by: liu-yucheng
@@ -6,16 +10,31 @@
 import copy
 import sys
 
-# Private attributes ...
+# Aliases
 
-_brief_usage = "gan help"
-_usage = fr"""Usage: {_brief_usage}
-Help: gan help"""
+_argv = sys.argv
+_deepcopy = copy.deepcopy
+_stderr = sys.stderr
 
-# ... Private attributes
-# Nominal info strings ...
+# End of aliases
 
-info = r"""Usage: gan <command> ...
+brief_usage = "gan help"
+"""Brief usage."""
+
+usage = fr"""
+
+Usage: {brief_usage}
+Help: gan help
+
+"""
+"""Usage."""
+usage = usage.strip()
+
+# Nominal info strings
+
+info = fr"""
+
+Usage: gan <command> ...
 ==== Commands ====
 help:
     When:   You need help info. For example, now.
@@ -49,51 +68,61 @@ reset:
 welcome:
     When:   You want to display the welcome message.
     How-to: gan welcome
+
 """
-"""The primary info to display."""
+"""Primary info to display."""
+info = info.strip()
 
-# ... Nominal info strings
-# Error info strings ...
+# End of nominal info strings
+# Error info strings
 
-too_many_args_info = f"\"{_brief_usage}\""r""" gets too many arguments
-Expects 0 arguments; Gets {} arguments"""fr"""
-{_usage}
+too_many_args_info = fr"""
+
+"{brief_usage}" gets too many arguments
+Expects 0 arguments; Gets {{}} arguments
+{usage}
+
 """
-"""The info to display when the executable gets too many arguments."""
+"""Info to display when getting too many arguments."""
+too_many_args_info = too_many_args_info.strip()
 
-# ... Error info stirngs
-# Other public attributes ...
+# End of error info stirngs
 
 argv_copy = None
-"""A consumable copy of sys.argv."""
-
-# ... Other public attributes
+"""Consumable copy of sys.argv."""
 
 
 def run():
     """Runs the executable as a command."""
     global argv_copy
     argv_copy_length = len(argv_copy)
+
     assert argv_copy_length >= 0
+
     if argv_copy_length == 0:
-        print(info, end="")
+        print(info)
         exit(0)
-    # elif argv_copy_length > 0
+    # elif argv_copy_length > 0:
     else:
-        print(too_many_args_info.format(argv_copy_length), end="")
+        print(too_many_args_info.format(argv_copy_length), file=_stderr)
         exit(1)
 
 
 def main():
     """Starts the executable."""
     global argv_copy
-    argv_length = len(sys.argv)
+    argv_length = len(_argv)
+
     assert argv_length >= 1
-    argv_copy = copy.deepcopy(sys.argv)
+
+    argv_copy = _deepcopy(_argv)
     argv_copy.pop(0)
     run()
 
+# Top level code
 
-# Let main be the script entry point
+
 if __name__ == "__main__":
     main()
+
+# End of top level code

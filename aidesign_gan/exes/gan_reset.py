@@ -1,4 +1,8 @@
-"""Executable module for the "gan reset" command."""
+""""gan reset" command executable.
+
+Child command of "gan."
+Can be executed directly.
+"""
 
 # Initially added by: liu-yucheng
 # Last updated by: liu-yucheng
@@ -10,64 +14,89 @@ from aidesign_gan.libs import defaults
 from aidesign_gan.libs import statuses
 from aidesign_gan.libs import utils
 
-# Private attributes ...
+# Aliases
 
-_brief_usage = "gan reset"
-_usage = fr"""Usage: {_brief_usage}
-Help: gan help"""
+_argv = sys.argv
+_deepcopy = copy.deepcopy
+_GenStatus = statuses.GANGenerateStatus
+_init_folder = utils.init_folder
+_stderr = sys.stderr
+_TrainStatus = statuses.GANTrainStatus
 
-# ... Private attributes
-# Nominal info strings ...
+# End of aliases
 
-info = r"""Completed resetting the app data at: {}
+brief_usage = "gan reset"
+"""Brief usage."""
+
+usage = fr"""
+
+Usage: {brief_usage}
+Help: gan help
+
 """
-"""The primary info to display."""
+"""Usage."""
+usage = usage.strip()
 
-# ... Nominal info strings
-# Error info strings ...
+# Nominal info strings
 
-too_many_args_info = f"\"{_brief_usage}\""r""" gets too many arguments
-Expects 0 arguments; Gets {} arguments"""fr"""
-{_usage}
+info = fr"""
+
+Completed resetting the app data at: {{}}
+
 """
-"""The info to display when the executable gets too many arguments."""
+"""Primary info to display."""
+info = info.strip()
 
-# ... Error info strings
-# Other public attributes ...
+# End of nominal info strings
+# Error info strings
+
+too_many_args_info = fr"""
+
+"{brief_usage}" gets too many arguments
+Expects 0 arguments; Gets {{}} arguments
+{usage}
+
+"""
+"""Info to display when getting too many arguments."""
+too_many_args_info = too_many_args_info.strip()
+
+# End of error info strings
 
 argv_copy = None
-"""A consumable copy of sys.argv."""
-
-# ... Other public attributes
+"""Consumable copy of sys.argv."""
 
 
 def run():
     """Runs the executable as a command."""
     global argv_copy
     argv_copy_length = len(argv_copy)
-    assert argv_copy_length >= 0
-    if argv_copy_length == 0:
-        utils.init_folder(defaults.app_data_path, clean=True)
 
-        gan_train_status = statuses.GANTrainStatus()
-        gan_generate_status = statuses.GANGenerateStatus()
+    assert argv_copy_length >= 0
+
+    if argv_copy_length == 0:
+        _init_folder(defaults.app_data_path, clean=True)
+
+        gan_train_status = _TrainStatus()
+        gan_generate_status = _GenStatus()
         gan_train_status.load()
         gan_generate_status.load()
 
-        print(info.format(defaults.app_data_path), end="")
+        print(info.format(defaults.app_data_path))
         exit(0)
     # elif argv_copy_length > 0
     else:
-        print(too_many_args_info.format(argv_copy_length), end="")
+        print(too_many_args_info.format(argv_copy_length), file=_stderr)
         exit(1)
 
 
 def main():
     """Starts the executable."""
     global argv_copy
-    argv_length = len(sys.argv)
+    argv_length = len(_argv)
+
     assert argv_length >= 1
-    argv_copy = copy.deepcopy(sys.argv)
+
+    argv_copy = _deepcopy(_argv)
     argv_copy.pop(0)
     run()
     exit(0)

@@ -106,7 +106,7 @@ too_many_args_info = too_many_args_info.strip()
 
 none_model_info = fr"""
 
-"{brief_usage}" finds that the model_path selection is None
+"{brief_usage}" finds that the "model_path" selection is None
 Please select a model with the "gan model <path-to-model>" command
 {usage}
 
@@ -127,10 +127,8 @@ stopped_session_info = stopped_session_info.strip()
 
 argv_copy = None
 """Consumable copy of sys.argv."""
-
 model_path = None
 """Model path."""
-
 log_loc = None
 """Log location."""
 

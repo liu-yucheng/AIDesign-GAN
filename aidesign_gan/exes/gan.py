@@ -1,4 +1,7 @@
-"""Executable module for the "gan" command."""
+""""gan" command executable.
+
+AIDesign-GAN primary command.
+"""
 
 # Initially added by: liu-yucheng
 # Last updated by: liu-yucheng
@@ -7,57 +10,80 @@ import copy
 import pkg_resources
 import sys
 
-# Private attributes ...
+# Aliases
+
+_argv = sys.argv
+_deepcopy = copy.deepcopy
+_require = pkg_resources.require
+_stderr = sys.stderr
+
+# End of aliases
 
 # Init _version
 _version = "<unknown version>"
-_packages = pkg_resources.require("aidesign-gan")
+_packages = _require("aidesign-gan")
 if len(_packages) > 0:
     _version = _packages[0].version
 
-_brief_usage = "gan <command> ..."
-_usage = fr"""Usage: {_brief_usage}
-Help: gan help"""
+brief_usage = "gan <command> ..."
+"""Brief usage."""
 
-# ... Private attributes
-# Nominal info strings ...
+usage = fr"""
 
-info = fr"""AIDesign-GAN (aidesign-gan) {_version}
-{_usage}
+Usage: {brief_usage}
+Help: gan help
+
 """
-"""The primary info to display."""
+"""Usage."""
+usage = usage.strip()
 
-# ... Nominal info strings
-# Error info strings ...
+# Nominal info strings
 
-unknown_command_info = f"\"{_brief_usage}\""r""" gets an unknown command: {}"""fr"""
-{_usage}
+info = fr"""
+
+AIDesign-GAN (aidesign-gan) {_version}
+{usage}
+
 """
-"""The info to display when the executable gets an unknown command."""
+"""Primary info to display."""
+info = info.strip()
 
-unknown_arg_info = f"\"{_brief_usage}\""r""" gets an unknown argument: {}"""fr"""
-{_usage}
+# End of nominal info strings
+# Error info strings
+
+unknown_command_info = fr"""
+
+"{brief_usage}" gets an unknown command: {{}}
+{usage}
+
 """
-"""The info to display when the executable gets an unknown argument."""
+"""Info to display when getting an unknown command."""
+unknown_command_info = unknown_command_info.strip()
 
-# ... Error info strings
-# Other public attributes ...
+unknown_arg_info = fr"""
+
+"{brief_usage}" gets an unknown argument: {{}}
+{usage}
+
+"""
+"""Info to display when getting an unknown argument."""
+
+# End of error info strings
 
 argv_copy = None
-"""A consumable copy of sys.argv."""
-
-# ... Other public attributes
+"""Consumable copy of sys.argv."""
 
 
 def _run_command():
     global argv_copy
     assert len(argv_copy) > 0
     command = argv_copy.pop(0)
+
     if len(command) <= 0:
-        print(unknown_command_info.format(command), end="")
+        print(unknown_command_info.format(command), file=_stderr)
         exit(1)
     elif command[0] == "-":
-        print(unknown_arg_info.format(command), end="")
+        print(unknown_arg_info.format(command), file=_stderr)
         exit(1)
     elif command == "help":
         from aidesign_gan.exes import gan_help
@@ -95,28 +121,31 @@ def _run_command():
         from aidesign_gan.exes import gan_reset
         gan_reset.argv_copy = argv_copy
         gan_reset.run()
-        exit(0)
     else:
-        print(unknown_command_info.format(command), end="")
+        print(unknown_command_info.format(command), file=_stderr)
         exit(1)
+    # end if
 
 
 def main():
     """Starts the executable."""
     global argv_copy
-    argv_length = len(sys.argv)
+    argv_length = len(_argv)
+
     assert argv_length >= 1
+
     if argv_length == 1:
-        print(info, end="")
+        print(info)
         exit(0)
-    # elif argv_length > 1
-    else:
-        argv_copy = copy.deepcopy(sys.argv)
+    else:  # elif argv_length > 1:
+        argv_copy = _deepcopy(_argv)
         argv_copy.pop(0)
         _run_command()
-        exit(0)
+
+# Top level code
 
 
-# Let main be the script entry point
 if __name__ == '__main__':
     main()
+
+# End of top level code

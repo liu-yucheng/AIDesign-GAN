@@ -83,7 +83,7 @@ def run():
 
         print(info.format(defaults.app_data_path))
         exit(0)
-    # elif argv_copy_length > 0
+    # elif argv_copy_length > 0:
     else:
         print(too_many_args_info.format(argv_copy_length), file=_stderr)
         exit(1)

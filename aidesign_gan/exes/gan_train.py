@@ -1,125 +1,205 @@
-"""Executable module for the "gan train" command."""
+""""gan train" command executable.
+
+Child command of "gan."
+Can be executed directly.
+"""
 
 # Initially added by: liu-yucheng
 # Last updated by: liu-yucheng
-
 
 import copy
 import datetime
 import sys
 import traceback
+import typing
 
 from aidesign_gan.libs import coords
 from aidesign_gan.libs import statuses
 from aidesign_gan.libs import utils
 
-# Private attributes ...
+# Aliases
 
-_brief_usage = "gan train"
-_usage = fr"""Usage: {_brief_usage}
-Help: gan help"""
-_timeout = 30
+_argv = sys.argv
+_deepcopy = copy.deepcopy
+_find_in_path = utils.find_in_path
+_format_exc = traceback.format_exc
+_IO = typing.IO
+_logln = utils.logln
+_logstr = utils.logstr
+_now = datetime.datetime.now
+_stderr = sys.stderr
+_stdout = sys.stdout
+_TimedInput = utils.TimedInput
+_TrainCoord = coords.TrainingCoord
+_TrainStatus = statuses.GANTrainStatus
 
-# ... Private attributes
-# Nominal info strings ...
+# End of aliases
 
-info = f"\"{_brief_usage}\":"r"""
-{}
+brief_usage = "gan train"
+"""Brief usage."""
+
+usage = fr"""
+
+Usage: {brief_usage}
+Help: gan help
+
+"""
+"""Usage."""
+usage = usage.strip()
+
+timeout = float(30)
+"""Timeout in seconds."""
+
+# Nominal info strings
+
+info = fr"""
+
+"{brief_usage}":
+{{}}
 -
 Please confirm the above training session setup
-Do you want to continue? [ Y (Yes) | n (no) ]:"""fr""" < default: Yes, timeout: {_timeout} seconds >
-"""
-"""The primary info to display."""
+Do you want to continue? [ Y (Yes) | n (no) ]: < default: Yes, timeout: {timeout} seconds >
 
-will_start_session_info = r"""Will start a training session
----- The following will be logged to: {} ----
 """
-"""The info to display when the session starts."""
+"""Primary info to display."""
+info = info.strip()
 
-completed_session_info = r"""---- The above has been logged to: {} ----
+will_start_session_info = fr"""
+
+Will start a training session
+---- The following will be logged to: {{}} ----
+
+"""
+"""Info to display when the session starts."""
+will_start_session_info = will_start_session_info.strip()
+
+completed_session_info = fr"""
+
+---- The above has been logged to: {{}} ----
 Completed the training session
+
 """
-"""The info to display when the session completes."""
+"""Info to display when the session completes."""
+completed_session_info = completed_session_info.strip()
 
-aborted_session_info = r"""Aborted the training session
+aborted_session_info = fr"""
+
+Aborted the training session
+
 """
-"""The info to display when the user aborts the session."""
+"""Info to display when the user aborts the session."""
+aborted_session_info = aborted_session_info.strip()
 
-# ... Nominal info strings
-# Error info strings ...
+# End of nominal info strings
+# Error info strings
 
-too_many_args_info = f"\"{_brief_usage}\""r""" gets too many arguments
-Expects 0 arguments; Gets {} arguments"""fr"""
-{_usage}
+too_many_args_info = fr"""
+"{brief_usage}" gets too many arguments
+Expects 0 arguments; Gets {{}} arguments
+{usage}
+
 """
-"""The info to display when the executable gets too many arguments."""
+"""Info to display when getting too many arguments."""
+too_many_args_info = too_many_args_info.strip()
 
-none_dataset_info = f"\"{_brief_usage}\""fr""" finds that the dataset_path selection is None
+none_dataset_info = fr"""
+
+"{brief_usage}" finds that the "dataset_path" selection is None
 Please select a dataset with the "gan dataset <path-to-dataset>" command
-{_usage}
-"""
-"""The info to display when the dataset selection is None."""
+{usage}
 
-none_model_info = f"\"{_brief_usage}\""fr""" finds that the model_path selection is None
+"""
+"""Info to display when the dataset selection is None."""
+none_dataset_info = none_dataset_info.strip()
+
+none_model_info = fr"""
+
+"{brief_usage}" finds that the "model_path" selection is None
 Please select a model with the "gan model <path-to-model>" command
-{_usage}
-"""
-"""The info to display when the model selection is None."""
+{usage}
 
-stopped_session_info = r"""---- The above has been logged to: {} ----
+"""
+"""Info to display when the model selection is None."""
+none_model_info = none_model_info.strip()
+
+stopped_session_info = fr"""
+
+---- The above has been logged to: {{}} ----
 Stopped the training session
-"""
-"""The info to display when the session stops from an exception."""
 
-# ... Error info strings
-# Other public attributes ...
+"""
+"""Info to display when the session stops from an exception."""
+
+# End of error info strings
 
 argv_copy = None
-"""A consumable copy of sys.argv."""
-
+"""Consumable copy of sys.argv."""
 dataset_path = None
-"""The dataset path."""
-
+"""Dataset path."""
 model_path = None
-"""The model path."""
-
-log_location = None
-"""The log location."""
-
-# ... Other public attributes
+"""Model path."""
+log_loc = None
+"""Log location."""
 
 
 def _start_session():
     global dataset_path
     global model_path
-    global log_location
+    global log_loc
 
-    start_time = datetime.datetime.now()
-    log_file = open(log_location, "a+")
-    all_logs = [sys.stdout, log_file]
-    utils.logln(all_logs, "AIDesign-GAN training session ...")
-    utils.logln(all_logs, f"Model path: {model_path}")
-    utils.logln(all_logs, f"Dataset path: {dataset_path}")
-    utils.logln(all_logs, "-")
+    start_time = _now()
+    log_file: _IO = open(log_loc, "a+")
+    all_logs = [_stdout, log_file]
+    err_logs = [_stderr, log_file]
+
+    start_info = fr"""
+
+AIDesign-GAN training session
+Model path:     {model_path}
+Dataset path:   {dataset_path}
+-
+
+    """
+    start_info = start_info.strip()
+
+    _logln(all_logs, start_info)
 
     try:
-        coord = coords.TrainingCoord(dataset_path, model_path, all_logs)
+        coord = _TrainCoord(dataset_path, model_path, all_logs)
         coord.start_training()
     except BaseException as base_exception:
-        utils.logstr(all_logs, traceback.format_exc())
-        end_time = datetime.datetime.now()
+        _logstr(err_logs, _format_exc())
+
+        end_time = _now()
         execution_time = end_time - start_time
-        utils.logln(all_logs, "-")
-        utils.logln(all_logs, f"Execution stopped after: {execution_time} (days, hours: minutes: seconds)")
-        utils.logln(all_logs, "... AIDesign-GAN training session (stopped)")
+
+        stop_info = fr"""
+
+-
+Execution stopped after: {execution_time} (days, hours: minutes: seconds)
+End of AIDesign-GAN training session (stopped)
+
+        """
+        stop_info = stop_info.strip()
+
+        _logln(all_logs, stop_info)
         log_file.close()
         raise base_exception
+    # end try
 
-    end_time = datetime.datetime.now()
+    end_time = _now()
     execution_time = end_time - start_time
-    utils.logln(all_logs, "-")
-    utils.logln(all_logs, f"Execution time: {execution_time} (days, hours: minutes: seconds)")
-    utils.logln(all_logs, "... AIDesign-GAN training session")
+
+    end_info = fr"""
+
+-
+Execution time: {execution_time} (days, hours: minutes: seconds)
+End of AIDesign-GAN training session
+
+    """
+    end_info = end_info.strip()
+
+    _logln(all_logs, end_info)
     log_file.close()
 
 
@@ -128,78 +208,100 @@ def run():
     global argv_copy
     global dataset_path
     global model_path
-    global log_location
-
+    global log_loc
     argv_copy_length = len(argv_copy)
+
     assert argv_copy_length >= 0
+
     if argv_copy_length == 0:
-        gan_train_status = statuses.GANTrainStatus()
+        gan_train_status = _TrainStatus()
         gan_train_status.load()
 
         dataset_path = gan_train_status["dataset_path"]
         model_path = gan_train_status["model_path"]
 
         if dataset_path is None:
-            print(none_dataset_info, end="")
+            print(none_dataset_info, file=_stderr)
             exit(1)
         if model_path is None:
-            print(none_model_info, end="")
+            print(none_model_info, file=_stderr)
             exit(1)
 
-        gan_train_info = ""
+        dataset_path = str(dataset_path)
+        model_path = str(model_path)
+
+        tab_width1 = 4
+        tab_width2 = 8
+        tab1 = " " * tab_width1
         gan_train_lines = []
+        gan_train_info = ""
+
         for key in gan_train_status.items:
-            tab_spaces = " " * (8 - len(key) % 8)
-            gan_train_lines.append(f"    {key}:{tab_spaces}{gan_train_status[key]}")
+            tab2 = " " * (tab_width2 - len(key) % tab_width2)
+            val = gan_train_status[key]
+            line = f"{tab1}{key}:{tab2}{val}"
+            gan_train_lines.append(line)
+
         gan_train_info = "\n".join(gan_train_lines)
 
-        timed_input = utils.TimedInput()
-        print(info.format(gan_train_info), end="")
-        answer = timed_input.take(_timeout)
+        timed_input = _TimedInput()
+        print(info.format(gan_train_info))
+        answer = timed_input.take(timeout)
 
         if answer is None:
             answer = "Yes"
-            print(f"\n{answer} (timeout)\n", end="")
+            print(f"\n{answer} (timeout)\n")
         elif len(answer) <= 0:
             answer = "Yes"
-            print(f"{answer} (default)\n", end="")
+            print(f"{answer} (default)\n")
 
-        print("-\n", end="")
+        print("-\n")
+
         if answer.lower() == "yes" or answer.lower() == "y":
-            log_location = utils.find_in_path("log.txt", model_path)
-            print(will_start_session_info.format(log_location), end="")
+            log_loc = _find_in_path("log.txt", model_path)
+            print(will_start_session_info.format(log_loc))
 
             try:
                 _start_session()
             except BaseException as base_exception:
                 exit_code = 1
+
                 if isinstance(base_exception, SystemExit):
                     exit_code = base_exception.code
-                print(stopped_session_info.format(log_location), end="")
-                exit(exit_code)
 
-            print(completed_session_info.format(log_location), end="")
-        # elif answer.lower() == "no" or answer.lower() == "n" or any other answer
+                print(stopped_session_info.format(log_loc), file=_stderr)
+                exit(exit_code)
+            # end try
+
+            print(completed_session_info.format(log_loc))
+        # elif answer.lower() == "no" or answer.lower() == "n" or any other answer:
         else:
-            print(aborted_session_info, end="")
+            print(aborted_session_info)
+        # end if
 
         exit(0)
-    # elif argv_copy_length > 0
+    # elif argv_copy_length > 0:
     else:
-        print(too_many_args_info.format(argv_copy_length), end="")
+        print(too_many_args_info.format(argv_copy_length), file=_stderr)
         exit(1)
+    # end if
 
 
 def main():
     """Starts the executable."""
     global argv_copy
-    argv_length = len(sys.argv)
+    argv_length = len(_argv)
+
     assert argv_length >= 1
-    argv_copy = copy.deepcopy(sys.argv)
+
+    argv_copy = _deepcopy(_argv)
     argv_copy.pop(0)
     run()
 
+# Top level code
 
-# Let main be the script entry point
+
 if __name__ == "__main__":
     main()
+
+# End of top level code

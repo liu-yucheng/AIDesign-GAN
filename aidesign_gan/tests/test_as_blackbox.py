@@ -1,7 +1,7 @@
 """Executable that tests the app as a blackbox."""
 
-# Initially added by: liu-yucheng
-# Last updated by: liu-yucheng
+# First added by liu-yucheng
+# Last updated by liu-yucheng
 
 import asyncio
 import json

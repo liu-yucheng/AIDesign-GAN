@@ -1,7 +1,7 @@
 """Module of the context classes."""
 
-# Initially added by: liu-yucheng
-# Last updated by: liu-yucheng
+# First added by liu-yucheng
+# Last updated by liu-yucheng
 
 from torch import nn
 from torch.utils import data

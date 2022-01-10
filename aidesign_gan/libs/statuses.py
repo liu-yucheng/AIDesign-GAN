@@ -1,7 +1,7 @@
 """Module of the app part statuses."""
 
-# Initially added by: liu-yucheng
-# Last updated by: liu-yucheng
+# First added by liu-yucheng
+# Last updated by liu-yucheng
 
 import pkg_resources
 

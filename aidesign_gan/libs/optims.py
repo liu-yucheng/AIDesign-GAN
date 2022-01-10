@@ -5,8 +5,8 @@ PyTorch Adam source code. https://pytorch.org/docs/stable/_modules/torch/optim/a
 Yadav, et al., 2018. Stabilizing Adversarial Nets With Prediction Methods. https://openreview.net/pdf?id=Skj8Kag0Z
 """
 
-# Initially added by: liu-yucheng
-# Last updated by: liu-yucheng
+# First added by liu-yucheng
+# Last updated by liu-yucheng
 
 from torch import optim
 import math

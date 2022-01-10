@@ -1,7 +1,7 @@
 """Module of the coord (coordinator) classes."""
 
-# Initially added by: liu-yucheng
-# Last updated by: liu-yucheng
+# First added by liu-yucheng
+# Last updated by liu-yucheng
 
 from torchvision import transforms
 from torchvision import utils as vutils
@@ -186,7 +186,7 @@ class TrainingCoord(Coord):
         r = self.results
         r.logln("Started training")
         r.logln("-")
-        self.algo.start_training()
+        self.algo.start()
         r.logln("Completed training")
 
 

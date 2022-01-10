@@ -1,7 +1,7 @@
 """Runs all the tests in the aidesign_gan.tests module."""
 
-# Initially added by: liu-yucheng
-# Last updated by: liu-yucheng
+# First added by liu-yucheng
+# Last updated by liu-yucheng
 
 import pathlib
 import unittest

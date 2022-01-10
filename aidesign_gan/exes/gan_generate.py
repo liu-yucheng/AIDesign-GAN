@@ -4,8 +4,8 @@ Child command of "gan."
 Can be launched directly.
 """
 
-# Initially added by: liu-yucheng
-# Last updated by: liu-yucheng
+# First added by liu-yucheng
+# Last updated by liu-yucheng
 
 
 import copy
@@ -233,12 +233,12 @@ def run():
 
         if answer is None:
             answer = "Yes"
-            print(f"\n{answer} (timeout)\n")
+            print(f"\n{answer} (timeout)")
         elif len(answer) <= 0:
             answer = "Yes"
-            print(f"{answer} (default)\n")
+            print(f"{answer} (default)")
 
-        print("-\n")
+        print("-")
 
         if answer.lower() == "yes" or answer.lower() == "y":
             log_loc = _find_in_path("log.txt", model_path)

@@ -65,5 +65,5 @@ You should have received a copy of the GNU General Public License along with
 this program.  If not, see:
     1. The LICENSE file in this repository.
     2. https://www.gnu.org/licenses/.
-    3. https://www.gnu.org/licenses/gpl-3.0.txt
+    3. https://www.gnu.org/licenses/gpl-3.0.txt.
 ```

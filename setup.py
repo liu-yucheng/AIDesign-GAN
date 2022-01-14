@@ -49,7 +49,7 @@ def _make_default_app_data():
 def main():
     _setup(
         name="aidesign-gan",
-        version="0.59.8",
+        version="0.59.9",
         description="AIDesign GAN Modeling Application",
         author="Yucheng Liu (From The AIDesign Team)",
         packages=_find_packages(),

@@ -45,3 +45,25 @@ Odena, et al., 2016. *Deconvolution and Checkerboard Artifacts.* https://distill
 Radford, et al., 2016. *Unsupervised Representation Learning With Deep Convolutional Generative Adversarial Networks.* https://arxiv.org/pdf/1511.06434.pdf
 
 Yadav, et al., 2018. *Stabilizing Adversarial Nets With Prediction Methods.* https://openreview.net/pdf?id=Skj8Kag0Z
+
+# Copyright Notice
+
+```plaintext
+AIDesign-GAN, a GAN modeling application.
+Copyright (C) 2022 Yucheng Liu. GNU GPL Version 3.
+
+This program is free software: you can redistribute it and/or modify it under
+the terms of the GNU General Public License as published by the Free Software
+Foundation, either version 3 of the License, or (at your option) any later
+version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with
+this program.  If not, see:
+    1. The LICENSE file in this repository.
+    2. https://www.gnu.org/licenses/.
+    3. https://www.gnu.org/licenses/gpl-3.0.txt
+```

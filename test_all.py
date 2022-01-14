@@ -1,14 +1,16 @@
 """Runs all the tests in the aidesign_gan.tests module."""
 
-# First added by liu-yucheng
-# Last updated by liu-yucheng
+# Copyright (C) 2022 Yucheng Liu. GNU GPL Version 3.
+# GNU GPL Version 3 copy: https://www.gnu.org/licenses/gpl-3.0.txt
+# First added by: liu-yucheng
+# Last updated by: liu-yucheng
 
 import pathlib
 import unittest
 
-from os import path
+from os import path as ospath
 
-_join = path.join
+_join = ospath.join
 _Path = pathlib.Path
 _TestLoader = unittest.TestLoader
 _TextTestRunner = unittest.TextTestRunner

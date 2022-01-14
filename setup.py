@@ -7,10 +7,19 @@ The "entry_points" parameter of the setup function specifies the function to cal
     corresponding command via the command line.
 """
 
-# First added by liu-yucheng
-# Last updated by liu-yucheng
+# Copyright (C) 2022 Yucheng Liu. GNU GPL Version 3.
+# GNU GPL Version 3 copy: https://www.gnu.org/licenses/gpl-3.0.txt
+# First added by: liu-yucheng
+# Last updated by: liu-yucheng
 
 import setuptools
+
+# Aliases
+
+_find_packages = setuptools.find_packages
+_setup = setuptools.setup
+
+# End of aliases
 
 
 def _make_default_app_data():
@@ -18,22 +27,32 @@ def _make_default_app_data():
     from aidesign_gan.libs import statuses
     from aidesign_gan.libs import utils
 
-    utils.init_folder(defaults.app_data_path)
-    gan_train_status = statuses.GANTrainStatus()
+    # Aliases
+
+    _init_folder = utils.init_folder
+    _TrainStatus = statuses.GANTrainStatus
+    _GenStatus = statuses.GANGenerateStatus
+
+    # End of aliases
+
+    _init_folder(defaults.app_data_path)
+
+    gan_train_status = _TrainStatus()
+    gan_generate_status = _GenStatus()
+
     gan_train_status.load()
-    gan_generate_status = statuses.GANGenerateStatus()
     gan_generate_status.load()
 
-    print(f"Created app data at: {defaults.app_data_path}")
+    print(f"Ensured app data at: {defaults.app_data_path}")
 
 
 def main():
-    setuptools.setup(
+    _setup(
         name="aidesign-gan",
-        version="0.57.0",
+        version="0.58.0",
         description="AIDesign GAN Modeling Application",
-        author="The AIDesign Team",
-        packages=setuptools.find_packages(),
+        author="Yucheng Liu (From The AIDesign Team)",
+        packages=_find_packages(),
         entry_points={
             "console_scripts": [
                 "gan = aidesign_gan.exes.gan:main"
@@ -44,6 +63,10 @@ def main():
     _make_default_app_data()
     print("Commands available: gan")
 
+# Top level code
+
 
 if __name__ == "__main__":
     main()
+
+# End of top level code

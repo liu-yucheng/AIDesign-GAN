@@ -7,8 +7,10 @@ Radford, et al., 2016. Unsupervised Representation Learning With Deep Convolutio
     https://arxiv.org/pdf/1511.06434.pdf
 """
 
-# First added by liu-yucheng
-# Last updated by liu-yucheng
+# Copyright (C) 2022 Yucheng Liu. GNU GPL Version 3.
+# GNU GPL Version 3 copy: https://www.gnu.org/licenses/gpl-3.0.txt
+# First added by: liu-yucheng
+# Last updated by: liu-yucheng
 
 from aidesign_gan.libs import defaults
 from aidesign_gan.libs import utils

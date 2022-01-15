@@ -7,10 +7,10 @@ The "entry_points" parameter of the setup function specifies the function to cal
     corresponding command via the command line.
 """
 
-# Copyright (C) 2022 Yucheng Liu. GNU GPL Version 3.
-# GNU GPL Version 3 copy: https://www.gnu.org/licenses/gpl-3.0.txt
-# First added by: liu-yucheng
-# Last updated by: liu-yucheng
+# Copyright 2022 Yucheng Liu. GNU GPL3 license.
+# GNU GPL3 license copy: https://www.gnu.org/licenses/gpl-3.0.txt
+# First added by username: liu-yucheng
+# Last updated by username: liu-yucheng
 
 import setuptools
 
@@ -49,7 +49,7 @@ def _make_default_app_data():
 def main():
     _setup(
         name="aidesign-gan",
-        version="0.59.11",
+        version="0.59.12",
         description="AIDesign GAN Modeling Application",
         author="Yucheng Liu (From The AIDesign Team)",
         packages=_find_packages(),

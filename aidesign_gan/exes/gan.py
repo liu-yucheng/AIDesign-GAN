@@ -69,6 +69,7 @@ unknown_arg_info = fr"""
 
 """
 """Info to display when getting an unknown argument."""
+unknown_arg_info = unknown_arg_info.strip()
 
 # End of error info strings
 
@@ -78,8 +79,11 @@ argv_copy = None
 
 def _run_command():
     global argv_copy
+
+    argv_copy = [str(elem) for elem in argv_copy]
     assert len(argv_copy) > 0
     command = argv_copy.pop(0)
+    command = str(command)
 
     if len(command) <= 0:
         print(unknown_command_info.format(command), file=_stderr)

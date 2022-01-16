@@ -131,6 +131,7 @@ Stopped the training session
 
 """
 """Info to display when the session stops from an exception."""
+stopped_session_info = stopped_session_info.strip()
 
 # End of error info strings
 

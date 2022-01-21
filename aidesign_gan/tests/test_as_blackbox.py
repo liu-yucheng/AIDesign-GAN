@@ -223,19 +223,22 @@ class _TestCmd(_TestCase):
         self._log_cmdout_end(cmd, stream_name)
 
     def _backup_app_data(self):
-        train_status = _load_json(_train_status_loc)
-        generate_status = _load_json(_generate_status_loc)
-        _save_json(train_status, _train_status_backup_loc)
-        _save_json(generate_status, _generate_status_backup_loc)
+        status = _load_json(_train_status_loc)
+        _save_json(status, _train_status_backup_loc)
+
+        status = _load_json(_generate_status_loc)
+        _save_json(status, _generate_status_backup_loc)
 
     def _restore_app_data(self):
-        train_status = _load_json(_train_status_backup_loc)
-        generate_status = _load_json(_generate_status_backup_loc)
-        _save_json(train_status, _train_status_loc)
-        _save_json(generate_status, _generate_status_loc)
+        status = _load_json(_train_status_backup_loc)
+        _save_json(status, _train_status_loc)
 
         if _exists(_train_status_backup_loc):
             _remove(_train_status_backup_loc)
+
+        status = _load_json(_generate_status_backup_loc)
+        _save_json(status, _generate_status_loc)
+
         if _exists(_generate_status_backup_loc):
             _remove(_generate_status_backup_loc)
 
@@ -583,8 +586,8 @@ class TestGANTrain(_TestCmd):
         fail_msg = "{} is not a directory; {}".format(_model_path, format_incorrect_info)
         self.assertTrue(isdir, fail_msg)
 
-        model_dnames = ["Training-Results"]
-        model_fnames = [
+        dnames = ["Training-Results"]
+        fnames = [
             "coords_config.json",
             "discriminator_optim.pt",
             "discriminator_state.pt",
@@ -599,7 +602,7 @@ class TestGANTrain(_TestCmd):
 
         contents = _listdir(_model_path)
 
-        for dname in model_dnames:
+        for dname in dnames:
             exists = dname in contents
             fail_msg = "{} is not in {}; {}".format(dname, _model_path, format_incorrect_info)
             self.assertTrue(exists, fail_msg)
@@ -609,7 +612,7 @@ class TestGANTrain(_TestCmd):
             fail_msg = "{} is not a directory; {}".format(path, format_incorrect_info)
             self.assertTrue(isdir, fail_msg)
 
-        for fname in model_fnames:
+        for fname in fnames:
             exists = fname in contents
             fail_msg = "{} is not in {}; {}".format(fname, _model_path, format_incorrect_info)
             self.assertTrue(exists, fail_msg)
@@ -699,8 +702,8 @@ class TestGANGenerate(_TestCmd):
         fail_msg = "{} is not a directory; {}".format(_model_path, format_incorrect_info)
         self.assertTrue(isdir, fail_msg)
 
-        model_dnames = ["Generation-Results"]
-        model_fnames = [
+        dnames = ["Generation-Results"]
+        fnames = [
             "coords_config.json",
             "discriminator_optim.pt",
             "discriminator_state.pt",
@@ -715,7 +718,7 @@ class TestGANGenerate(_TestCmd):
 
         contents = _listdir(_model_path)
 
-        for dname in model_dnames:
+        for dname in dnames:
             exists = dname in contents
             fail_msg = "{} is not in {}; {}".format(dname, _model_path, format_incorrect_info)
             self.assertTrue(exists, fail_msg)
@@ -725,7 +728,7 @@ class TestGANGenerate(_TestCmd):
             fail_msg = "{} is not a directory; {}".format(path, format_incorrect_info)
             self.assertTrue(isdir, fail_msg)
 
-        for fname in model_fnames:
+        for fname in fnames:
             exists = fname in contents
             fail_msg = "{} is not in {}; {}".format(fname, _model_path, format_incorrect_info)
             self.assertTrue(exists, fail_msg)

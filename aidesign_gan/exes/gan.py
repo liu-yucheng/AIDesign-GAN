@@ -21,11 +21,16 @@ _stderr = sys.stderr
 
 # End of aliases
 
-# Init _version
+# Initialize _version
 _version = "<unknown version>"
-_packages = _require("aidesign-gan")
-if len(_packages) > 0:
-    _version = _packages[0].version
+
+try:
+    _packages = _require("aidesign-gan")
+
+    if len(_packages) > 0:
+        _version = _packages[0].version
+except Exception as _:
+    pass
 
 brief_usage = "gan <command> ..."
 """Brief usage."""
@@ -53,14 +58,14 @@ info = info.strip()
 # End of nominal info strings
 # Error info strings
 
-unknown_command_info = fr"""
+unknown_cmd_info = fr"""
 
 "{brief_usage}" gets an unknown command: {{}}
 {usage}
 
 """
 """Info to display when getting an unknown command."""
-unknown_command_info = unknown_command_info.strip()
+unknown_cmd_info = unknown_cmd_info.strip()
 
 unknown_arg_info = fr"""
 
@@ -86,7 +91,7 @@ def _run_command():
     command = str(command)
 
     if len(command) <= 0:
-        print(unknown_command_info.format(command), file=_stderr)
+        print(unknown_cmd_info.format(command), file=_stderr)
         exit(1)
     elif command[0] == "-":
         print(unknown_arg_info.format(command), file=_stderr)
@@ -128,7 +133,7 @@ def _run_command():
         gan_reset.argv_copy = argv_copy
         gan_reset.run()
     else:
-        print(unknown_command_info.format(command), file=_stderr)
+        print(unknown_cmd_info.format(command), file=_stderr)
         exit(1)
     # end if
 

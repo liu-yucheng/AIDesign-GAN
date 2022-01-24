@@ -49,7 +49,7 @@ def _make_default_app_data():
 def main():
     _setup(
         name="aidesign-gan",
-        version="0.59.15",
+        version="0.60.0",
         description="AIDesign GAN Modeling Application",
         author="Yucheng Liu (From The AIDesign Team)",
         packages=_find_packages(),
@@ -61,6 +61,9 @@ def main():
         # test_suite="aidesign_gan.tests"
     )
     _make_default_app_data()
+
+    # Check main command availability
+    from aidesign_gan.exes import gan as _
     print("Commands available: gan")
 
 # Top level code

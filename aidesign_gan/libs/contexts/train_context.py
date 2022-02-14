@@ -1,103 +1,44 @@
-"""Module of the context classes."""
+"""Training context."""
 
 # Copyright 2022 Yucheng Liu. GNU GPL3 license.
 # GNU GPL3 license copy: https://www.gnu.org/licenses/gpl-3.0.txt
 # First added by username: liu-yucheng
 # Last updated by username: liu-yucheng
 
+import numpy
+import random
+import typing
+
 from torch import nn
 from torch.utils import data
 from torchvision import datasets
 from torchvision import transforms
 
-import numpy
-import random
-import torch
-import typing
-
 from aidesign_gan.libs import modelers
 from aidesign_gan.libs import utils
+from aidesign_gan.libs.contexts import context
 
 _AttrDict = utils.AttrDict
+_BCELoss = nn.BCELoss
+_BICUBIC = transforms.InterpolationMode.BICUBIC
+_CenterCrop = transforms.CenterCrop
+_clamp = utils.bound_num
+_Compose = transforms.Compose
+_Context = context.Context
+_DataLoader = data.DataLoader
 _DModeler = modelers.DModeler
 _GModeler = modelers.GModeler
+_ImageFolder = datasets.ImageFolder
+_Normalize = transforms.Normalize
+_nparray = numpy.array
+_shuffle = random.shuffle
+_Subset = data.Subset
+_Resize = transforms.Resize
+_ToTensor = transforms.ToTensor
 _Union = typing.Union
 
 
-class Context:
-    """Super class of the context classes."""
-    class Rand(_AttrDict):
-        """Random info."""
-        mode = None
-        """Random mode."""
-        seed = None
-        """Random seed."""
-
-    class Hw(_AttrDict):
-        """Hardware info."""
-        device = None
-        """Device to use."""
-        gpu_count = None
-        """Number of GPUs to use."""
-
-    def __init__(self):
-        """Inits self."""
-        self.rand = Context.Rand()
-        """Random info attr dict."""
-        self.hw = Context.Hw()
-        """Hardware info attr dict."""
-
-        # Explicitly set torch default dtype to float32 and default tensor type to FloatTensor
-        torch.set_default_dtype(torch.float32)
-        torch.set_default_tensor_type(torch.FloatTensor)
-
-    def setup_rand(self, config):
-        """Sets the random seeds with the given args.
-
-        Set up seeds for numpy, random and torch. Set up self.rand and its attributes.
-
-        Args:
-            config: the training / generation coords config subset
-        """
-        mode = "manual"
-        seed = config["manual_seed"]
-
-        if hasattr(seed, "__int__"):
-            seed = int(seed)
-            seed = seed % (2 ** 32 - 1)
-        else:  # elif not hasattr(seed, "__int__")
-            mode = "auto"
-            random.seed(None)
-            seed = random.randint(0, 2 ** 32 - 1)
-
-        numpy.random.seed(seed)
-        random.seed(seed)
-        torch.manual_seed(seed)
-        torch.cuda.manual_seed_all(seed)
-
-        self.rand.mode = mode
-        self.rand.seed = seed
-
-    def setup_hw(self, config):
-        """Sets up the torch hardware with the given args.
-
-        Set up self.hw and its attributes.
-
-        Args:
-            config: the training / generation coords config subset
-        """
-        gpu_count = config["gpu_count"]
-
-        device_name = "cpu"
-        if torch.cuda.is_available() and gpu_count > 0:
-            device_name = "cuda:0"
-        device = torch.device(device_name)
-
-        self.hw.device = device
-        self.hw.gpu_count = gpu_count
-
-
-class TrainingContext(Context):
+class TrainContext(_Context):
     """Training context."""
 
     class Data(_AttrDict):
@@ -105,6 +46,7 @@ class TrainingContext(Context):
 
         class TrainValid(_AttrDict):
             """Training validation subset info."""
+
             loader = None
             """Subset data loader."""
             size = None
@@ -125,6 +67,7 @@ class TrainingContext(Context):
 
     class Mods(_AttrDict):
         """Modelers info."""
+
         d: _Union[None, _DModeler] = None
         """Discriminator modeler instance."""
         g: _Union[None, _GModeler] = None
@@ -132,6 +75,7 @@ class TrainingContext(Context):
 
     class Labels(_AttrDict):
         """Target labels info."""
+
         real = None
         """Real label."""
         fake = None
@@ -142,6 +86,7 @@ class TrainingContext(Context):
 
         class IterationEpochBatch(_AttrDict):
             """Iteration epoch batch info."""
+
             count = None
             """Count."""
             index = None
@@ -149,6 +94,7 @@ class TrainingContext(Context):
 
         class RollbackEarlystop(_AttrDict):
             """Rollback earlystop info."""
+
             max = None
             """Maximum rollback / earlystop count."""
             d = None
@@ -171,6 +117,7 @@ class TrainingContext(Context):
 
     class Latest(_AttrDict):
         """Latest batch result info."""
+
         dx = None
         """Average D(X) while training D."""
         ldr = None
@@ -206,6 +153,7 @@ class TrainingContext(Context):
 
         class Subset(_AttrDict):
             """Data subset losses info."""
+
             d = None
             """Discriminator epoch losses."""
             g = None
@@ -218,6 +166,7 @@ class TrainingContext(Context):
 
     class Bests(_AttrDict):
         """Best losses info."""
+
         d = None
         """Discriminator best loss."""
         g = None
@@ -225,6 +174,7 @@ class TrainingContext(Context):
 
     class Rbs(_AttrDict):
         """Rollback epochs info."""
+
         d = None
         """Discriminator rollback epoch number list."""
         g = None
@@ -232,6 +182,7 @@ class TrainingContext(Context):
 
     class Noises(_AttrDict):
         """Fixed noises info."""
+
         valid = None
         """Validation noise batch."""
         ref_batch = None
@@ -239,6 +190,7 @@ class TrainingContext(Context):
 
     class Collapses(_AttrDict):
         """Training collapses info."""
+
         epochs = None
         """Collapses epoch number list."""
         batch_count = None
@@ -255,28 +207,30 @@ class TrainingContext(Context):
 
     def __init__(self):
         """Inits self."""
+
         super().__init__()
-        self.data = TrainingContext.Data()
+
+        self.data = TrainContext.Data()
         """Data info attr dict."""
-        self.mods = TrainingContext.Mods()
+        self.mods = TrainContext.Mods()
         """Modelers info attr dict."""
         self.mode = None
         """Training mode name."""
-        self.labels = TrainingContext.Labels()
+        self.labels = TrainContext.Labels()
         """Target labels info attr dict."""
-        self.loops = TrainingContext.Loops()
+        self.loops = TrainContext.Loops()
         """Loop controls info attr dict."""
-        self.latest = TrainingContext.Latest()
+        self.latest = TrainContext.Latest()
         """Latest batch result info attr dict."""
-        self.losses = TrainingContext.Losses()
+        self.losses = TrainContext.Losses()
         """Epoch losses info attr dict."""
-        self.bests = TrainingContext.Bests()
+        self.bests = TrainContext.Bests()
         """Best losses info attr dict."""
-        self.rbs = TrainingContext.Rbs()
+        self.rbs = TrainContext.Rbs()
         """Rollback epochs info attr dict."""
-        self.noises = TrainingContext.Noises()
+        self.noises = TrainContext.Noises()
         """Fixed noises info attr dict."""
-        self.collapses = TrainingContext.Collapses()
+        self.collapses = TrainContext.Collapses()
         """Training collapses info attr dict."""
 
     def setup_data(self, path, config):
@@ -298,34 +252,35 @@ class TrainingContext(Context):
 
         means = [0.5 for _ in range(channel_count)]
         sdevs = [0.667 for _ in range(channel_count)]
-        dataset = datasets.ImageFolder(
+
+        dataset = _ImageFolder(
             root=path,
-            transform=transforms.Compose([
-                transforms.Resize(image_resolution, interpolation=transforms.InterpolationMode.BICUBIC),
-                transforms.CenterCrop(image_resolution),
-                transforms.ToTensor(),
-                transforms.Normalize(means, sdevs)
+            transform=_Compose([
+                _Resize(image_resolution, interpolation=_BICUBIC),
+                _CenterCrop(image_resolution),
+                _ToTensor(),
+                _Normalize(means, sdevs)
             ])
         )
 
         size = len(dataset)
-        subset_ratio = numpy.array([train_weight, valid_weight])
+        subset_ratio = _nparray([train_weight, valid_weight])
         subset_ratio = subset_ratio / subset_ratio.sum()
         prop_to_use = percents_to_use / 100
-        prop_to_use = utils.bound_num(prop_to_use, 0, 1)
+        prop_to_use = _clamp(prop_to_use, 0, 1)
         size_to_use = int(prop_to_use * size)
         train_start, train_end = 0, int(subset_ratio[0] * size_to_use)
         valid_start, valid_end = train_end, size_to_use
         indices = list(range(size_to_use))
-        random.shuffle(indices)
+        _shuffle(indices)
         train_indices = indices[train_start: train_end]
         valid_indices = indices[valid_start: valid_end]
-        train_set = data.Subset(dataset, train_indices)
-        valid_set = data.Subset(dataset, valid_indices)
-        train_loader = data.DataLoader(train_set, batch_size=batch_size, shuffle=True, num_workers=worker_count)
+        train_set = _Subset(dataset, train_indices)
+        valid_set = _Subset(dataset, valid_indices)
+        train_loader = _DataLoader(train_set, batch_size=batch_size, shuffle=True, num_workers=worker_count)
         train_size = len(train_set)
         train_batch_count = len(train_loader)
-        valid_loader = data.DataLoader(valid_set, batch_size=batch_size, shuffle=True, num_workers=worker_count)
+        valid_loader = _DataLoader(valid_set, batch_size=batch_size, shuffle=True, num_workers=worker_count)
         valid_size = len(valid_set)
         valid_batch_count = len(valid_loader)
 
@@ -351,12 +306,13 @@ class TrainingContext(Context):
         if self.hw.device is None:
             raise ValueError("self.hw.device cannot be None")
 
+        model_path = config.model_path
         d_config = config["discriminator"]
         g_config = config["generator"]
-        loss_func = nn.BCELoss()
+        loss_func = _BCELoss()
 
-        d = modelers.DModeler(config.model_path, d_config, self.hw.device, self.hw.gpu_count, loss_func)
-        g = modelers.GModeler(config.model_path, g_config, self.hw.device, self.hw.gpu_count, loss_func)
+        d = _DModeler(model_path, d_config, self.hw.device, self.hw.gpu_count, loss_func)
+        g = _GModeler(model_path, g_config, self.hw.device, self.hw.gpu_count, loss_func)
 
         self.mods.d = d
         self.mods.g = g
@@ -395,8 +351,8 @@ class TrainingContext(Context):
             self.labels.real = float(1)
             self.labels.fake = float(0)
         else:  # elif config is not None:
-            real = float(utils.bound_num(config["real"], 0, 1))
-            fake = float(utils.bound_num(config["fake"], 0, 1))
+            real = float(_clamp(config["real"], 0, 1))
+            fake = float(_clamp(config["fake"], 0, 1))
 
             self.labels.real = real
             self.labels.fake = fake
@@ -503,97 +459,3 @@ class TrainingContext(Context):
 
         self.noises.valid = valid
         self.noises.ref_batch = ref_batch
-
-
-class GenerationContext(Context):
-    """Generation context."""
-
-    class Images(utils.AttrDict):
-        """Images info."""
-
-        count = None
-        """Image count."""
-        per_batch = None
-        """Image count of each batch."""
-        to_save = None
-        """Images to save."""
-
-    class Grids(utils.AttrDict):
-        """Grid mode info."""
-
-        enabled = None
-        """Whether grid mode is enabled."""
-        size_each = None
-        """Size of each grid."""
-        padding = None
-        """Grid padding width."""
-
-    class BatchProg(utils.AttrDict):
-        """Generation batch progress info."""
-
-        count = None
-        """Count."""
-        index = None
-        """Current index."""
-
-    def __init__(self):
-        """Inits self."""
-        super().__init__()
-        self.g = None
-        """Generator modeler instance."""
-        self.images = GenerationContext.Images()
-        """Images info attr dict."""
-        self.grids = GenerationContext.Grids()
-        """Grid mode info attr dict."""
-        self.noise_batches = None
-        """Noise batch list."""
-        self.batch_prog = GenerationContext.BatchProg()
-        """Generation batch progress info."""
-
-    def setup_all(self, coords_config, modelers_config):
-        """Sets up the entire context.
-
-        Sets up self.g, self.images, self.grids, and self.noises.
-
-        Args:
-            coords_config: the coords config
-            modelers_config: the modelers config
-
-        Raises:
-            ValueError: if self.hw.device is None
-        """
-        if self.hw.device is None:
-            raise ValueError("self.hw.device cannot be None")
-
-        # Setup self.g
-        model_path = modelers_config.model_path
-        config = modelers_config["generator"]
-        loss_func = nn.BCELoss()
-        self.g = modelers.GModeler(model_path, config, self.hw.device, self.hw.gpu_count, loss_func, train=False)
-        self.g.load()
-
-        # Setup self.images
-        config = coords_config["generation"]
-        self.images.count = config["image_count"]
-        self.images.per_batch = config["images_per_batch"]
-        self.images.to_save = []
-
-        # Setup self.grids
-        config = config["grid_mode"]
-        self.grids.enabled = config["enabled"]
-        self.grids.size_each = config["images_per_grid"]
-        self.grids.padding = config["padding"]
-
-        # Setup self.noise_batches
-        noises_left = self.images.count
-        noise_batches = []
-        while noises_left > 0:
-            noise_count = min(noises_left, self.images.per_batch)
-            noise_batch = self.g.generate_noises(noise_count)
-            noise_batches.append(noise_batch)
-            noises_left -= noise_count
-        self.noise_batches = noise_batches
-
-        # Setup self.batch_prog
-        self.batch_prog.count = len(self.noise_batches)
-        self.batch_prog.index = 0

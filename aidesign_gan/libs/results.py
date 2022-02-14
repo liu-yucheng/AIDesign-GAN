@@ -17,8 +17,8 @@ from aidesign_gan.libs import contexts
 from aidesign_gan.libs import utils
 
 _Context = contexts.Context
-_TrainingContext = contexts.TrainingContext
-_GenerationContext = contexts.GenerationContext
+_TrainingContext = contexts.TrainContext
+_GenerationContext = contexts.GenContext
 
 
 class Results:

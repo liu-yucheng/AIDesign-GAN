@@ -104,7 +104,7 @@ class TrainingCoord(Coord):
 
         self.results.log_configs(self.coords_config, self.modelers_config)
 
-        self.context = contexts.TrainingContext()
+        self.context = contexts.TrainContext()
         self.results.bind_context(self.context)
 
         training_key = "training"
@@ -223,7 +223,7 @@ class GenerationCoord(Coord):
         self.modelers_config = configs.ModelersConfig(self.model_path)
         self.modelers_config.load()
         self.results.log_configs(self.coords_config, self.modelers_config)
-        self.context = contexts.GenerationContext()
+        self.context = contexts.GenContext()
         self.results.bind_context(self.context)
         config = self.coords_config["generation"]
         self.context.setup_rand(config)

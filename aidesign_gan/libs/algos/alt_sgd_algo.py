@@ -17,7 +17,7 @@ from aidesign_gan.libs.algos import algo
 _Algo = algo.Algo
 _nparray = numpy.array
 _rand_bool = utils.rand_bool
-_TrainContext = contexts.TrainingContext
+_TrainContext = contexts.TrainContext
 _TrainResults = results.TrainingResults
 
 # End of aliases

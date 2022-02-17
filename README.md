@@ -32,6 +32,46 @@ AIDesign GAN modeling application.
 
 `gan help`: The help subcommand, which tells you the details about how to use the app.
 
+# `gan help` Help Page
+
+```powershell
+> gan help
+Usage: gan <command> ...
+==== Commands ====
+help:
+    When:   You need help info. For example, now.
+    How-to: gan help
+create:
+    When:   You create a new model with the defaults.
+    How-to: gan create <path-to-model>
+status:
+    When:   You check the status of the train and generate commands.
+    How-to: gan status
+model:
+    When:   You select the model for the next training or generation session.
+    How-to: gan model <path-to-model>
+dataset:
+    When:   You select the dataset for the next training session.
+    How-to: gan dataset <path-to-dataset>
+train:
+    When:   You start a training session.
+    How-to: gan train
+    Notes:  You will be prompted with the command status. You need to confirm to continue. Depending on your training
+            configs, the training session might take minutes, hours, or several days.
+generate:
+    When:   You start a generation session.
+    How-to: gan generate
+    Notes:  You will be prompted with the command status. You need to confirm to continue. Depending on your generation
+            configs, the generation session might take seconds or minutes.
+reset:
+    When:   You want to reset the app data, which contains the command statuses.
+    How-to: gan reset
+    Notes:  You will lose the current command statuses after the reset.
+welcome:
+    When:   You want to display the welcome message.
+    How-to: gan welcome
+```
+
 # References
 
 **Note:** The referenced works are listed below in alphabetical order. You can find the reference details in the docstring of the modules that are relevant to the referenced works.

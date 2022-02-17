@@ -107,7 +107,7 @@ An output of this application is a file that satisfies **all** of the following:
 
 The outputs of this application do not have to be distributed under the GNU GPL3 license.
 
-The works that uses the outputs of this application do not have to be distributed under the GNU GPL3 license.
+The non-subsequent works that uses the outputs of this application do not have to be distributed under the GNU GPL3 license.
 
 ### Warnings :warning:
 

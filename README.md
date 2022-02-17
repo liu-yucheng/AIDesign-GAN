@@ -49,28 +49,57 @@ Radford, et al., 2016. *Unsupervised Representation Learning With Deep Convoluti
 Yadav, et al., 2018. *Stabilizing Adversarial Nets With Prediction Methods.* https://openreview.net/pdf?id=Skj8Kag0Z
 
 # Miscellaneous
-## Versioning
+## Developer's Notes :memo: And Warnings :warning:
+### Notes :memo:
+
+This application is distributed under the **GNU GPL3 license**.
+
+A subsequent work of this application is a work that satisfies **any one** of the following:
+ - Is a variant of any form of this application.
+ - Contains a part, some parts, or all parts of this application.
+ - Integrates a part, some parts, or all parts of this application.
+
+All subsequent works of this application **must also be distributed under the GNU GPL3 license, and must also open their source codes to the public**.
+
+An output of this application is a file that satisfies **all** of the following:
+ - Is directly produced by running one or more commands provided by this application.
+ - Is directly produced by conducting one or more operations on the GUI of this application.
+
+The outputs of this application do not have to be distributed under the GNU GPL3 license.
+
+The works that uses the outputs of this application do not have to be distributed under the GNU GPL3 license.
+
+### Warnings :warning:
+
+Making a **closed-source** subsequent work (as defined above) of this application, and distribute it to the public is **unlawful**, no matter if such work makes a profit.
+
+Doing the above may result in severe civil and criminal penalties.
+
+I reserve the rights, funds, time, and efforts to prosecute those who violate the license of this application to the maximum extent under applicable laws.
+
+## Versions
+### Versioning
 
 ```text
-The versioning of this app is based on Semantic Versioning.
+The versioning of this application is based on Semantic Versioning.
 You can see the complete Semantic Versioning specification from
   https://semver.org/.
-Basically, the version name of this app is in the form of:
+Basically, the version name of this application is in the form of:
   x.y.z
   Where x, y, and z are integers that are greater than or equal to 0.
   Where x, y, and z are separated by dots.
   x stands for the major version and indicates non-compatible major changes to
-    the app.
+    the application.
   y stands for the minor version and indicates forward compatible minor
-    changes to the app.
+    changes to the application.
   z stands for the patch version and indicates bug fixes and patches to the
-    app.
+    application.
 ```
 
-## Version Tags
+### Version Tags
 
 ```text
-The version tags of this repo has the form of a letter "v" followed by a
+The version tags of this repository has the form of a letter "v" followed by a
   semantic version.
 Given a semantic version:
   $x.$y.$z

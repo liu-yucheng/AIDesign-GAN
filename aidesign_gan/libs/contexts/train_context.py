@@ -18,7 +18,6 @@ from aidesign_gan.libs import modelers
 from aidesign_gan.libs import utils
 from aidesign_gan.libs.contexts import context
 
-_AttrDict = utils.AttrDict
 _BCELoss = nn.BCELoss
 _BICUBIC = transforms.InterpolationMode.BICUBIC
 _CenterCrop = transforms.CenterCrop
@@ -27,6 +26,7 @@ _Compose = transforms.Compose
 _Context = context.Context
 _DataLoader = data.DataLoader
 _DModeler = modelers.DModeler
+_DotDict = utils.DotDict
 _GModeler = modelers.GModeler
 _ImageFolder = datasets.ImageFolder
 _Normalize = transforms.Normalize
@@ -41,10 +41,10 @@ _Union = typing.Union
 class TrainContext(_Context):
     """Training context."""
 
-    class Data(_AttrDict):
+    class Data(_DotDict):
         """Data info."""
 
-        class TrainValid(_AttrDict):
+        class TrainValid(_DotDict):
             """Training validation subset info."""
 
             loader = None
@@ -65,7 +65,7 @@ class TrainContext(_Context):
         valid = TrainValid()
         """Dataset validation subset info."""
 
-    class Mods(_AttrDict):
+    class Mods(_DotDict):
         """Modelers info."""
 
         d: _Union[None, _DModeler] = None
@@ -73,7 +73,7 @@ class TrainContext(_Context):
         g: _Union[None, _GModeler] = None
         """Generator modeler instance."""
 
-    class Labels(_AttrDict):
+    class Labels(_DotDict):
         """Target labels info."""
 
         real = None
@@ -81,10 +81,10 @@ class TrainContext(_Context):
         fake = None
         """Fake label."""
 
-    class Loops(_AttrDict):
+    class Loops(_DotDict):
         """Loop controls info."""
 
-        class IterationEpochBatch(_AttrDict):
+        class IterationEpochBatch(_DotDict):
             """Iteration epoch batch info."""
 
             count = None
@@ -92,7 +92,7 @@ class TrainContext(_Context):
             index = None
             """Current index."""
 
-        class RollbackEarlystop(_AttrDict):
+        class RollbackEarlystop(_DotDict):
             """Rollback earlystop info."""
 
             max = None
@@ -115,7 +115,7 @@ class TrainContext(_Context):
         es = RollbackEarlystop()
         """Earlystop control info."""
 
-    class Latest(_AttrDict):
+    class Latest(_DotDict):
         """Latest batch result info."""
 
         dx = None
@@ -148,10 +148,10 @@ class TrainContext(_Context):
         lg = None
         """L(G), the loss of G."""
 
-    class Losses(_AttrDict):
+    class Losses(_DotDict):
         """Epoch losses info."""
 
-        class Subset(_AttrDict):
+        class Subset(_DotDict):
             """Data subset losses info."""
 
             d = None
@@ -164,7 +164,7 @@ class TrainContext(_Context):
         valid = Subset()
         """Validation losses info."""
 
-    class Bests(_AttrDict):
+    class Bests(_DotDict):
         """Best losses info."""
 
         d = None
@@ -172,7 +172,7 @@ class TrainContext(_Context):
         g = None
         """Generator best loss."""
 
-    class Rbs(_AttrDict):
+    class Rbs(_DotDict):
         """Rollback epochs info."""
 
         d = None
@@ -180,7 +180,7 @@ class TrainContext(_Context):
         g = None
         """Generator rollback epoch number list."""
 
-    class Noises(_AttrDict):
+    class Noises(_DotDict):
         """Fixed noises info."""
 
         valid = None
@@ -188,7 +188,7 @@ class TrainContext(_Context):
         ref_batch = None
         """A reference batch."""
 
-    class Collapses(_AttrDict):
+    class Collapses(_DotDict):
         """Training collapses info."""
 
         epochs = None

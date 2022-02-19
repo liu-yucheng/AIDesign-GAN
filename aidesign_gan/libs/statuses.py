@@ -58,7 +58,8 @@ class Status:
         if self.location is None:
             raise ValueError("self.location cannot be None")
         try:
-            utils.load_json(self.location, self.items)
+            self.items = utils.load_json(self.location)
+            self.items = dict(self.items)
         except FileNotFoundError:
             utils.save_json(self.items, self.location)
 

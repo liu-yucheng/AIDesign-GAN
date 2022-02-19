@@ -11,7 +11,7 @@ import torch
 
 from aidesign_gan.libs import utils
 
-_AttrDict = utils.AttrDict
+_DotDict = utils.DotDict
 _float32 = torch.float32
 _FloatTensor = torch.FloatTensor
 _nprandseed = numpy.random.seed
@@ -28,7 +28,7 @@ _torch_set_default_tensor_type = torch.set_default_tensor_type
 class Context:
     """Context base class."""
 
-    class Rand(_AttrDict):
+    class Rand(_DotDict):
         """Random info."""
 
         mode = None
@@ -36,7 +36,7 @@ class Context:
         seed = None
         """Random seed."""
 
-    class Hw(_AttrDict):
+    class Hw(_DotDict):
         """Hardware info."""
 
         device = None

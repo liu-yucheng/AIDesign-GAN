@@ -11,16 +11,16 @@ from aidesign_gan.libs import modelers
 from aidesign_gan.libs import utils
 from aidesign_gan.libs.contexts import context
 
-_AttrDict = utils.AttrDict
 _BCELoss = nn.BCELoss
 _Context = context.Context
+_DotDict = utils.DotDict
 _GModeler = modelers.GModeler
 
 
 class GenContext(_Context):
     """Generation context."""
 
-    class Images(_AttrDict):
+    class Images(_DotDict):
         """Images info."""
 
         count = None
@@ -30,7 +30,7 @@ class GenContext(_Context):
         to_save = None
         """Images to save."""
 
-    class Grids(_AttrDict):
+    class Grids(_DotDict):
         """Grid mode info."""
 
         enabled = None
@@ -40,7 +40,7 @@ class GenContext(_Context):
         padding = None
         """Grid padding width."""
 
-    class BatchProg(_AttrDict):
+    class BatchProg(_DotDict):
         """Generation batch progress info."""
 
         count = None

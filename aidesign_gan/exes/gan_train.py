@@ -32,7 +32,7 @@ _now = datetime.datetime.now
 _stderr = sys.stderr
 _stdout = sys.stdout
 _TimedInput = utils.TimedInput
-_TrainCoord = coords.TrainingCoord
+_TrainCoord = coords.TrainCoord
 _TrainStatus = statuses.GANTrainStatus
 
 # End of aliases

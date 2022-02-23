@@ -6,9 +6,12 @@
 # Last updated by username: liu-yucheng
 
 import pkg_resources
+from os import path as ospath
 
 from aidesign_gan.libs import defaults
 from aidesign_gan.libs import utils
+
+_join = ospath.join
 
 
 class Config:
@@ -77,7 +80,7 @@ class CoordsConfig(Config):
         if model_path is None:
             raise ValueError("Argument model_path cannot be None")
         self.model_path = model_path
-        self.location = utils.find_in_path(defaults.coords_config_name, model_path)
+        self.location = _join(model_path, defaults.coords_config_name)
         self.items = {
             "training": {
                 "mode": "resume",
@@ -132,7 +135,7 @@ class ModelersConfig(Config):
         if model_path is None:
             raise ValueError("Argument model_path cannot be None")
         self.model_path = model_path
-        self.location = utils.find_in_path(defaults.modelers_config_name, model_path)
+        self.location = _join(model_path, defaults.modelers_config_name)
         self.items = {
             "discriminator": {
                 "image_resolution": 64,
@@ -221,7 +224,7 @@ class FormatConfig(Config):
         if model_path is None:
             raise ValueError("Argument model_path cannot be None")
 
-        self.location = utils.find_in_path(defaults.format_config, model_path)
+        self.location = _join(model_path, defaults.format_config)
 
         # Init version
         version = "<unknown version>"

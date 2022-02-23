@@ -15,6 +15,7 @@ import datetime
 import sys
 import traceback
 import typing
+from os import path as ospath
 
 from aidesign_gan.libs import coords
 from aidesign_gan.libs import statuses
@@ -24,7 +25,7 @@ from aidesign_gan.libs import utils
 
 _argv = sys.argv
 _deepcopy = copy.deepcopy
-_find_in_path = utils.find_in_path
+_join = ospath.join
 _format_exc = traceback.format_exc
 _GenCoord = coords.GenCoord
 _GenStatus = statuses.GANGenerateStatus
@@ -243,7 +244,7 @@ def run():
         print("-")
 
         if answer.lower() == "yes" or answer.lower() == "y":
-            log_loc = _find_in_path("log.txt", model_path)
+            log_loc = _join(model_path, "log.txt")
             print(will_start_session_info.format(log_loc))
 
             try:

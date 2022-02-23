@@ -6,6 +6,7 @@
 # Last updated by username: liu-yucheng
 
 import typing
+from os import path as ospath
 from torch import nn
 from torch import optim
 
@@ -13,7 +14,7 @@ from aidesign_gan.libs import optims as libs_optims
 from aidesign_gan.libs import utils
 
 _Adam = optim.Adam
-_join = utils.find_in_path
+_join = ospath.join
 _load_model = utils.load_model
 _load_optim = utils.load_optim
 _Module = nn.Module
@@ -75,8 +76,8 @@ class Modeler:
 
     def load(self):
         """Loads the model and optimizer states."""
-        state_location = _join(self.config["state_name"], self.model_path)
-        optim_location = _join(self.config["optim_name"], self.model_path)
+        state_location = _join(self.model_path, self.config["state_name"])
+        optim_location = _join(self.model_path, self.config["optim_name"])
 
         try:
             _load_model(state_location, self.model)
@@ -92,8 +93,8 @@ class Modeler:
 
     def save(self):
         """Saves the model and optimizer states."""
-        state_location = _join(self.config["state_name"], self.model_path)
-        optim_location = _join(self.config["optim_name"], self.model_path)
+        state_location = _join(self.model_path, self.config["state_name"])
+        optim_location = _join(self.model_path, self.config["optim_name"])
         _save_model(self.model, state_location)
 
         if self.optim is not None:

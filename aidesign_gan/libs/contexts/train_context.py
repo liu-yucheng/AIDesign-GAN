@@ -21,7 +21,7 @@ from aidesign_gan.libs.contexts import context
 _BCELoss = nn.BCELoss
 _BICUBIC = transforms.InterpolationMode.BICUBIC
 _CenterCrop = transforms.CenterCrop
-_clamp = utils.bound_num
+_clamp = utils.clamp
 _Compose = transforms.Compose
 _Context = context.Context
 _DataLoader = data.DataLoader
@@ -351,8 +351,8 @@ class TrainContext(_Context):
             self.labels.real = float(1)
             self.labels.fake = float(0)
         else:  # elif config is not None:
-            real = float(_clamp(config["real"], 0, 1))
-            fake = float(_clamp(config["fake"], 0, 1))
+            real = _clamp(config["real"], 0, 1)
+            fake = _clamp(config["fake"], 0, 1)
 
             self.labels.real = real
             self.labels.fake = fake

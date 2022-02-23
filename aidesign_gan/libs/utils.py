@@ -635,23 +635,6 @@ def flushlogs(logs):
         log.flush()
 
 
-def find_in_path(name, path):
-    """Finds the location of a file given its name and path.
-
-    The path needs to be an existing path. But, the file needs not to be an existing file.
-
-    Args:
-        name: the given config file name
-        path: the given path
-
-    Returns:
-        location: the location of the config file
-    """
-    path = str(pathlib.Path(path).resolve())
-    location: str = str(pathlib.Path(path + "/" + name).absolute())
-    return location
-
-
 def load_model(location, model):
     """Loads the states from a location into a model.
 
@@ -696,7 +679,7 @@ def save_optim(optim, location):
     file.close()
 
 
-def parallelize_model(model, device, gpu_count):
+def paral_model(model, device, gpu_count):
     """Finds the parallelized model with the given args.
 
     If the GPU count is 0 or 1, or the GPUs do not support CUDA, the function returns the original model.
@@ -711,6 +694,7 @@ def parallelize_model(model, device, gpu_count):
     """
     if device.type == "cuda" and gpu_count > 1:
         model = nn.DataParallel(model, list(range(gpu_count)))
+
     return model
 
 
@@ -731,42 +715,37 @@ def prep_batch_and_labels(batch, label, device):
     return batch, labels
 
 
-def bound_num(num, bound1, bound2):
-    """Bounds a number with the given args.
+def clamp(inval, bound1, bound2):
+    """Clamps inval to the range bounded by bounds 1 and 2.
 
     Args:
-        num: the number
-        bound1: the 1st bound
-        bound2: the 2nd bound
+        inval: the input value
+        bound1: bound 1
+        bound2: bound 2
 
     Returns:
-        result: the number, if the number is bounded by the 2 bounds; or, the upper bound, if the number is greater
-            than the bounds; or, the lower bound, if the number is less than the bounds
+        result: the result
     """
-    result = num
-    lower = bound1
-    upper = bound2
-    if upper < lower:
-        lower, upper = upper, lower
-    if result < lower:
-        result = lower
-    if result > upper:
-        result = upper
+    inval = float(inval)
+    bound1 = float(bound1)
+    bound2 = float(bound2)
+
+    if bound1 < bound2:
+        floor = bound1
+        ceil = bound2
+    else:  # elif bound1 >= bound2:
+        floor = bound2
+        ceil = bound1
+
+    result = inval
+
+    if result < floor:
+        result = floor
+
+    if result > ceil:
+        result = ceil
+
     return result
-
-
-def concat_paths(path1, path2):
-    """Concatenates 2 paths together.
-
-    Args:
-        path1: the 1st path
-        path2: the 2nd path
-
-    Returns:
-        path: the concatenated path
-    """
-    path = str(pathlib.Path(path1 + "/" + path2).absolute())
-    return path
 
 
 def init_folder(path, clean=False):
@@ -843,52 +822,6 @@ def find_model_sizes(model):
     return size, training_size
 
 
-def half_float_nan_to_num(tensor):
-    """Applies a half-precison float overflow-underflow-preventing nan_to_num operation to a tensor.
-
-    Does nothing if the given tensor is not an instance of torch.Tensor.
-
-    Args:
-        tensor: the tensor
-    """
-    if isinstance(tensor, torch.Tensor):
-        torch.nan_to_num_(tensor, nan=0.0, posinf=65504.0, neginf=-65504.0)
-
-
-def nan_to_num_model(model):
-    """Applies nan_to_num to a model.
-
-    Args:
-        model: the model, a pytorch nn module
-    """
-    class_name = model.__class__.__name__
-    if class_name.find("Conv") != -1:
-        half_float_nan_to_num(model.weight.data)
-        half_float_nan_to_num(model.weight.grad.data)
-    elif class_name.find("BatchNorm") != -1:
-        half_float_nan_to_num(model.weight.data)
-        half_float_nan_to_num(model.weight.grad.data)
-        half_float_nan_to_num(model.bias.data)
-        half_float_nan_to_num(model.bias.grad.data)
-
-
-def nan_to_num_optim(optim):
-    """Applies nan_to_num to an optimizer.
-
-    Args:
-        optim: the optimizer, a PyTorch optim
-    """
-    for group in optim.param_groups:
-        for param in group["params"]:
-            if param.grad is None:
-                continue
-            grad = param.grad.data
-            half_float_nan_to_num(grad)
-            state = optim.state[param]
-            for key in state:
-                half_float_nan_to_num(state[key])
-
-
 def find_params_init_func(config=None):
     """Finds the parameters initialization function.
 
@@ -898,22 +831,22 @@ def find_params_init_func(config=None):
     Returns:
         result_func: resulting function
     """
-    c_wmean = float(0)
-    c_wstd = 0.02
+    cw_mean = float(0)
+    cw_std = 0.02
 
-    bn_wmean = float(1)
-    bn_wstd = 0.02
-    bn_bmean = float(0)
-    bn_bstd = 0.0002
+    bnw_mean = float(1)
+    bnw_std = 0.02
+    bnb_mean = float(0)
+    bnb_std = 0.0002
 
     if config is not None:
-        c_wmean = float(config["conv"]["weight_mean"])
-        c_wstd = float(config["conv"]["weight_std"])
+        cw_mean = float(config["conv"]["weight_mean"])
+        cw_std = float(config["conv"]["weight_std"])
 
-        bn_wmean = float(config["batch_norm"]["weight_mean"])
-        bn_wstd = float(config["batch_norm"]["weight_std"])
-        bn_bmean = float(config["batch_norm"]["bias_mean"])
-        bn_bstd = float(config["batch_norm"]["bias_std"])
+        bnw_mean = float(config["batch_norm"]["weight_mean"])
+        bnw_std = float(config["batch_norm"]["weight_std"])
+        bnb_mean = float(config["batch_norm"]["bias_mean"])
+        bnb_std = float(config["batch_norm"]["bias_std"])
     # end if
 
     def result_func(model):
@@ -924,9 +857,9 @@ def find_params_init_func(config=None):
         """
         class_name = str(model.__class__.__name__)
         if class_name.find("Conv") != -1:
-            nn.init.normal_(model.weight.data, c_wmean, c_wstd)
+            nn.init.normal_(model.weight.data, cw_mean, cw_std)
         elif class_name.find("BatchNorm") != -1:
-            nn.init.normal_(model.weight.data, bn_wmean, bn_wstd)
-            nn.init.normal_(model.bias.data, bn_bmean, bn_bstd)
+            nn.init.normal_(model.weight.data, bnw_mean, bnw_std)
+            nn.init.normal_(model.bias.data, bnb_mean, bnb_std)
 
     return result_func

@@ -4,6 +4,7 @@
 # GNU GPL3 license copy: https://www.gnu.org/licenses/gpl-3.0.txt
 # First added by username: liu-yucheng
 # Last updated by username: liu-yucheng
+from os import path as ospath
 
 from aidesign_gan.libs import algos
 from aidesign_gan.libs import configs
@@ -16,7 +17,7 @@ _AltSGDAlgo = algos.AltSGDAlgo
 _Coord = coord.Coord
 _CoordsConfig = configs.CoordsConfig
 _FairPredAltSGDAlgo = algos.FairPredAltSGDAlgo
-_join = utils.concat_paths
+_join = ospath.join
 _ModelersConfig = configs.ModelersConfig
 _PredAltSGDAlgo = algos.PredAltSGDAlgo
 _TrainContext = contexts.TrainContext

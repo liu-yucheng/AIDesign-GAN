@@ -25,9 +25,9 @@ _clamp = utils.bound_num
 _Compose = transforms.Compose
 _Context = context.Context
 _DataLoader = data.DataLoader
-_DModeler = modelers.DModeler
+_DiscModeler = modelers.DiscModeler
 _DotDict = utils.DotDict
-_GModeler = modelers.GModeler
+_GenModeler = modelers.GenModeler
 _ImageFolder = datasets.ImageFolder
 _Normalize = transforms.Normalize
 _nparray = numpy.array
@@ -68,9 +68,9 @@ class TrainContext(_Context):
     class Mods(_DotDict):
         """Modelers info."""
 
-        d: _Union[None, _DModeler] = None
+        d: _Union[None, _DiscModeler] = None
         """Discriminator modeler instance."""
-        g: _Union[None, _GModeler] = None
+        g: _Union[None, _GenModeler] = None
         """Generator modeler instance."""
 
     class Labels(_DotDict):
@@ -311,8 +311,8 @@ class TrainContext(_Context):
         g_config = config["generator"]
         loss_func = _BCELoss()
 
-        d = _DModeler(model_path, d_config, self.hw.device, self.hw.gpu_count, loss_func)
-        g = _GModeler(model_path, g_config, self.hw.device, self.hw.gpu_count, loss_func)
+        d = _DiscModeler(model_path, d_config, self.hw.device, self.hw.gpu_count, loss_func)
+        g = _GenModeler(model_path, g_config, self.hw.device, self.hw.gpu_count, loss_func)
 
         self.mods.d = d
         self.mods.g = g

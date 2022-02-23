@@ -5,10 +5,12 @@
 # First added by username: liu-yucheng
 # Last updated by username: liu-yucheng
 
-import pkg_resources
+from os import path as ospath
 
 from aidesign_gan.libs import defaults
 from aidesign_gan.libs import utils
+
+_join = ospath.join
 
 
 class Status:
@@ -79,7 +81,7 @@ class GANTrainStatus(Status):
 
     def __init__(self):
         super().__init__()
-        self.location = utils.find_in_path(defaults.gan_train_status_name, defaults.app_data_path)
+        self.location = _join(defaults.app_data_path, defaults.gan_train_status_name)
         self.items = {
             "dataset_path": None,
             "model_path": None
@@ -91,7 +93,7 @@ class GANGenerateStatus(Status):
 
     def __init__(self):
         super().__init__()
-        self.location = utils.find_in_path(defaults.gan_generate_status_name, defaults.app_data_path)
+        self.location = _join(defaults.app_data_path, defaults.gan_generate_status_name)
         self.items = {
             "model_path": None
         }

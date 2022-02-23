@@ -12,8 +12,12 @@ Radford, et al., 2016. Unsupervised Representation Learning With Deep Convolutio
 # First added by username: liu-yucheng
 # Last updated by username: liu-yucheng
 
+from os import path as ospath
+
 from aidesign_gan.libs import defaults
 from aidesign_gan.libs import utils
+
+_join = ospath.join
 
 
 class Struct:
@@ -67,7 +71,7 @@ class DStruct(Struct):
         super().__init__()
         if model_path is None:
             raise ValueError("Argument model_path cannot be None")
-        self.location = utils.find_in_path(defaults.discriminator_struct_name, model_path)
+        self.location = _join(model_path, defaults.discriminator_struct_name)
         # fmt: off
         self.definition = r"""# D (Discriminator)
 # CNN (Convolutional Neural Network)
@@ -136,7 +140,7 @@ class GStruct(Struct):
         super().__init__()
         if model_path is None:
             raise ValueError("Argument model_path cannot be None")
-        self.location = utils.find_in_path(defaults.generator_struct_name, model_path)
+        self.location = _join(model_path, defaults.generator_struct_name)
         # fmt: off
         self.definition = r"""# G (Generator)
 # CNN (Convolutional Neural Network)

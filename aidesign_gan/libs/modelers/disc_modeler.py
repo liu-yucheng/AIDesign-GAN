@@ -6,6 +6,7 @@
 # Last updated by username: liu-yucheng
 
 import torch
+from os import path as ospath
 from torch import nn
 
 from aidesign_gan.libs import structs
@@ -15,12 +16,12 @@ from aidesign_gan.libs.modelers import modeler
 _DiscStruct = structs.DStruct
 _find_model_sizes = utils.find_model_sizes
 _find_params_init_func = utils.find_params_init_func
-_join = utils.find_in_path
+_join = ospath.join
 _logit = torch.logit
 _Modeler = modeler.Modeler
 _Module = nn.Module
 _no_grad = torch.no_grad
-_paral_model = utils.parallelize_model
+_paral_model = utils.paral_model
 _prep_batch_and_labels = utils.prep_batch_and_labels
 _setup_pred_adam = utils.setup_pred_adam
 _tanh = torch.tanh
@@ -49,7 +50,7 @@ class DiscModeler(_Modeler):
 
         # Setup self.model
         struct = _DiscStruct(self.model_path)
-        struct.location = _join(self.config["struct_name"], self.model_path)
+        struct.location = _join(self.model_path, self.config["struct_name"])
         struct.load()
         exec(struct.definition)
         self.model = self.model.to(self.device)

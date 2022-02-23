@@ -5,20 +5,21 @@
 # First added by username: liu-yucheng
 # Last updated by username: liu-yucheng
 
-from matplotlib import lines
-from matplotlib import pyplot
-from torchvision import utils as vutils
-
 import datetime
 import math
 import numpy
+from matplotlib import lines
+from matplotlib import pyplot
+from os import path as ospath
+from torchvision import utils as vutils
 
 from aidesign_gan.libs import contexts
 from aidesign_gan.libs import utils
 
 _Context = contexts.Context
-_TrainingContext = contexts.TrainContext
-_GenerationContext = contexts.GenContext
+_GenContext = contexts.GenContext
+_join = ospath.join
+_TrainContext = contexts.TrainContext
 
 
 class Results:
@@ -115,20 +116,20 @@ class TrainingResults(Results):
             logs: the log file objects
         """
         super().__init__(path, logs)
-        self.generated_images_path = utils.concat_paths(path, "Generated-Images")
+        self.gen_img_path = _join(path, "Generated-Images")
         """Generated images path."""
 
     def init_folders(self):
         """Inits the result folders."""
         utils.init_folder(self.path)
         self.logln(f"Initialized folder: {self.path}")
-        utils.init_folder(self.generated_images_path)
-        self.logln(f"Initialized folder: {self.generated_images_path}")
+        utils.init_folder(self.gen_img_path)
+        self.logln(f"Initialized folder: {self.gen_img_path}")
 
     def log_data(self):
         """Logs the data loaders info."""
         self.check_context()
-        c: _TrainingContext = self.context
+        c: _TrainContext = self.context
 
         self.logln(f"Data total size: {c.data.size}; Data size to use: {c.data.size_to_use}")
         self.logln(f"Training set size: {c.data.train.size}; Validation set size: {c.data.valid.size}")
@@ -136,7 +137,7 @@ class TrainingResults(Results):
     def log_mods(self):
         """Logs the modelers info."""
         self.check_context()
-        c: _TrainingContext = self.context
+        c: _TrainContext = self.context
 
         d_config = c.mods.d.config["adam_optimizer"]
         d_lr = d_config["learning_rate"]
@@ -179,14 +180,14 @@ class TrainingResults(Results):
     def log_mode(self):
         """Logs the training mode info."""
         self.check_context()
-        c: _TrainingContext = self.context
+        c: _TrainContext = self.context
 
         self.logln(f"Training mode: {c.mode}")
 
     def log_labels(self):
         """Logs the labels info."""
         self.check_context()
-        c: _TrainingContext = self.context
+        c: _TrainContext = self.context
 
         self.logln("Labels:  Real: {}  Fake: {}".format(f"{c.labels.real:.6f}", f"{c.labels.fake:.6f}"))
 
@@ -202,7 +203,7 @@ class TrainingResults(Results):
     def log_fairness(self):
         """Logs the fairness config."""
         self.check_context()
-        c: _TrainingContext = self.context
+        c: _TrainContext = self.context
 
         d_dx_factor = c.mods.d.config["fairness"]["dx_factor"]
         d_dgz_factor = c.mods.d.config["fairness"]["dgz_factor"]
@@ -232,7 +233,7 @@ class TrainingResults(Results):
     def log_pred_factor(self):
         """Logs the prediction factor."""
         self.check_context()
-        c: _TrainingContext = self.context
+        c: _TrainContext = self.context
 
         d_pred_factor = c.mods.d.optim.pred_factor
         g_pred_factor = c.mods.g.optim.pred_factor
@@ -252,7 +253,7 @@ class TrainingResults(Results):
             prefix: the contents to log before the info
         """
         self.check_context()
-        c: _TrainingContext = self.context
+        c: _TrainContext = self.context
 
         self.logstr("==== ==== ")
 
@@ -268,7 +269,7 @@ class TrainingResults(Results):
             epoch_type: epoch type (d/g/(empty string))
         """
         self.check_context()
-        c: _TrainingContext = self.context
+        c: _TrainContext = self.context
 
         self.logstr("==== ")
 
@@ -284,7 +285,7 @@ class TrainingResults(Results):
             result: whether the batch needs to be logged
         """
         self.check_context()
-        c: _TrainingContext = self.context
+        c: _TrainContext = self.context
 
         result = c.loops.train.index == 0
         result = result or (c.loops.train.index + 1) % 30 == 0
@@ -298,7 +299,7 @@ class TrainingResults(Results):
             result: whether the batch needs to be logged
         """
         self.check_context()
-        c: _TrainingContext = self.context
+        c: _TrainContext = self.context
 
         result = c.loops.valid.index == 0
         result = result or (c.loops.valid.index + 1) % 15 == 0
@@ -313,7 +314,7 @@ class TrainingResults(Results):
             batch_type: batch type (tr/tf/vr/vf/t/v)
         """
         self.check_context()
-        c: _TrainingContext = self.context
+        c: _TrainContext = self.context
 
         needs_log = False
         if "t" in batch_type:
@@ -365,7 +366,7 @@ class TrainingResults(Results):
             batch_type: batch type (t/vdr/vdf/vg)
         """
         self.check_context()
-        c: _TrainingContext = self.context
+        c: _TrainContext = self.context
 
         needs_log = False
         if "t" in batch_type:
@@ -417,7 +418,7 @@ class TrainingResults(Results):
             batch_type: batch type (t/v)
         """
         self.check_context()
-        c: _TrainingContext = self.context
+        c: _TrainContext = self.context
 
         needs_log = False
         if "t" in batch_type:
@@ -482,7 +483,7 @@ class TrainingResults(Results):
             loss_type: loss type (td/vd/tg/vg)
         """
         self.check_context()
-        c: _TrainingContext = self.context
+        c: _TrainContext = self.context
 
         loss = None
         if loss_type == "td":
@@ -515,7 +516,7 @@ class TrainingResults(Results):
             model_type: model type (d/g)
         """
         self.check_context()
-        c: _TrainingContext = self.context
+        c: _TrainContext = self.context
 
         if model_type == "d":
             curr_loss = c.losses.valid.d[-1]
@@ -543,7 +544,7 @@ class TrainingResults(Results):
             model_type: model type (d/g)
         """
         self.check_context()
-        c: _TrainingContext = self.context
+        c: _TrainContext = self.context
 
         model_name = None
         es_count = None
@@ -569,7 +570,7 @@ class TrainingResults(Results):
     def save_training_images(self):
         """Saves the first 64 training images."""
         self.check_context()
-        c: _TrainingContext = self.context
+        c: _TrainContext = self.context
 
         batch = next(iter(c.data.train.loader))
         batch = batch[0].cpu()
@@ -581,7 +582,7 @@ class TrainingResults(Results):
         grid = grid.cpu()
         grid = numpy.transpose(grid, (1, 2, 0))
 
-        location = utils.find_in_path("Training-Images.jpg", self.path)
+        location = _join(self.path, "Training-Images.jpg")
         figure = pyplot.figure(figsize=(8, 8))
         pyplot.axis("off")
         pyplot.title("Training Images")
@@ -594,7 +595,7 @@ class TrainingResults(Results):
     def save_validation_images(self):
         """Saves the first 64 validation images."""
         self.check_context()
-        c: _TrainingContext = self.context
+        c: _TrainContext = self.context
 
         batch = next(iter(c.data.valid.loader))
         batch = batch[0].cpu()
@@ -606,7 +607,7 @@ class TrainingResults(Results):
         grid = grid.cpu()
         grid = numpy.transpose(grid, (1, 2, 0))
 
-        location = utils.find_in_path("Validation-Images.jpg", self.path)
+        location = _join(self.path, "Validation-Images.jpg")
         figure = pyplot.figure(figsize=(8, 8))
         pyplot.axis("off")
         pyplot.title("Validation Images")
@@ -619,7 +620,7 @@ class TrainingResults(Results):
     def save_images_before_training(self):
         """Saves the generated images grid before any training."""
         self.check_context()
-        c: _TrainingContext = self.context
+        c: _TrainContext = self.context
 
         batch = c.mods.g.test(c.noises.ref_batch)
 
@@ -634,7 +635,7 @@ class TrainingResults(Results):
             f"{now.microsecond:06}"
         file_name = f"Before-Training-{timestamp}.jpg"
 
-        location = utils.find_in_path(file_name, self.generated_images_path)
+        location = _join(self.gen_img_path, file_name)
         figure = pyplot.figure(figsize=(8, 8))
         pyplot.axis("off")
         pyplot.title(f"Generated Images Before Any Training")
@@ -647,7 +648,7 @@ class TrainingResults(Results):
     def save_generated_images(self):
         """Saves the generated images grid."""
         self.check_context()
-        c: _TrainingContext = self.context
+        c: _TrainContext = self.context
 
         batch = c.mods.g.test(c.noises.ref_batch)
 
@@ -661,7 +662,7 @@ class TrainingResults(Results):
         timestamp = f"Time-{now.year:04}{now.month:02}{now.day:02}-{now.hour:02}{now.minute:02}{now.second:02}-"\
             f"{now.microsecond:06}"
         file_name = f"Iter-{c.loops.iteration.index + 1}-Epoch-{c.loops.epoch.index + 1}-{timestamp}.jpg"
-        location = utils.find_in_path(file_name, self.generated_images_path)
+        location = _join(self.gen_img_path, file_name)
         figure = pyplot.figure(figsize=(8, 8))
         pyplot.axis("off")
         pyplot.title(f"Iter {c.loops.iteration.index + 1} Epoch {c.loops.epoch.index + 1} Generated Images")
@@ -674,7 +675,7 @@ class TrainingResults(Results):
     def save_d_losses(self):
         """Saves the discriminator training/validation losses plot."""
         self.check_context()
-        c: _TrainingContext = self.context
+        c: _TrainContext = self.context
 
         iteration = c.loops.iteration.index
         epoch_count, epoch = c.loops.epoch.count, c.loops.epoch.index
@@ -684,7 +685,7 @@ class TrainingResults(Results):
         rb_x_list = [epoch_count * x[0] + x[1] + 1 + 0.5 for x in c.rbs.d]
         collapse_x_list = [epoch_count * x[0] + x[1] + 1 for x in c.collapses.epochs]
 
-        location = utils.find_in_path("Discriminator-Losses.jpg", self.path)
+        location = _join(self.path, "Discriminator-Losses.jpg")
         figure = pyplot.figure(figsize=(10, 5))
         pyplot.title("Discriminator Losses")
 
@@ -720,7 +721,7 @@ class TrainingResults(Results):
     def save_g_losses(self):
         """Saves the generator training/validation losses plot."""
         self.check_context()
-        c: _TrainingContext = self.context
+        c: _TrainContext = self.context
 
         iteration = c.loops.iteration.index
         epoch_count, epoch = c.loops.epoch.count, c.loops.epoch.index
@@ -730,7 +731,7 @@ class TrainingResults(Results):
         rb_x_list = [epoch_count * x[0] + x[1] + 1 + 0.5 for x in c.rbs.g]
         collapse_x_list = [epoch_count * x[0] + x[1] + 1 for x in c.collapses.epochs]
 
-        location = utils.find_in_path("Generator-Losses.jpg", self.path)
+        location = _join(self.path, "Generator-Losses.jpg")
         figure = pyplot.figure(figsize=(10, 5))
         pyplot.title("Generator Losses")
 
@@ -766,7 +767,7 @@ class TrainingResults(Results):
     def save_tvg(self):
         """Saves the TVG (training-validation-generated) figure."""
         self.check_context()
-        c: _TrainingContext = self.context
+        c: _TrainContext = self.context
 
         tbatch = next(iter(c.data.train.loader))
         tbatch = tbatch[0].cpu()
@@ -796,7 +797,7 @@ class TrainingResults(Results):
         vgrid = numpy.transpose(vgrid, (1, 2, 0))
         ggrid = numpy.transpose(ggrid, (1, 2, 0))
 
-        location = utils.find_in_path("Training-Validation-Generated.jpg", self.path)
+        location = _join(self.path, "Training-Validation-Generated.jpg")
         figure = pyplot.figure(figsize=(24, 24))
         sp_figure, axes = pyplot.subplots(1, 3)
         sp1, sp2, sp3 = axes[0], axes[1], axes[2]
@@ -837,7 +838,7 @@ class GenerationResults(Results):
     def log_g(self):
         """Logs the G modelers info."""
         self.check_context()
-        c: _GenerationContext = self.context
+        c: _GenContext = self.context
 
         self.logln(f"G's size: {c.g.size}")
         self.logln(f"G's training size: {c.g.training_size}")
@@ -847,7 +848,7 @@ class GenerationResults(Results):
     def log_batch(self):
         """Logs the batch info."""
         self.check_context()
-        c: _GenerationContext = self.context
+        c: _GenContext = self.context
 
         needs_log = c.batch_prog.index == 0
         needs_log = needs_log or (c.batch_prog.index + 1) % 15 == 0
@@ -860,7 +861,7 @@ class GenerationResults(Results):
     def save_generated_images(self):
         """Saves the generated images."""
         self.check_context()
-        c: _GenerationContext = self.context
+        c: _GenContext = self.context
 
         for index, image in enumerate(c.images.to_save):
             now = datetime.datetime.now()
@@ -874,7 +875,7 @@ class GenerationResults(Results):
                 name += "Image-"
             name += f"{index + 1}-{timestamp}.jpg"
 
-            location = utils.find_in_path(name, self.path)
+            location = _join(self.path, name)
             vutils.save_image(image, location, "JPEG")
 
         count = len(c.images.to_save)

@@ -14,7 +14,7 @@ from aidesign_gan.libs.contexts import context
 _BCELoss = nn.BCELoss
 _Context = context.Context
 _DotDict = utils.DotDict
-_GModeler = modelers.GModeler
+_GenModeler = modelers.GenModeler
 
 
 class GenContext(_Context):
@@ -82,7 +82,7 @@ class GenContext(_Context):
         model_path = modelers_config.model_path
         config = modelers_config["generator"]
         loss_func = _BCELoss()
-        self.g = _GModeler(model_path, config, self.hw.device, self.hw.gpu_count, loss_func, train=False)
+        self.g = _GenModeler(model_path, config, self.hw.device, self.hw.gpu_count, loss_func, train=False)
         self.g.load()
 
         # Setup self.images

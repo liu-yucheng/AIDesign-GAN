@@ -7,6 +7,7 @@
 
 import math
 import torch
+from os import path as ospath
 
 from torchvision import utils as tv_utils
 
@@ -21,7 +22,7 @@ _Coord = coord.Coord
 _CoordsConfig = configs.CoordsConfig
 _GenContext = contexts.GenContext
 _GenResults = results.GenerationResults
-_join = utils.concat_paths
+_join = ospath.join
 _make_grid = tv_utils.make_grid
 _ModelersConfig = configs.ModelersConfig
 _torch_cat = torch.cat

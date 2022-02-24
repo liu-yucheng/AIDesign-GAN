@@ -21,7 +21,7 @@ from aidesign_gan.libs.contexts import context
 _BCELoss = nn.BCELoss
 _BICUBIC = transforms.InterpolationMode.BICUBIC
 _CenterCrop = transforms.CenterCrop
-_clamp = utils.clamp
+_clamp = utils.clamp_float
 _Compose = transforms.Compose
 _Context = context.Context
 _DataLoader = data.DataLoader

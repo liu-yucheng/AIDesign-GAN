@@ -329,6 +329,7 @@ print(input_str)
         self._subproc = await _create_subprocess_exec(
             _executable, "-c", self._subproc_code, stdin=_stdin, stdout=_PIPE
         )
+
         data = await self._subproc.stdout.readline()
         self._input_str = data.decode("utf-8", "replace").rstrip()
         await self._subproc.wait()
@@ -635,6 +636,100 @@ def flushlogs(logs):
         log.flush()
 
 
+def clamp_float(inval, bound1, bound2):
+    """Clamps inval to the range bounded by bounds 1 and 2.
+
+    Performs comparisons in floats.
+
+    Args:
+        inval: the input value
+        bound1: bound 1
+        bound2: bound 2
+
+    Returns:
+        result: the result
+    """
+
+    # Part of LYC-PythonUtils
+    # Copyright 2022 Yucheng Liu. GNU GPL3 license.
+    # GNU GPL3 license copy: https://www.gnu.org/licenses/gpl-3.0.txt
+
+    inval = float(inval)
+    bound1 = float(bound1)
+    bound2 = float(bound2)
+
+    if bound1 < bound2:
+        floor = bound1
+        ceil = bound2
+    else:  # elif bound1 >= bound2:
+        floor = bound2
+        ceil = bound1
+    # end if
+
+    result = inval
+
+    if result < floor:
+        result = floor
+
+    if result > ceil:
+        result = ceil
+
+    return result
+
+
+def clamp_int(inval, bound1, bound2):
+    """Clamps inval to the range bounded by bounds 1 and 2.
+
+    Performs comparisons in integers.
+
+    Args:
+        inval: the input value
+        bound1: bound 1
+        bound2: bound 2
+
+    Returns:
+        result: the result
+    """
+
+    # Part of LYC-PythonUtils
+    # Copyright 2022 Yucheng Liu. GNU GPL3 license.
+    # GNU GPL3 license copy: https://www.gnu.org/licenses/gpl-3.0.txt
+
+    inval = int(inval)
+    bound1 = int(bound1)
+    bound2 = int(bound2)
+
+    if bound1 < bound2:
+        floor = bound1
+        ceil = bound2
+    else:  # elif bound1 >= bound2:
+        floor = bound2
+        ceil = bound1
+    # end if
+
+    result = inval
+
+    if result < floor:
+        result = floor
+
+    if result > ceil:
+        result = ceil
+
+    return result
+
+
+def init_folder(path, clean=False):
+    """Initializes a folder given a path.
+
+    Args:
+        path: the path to the folder
+        clean: whether to clean up the folder
+    """
+    if clean and os.path.exists(path):
+        shutil.rmtree(path)
+    pathlib.Path(path).mkdir(exist_ok=True)
+
+
 def load_model(location, model):
     """Loads the states from a location into a model.
 
@@ -713,51 +808,6 @@ def prep_batch_and_labels(batch, label, device):
     batch = batch.to(device)
     labels = torch.full((batch.size(0),), label, dtype=torch.float, device=device)
     return batch, labels
-
-
-def clamp(inval, bound1, bound2):
-    """Clamps inval to the range bounded by bounds 1 and 2.
-
-    Args:
-        inval: the input value
-        bound1: bound 1
-        bound2: bound 2
-
-    Returns:
-        result: the result
-    """
-    inval = float(inval)
-    bound1 = float(bound1)
-    bound2 = float(bound2)
-
-    if bound1 < bound2:
-        floor = bound1
-        ceil = bound2
-    else:  # elif bound1 >= bound2:
-        floor = bound2
-        ceil = bound1
-
-    result = inval
-
-    if result < floor:
-        result = floor
-
-    if result > ceil:
-        result = ceil
-
-    return result
-
-
-def init_folder(path, clean=False):
-    """Initializes a folder given a path.
-
-    Args:
-        path: the path to the folder
-        clean: whether to clean up the folder
-    """
-    if clean and os.path.exists(path):
-        shutil.rmtree(path)
-    pathlib.Path(path).mkdir(exist_ok=True)
 
 
 def setup_adam(model, config):

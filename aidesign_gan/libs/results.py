@@ -8,6 +8,7 @@
 import datetime
 import math
 import numpy
+import os
 from matplotlib import lines
 from matplotlib import pyplot
 from os import path as ospath
@@ -19,6 +20,7 @@ from aidesign_gan.libs import utils
 _Context = contexts.Context
 _GenContext = contexts.GenContext
 _join = ospath.join
+_makedirs = os.makedirs
 _TrainContext = contexts.TrainContext
 
 
@@ -39,13 +41,12 @@ class Results:
         self.context = None
         """Context to be bind."""
 
-    def init_folders(self):
-        """Inits the result folders.
+    def ensure_folders(self):
+        """Ensures the result folders.
 
-        Raises:
-            NotImplementedError: always
+        This function is abstract and does nothing.
         """
-        raise NotImplementedError("init_folders not implemented")
+        pass
 
     def bind_context(self, context):
         """Binds a context to self.
@@ -119,12 +120,12 @@ class TrainingResults(Results):
         self.gen_img_path = _join(path, "Generated-Images")
         """Generated images path."""
 
-    def init_folders(self):
-        """Inits the result folders."""
-        utils.init_folder(self.path)
-        self.logln(f"Initialized folder: {self.path}")
-        utils.init_folder(self.gen_img_path)
-        self.logln(f"Initialized folder: {self.gen_img_path}")
+    def ensure_folders(self):
+        """Ensures the result folders."""
+        _makedirs(self.path, exist_ok=True)
+        self.logln(f"Ensured folder: {self.path}")
+        _makedirs(self.gen_img_path, exist_ok=True)
+        self.logln(f"Ensured folder: {self.gen_img_path}")
 
     def log_data(self):
         """Logs the data loaders info."""
@@ -830,10 +831,10 @@ class GenerationResults(Results):
         """
         super().__init__(path, logs)
 
-    def init_folders(self):
-        """Inits the result folders."""
-        utils.init_folder(self.path)
-        self.logln(f"Initialized folder: {self.path}")
+    def ensure_folders(self):
+        """Ensures the result folders."""
+        _makedirs(self.path, exist_ok=True)
+        self.logln(f"Ensured folder: {self.path}")
 
     def log_g(self):
         """Logs the G modelers info."""

@@ -141,9 +141,9 @@ class ModelersConfig(Config):
                 "image_resolution": 64,
                 "image_channel_count": 3,
                 "feature_map_size": 64,
-                "struct_name": defaults.discriminator_struct_name,
-                "state_name": defaults.discriminator_state_name,
-                "optim_name": defaults.discriminator_optim_name,
+                "struct_name": defaults.disc_struct_name,
+                "state_name": defaults.disc_state_name,
+                "optim_name": defaults.disc_optim_name,
                 "adam_optimizer": {
                     "learning_rate": 0.0002,
                     "beta1": 0.5,
@@ -175,9 +175,9 @@ class ModelersConfig(Config):
                 "image_resolution": 64,
                 "image_channel_count": 3,
                 "feature_map_size": 64,
-                "struct_name": defaults.generator_struct_name,
-                "state_name": defaults.generator_state_name,
-                "optim_name": defaults.generator_optim_name,
+                "struct_name": defaults.gen_struct_name,
+                "state_name": defaults.gen_state_name,
+                "optim_name": defaults.gen_optim_name,
                 "adam_optimizer": {
                     "learning_rate": 0.0002,
                     "beta1": 0.5,
@@ -224,7 +224,7 @@ class FormatConfig(Config):
         if model_path is None:
             raise ValueError("Argument model_path cannot be None")
 
-        self.location = _join(model_path, defaults.format_config)
+        self.location = _join(model_path, defaults.format_config_name)
 
         # Init version
         version = "<unknown version>"

@@ -6,37 +6,49 @@
 # Last updated by username: liu-yucheng
 
 import pathlib
+from os import path as ospath
 
+_join = ospath.join
 _Path = pathlib.Path
 
-_aidesign_gan_libs_path = str(_Path(__file__).parent)
-_aidesign_gan_repo_path = str(_Path(_aidesign_gan_libs_path).parent.parent)
+_libs_path = str(_Path(__file__).parent)
+_repo_path = str(_Path(_libs_path).parent.parent)
 
-app_data_path: str = str(_Path(_aidesign_gan_repo_path + "/.aidesign_gan_app_data").absolute())
-"""App data folder's full path."""
+app_data_path = _join(_repo_path, ".aidesign_gan_app_data")
+"""App data path."""
+test_data_path = _join(_repo_path, ".aidesign_gan_test_data")
+"""Test data path."""
 
-gan_train_status_name: str = "gan_train_status.json"
-"""\"gan train\" atatus file name."""
-gan_generate_status_name: str = "gan_generate_status.json"
-"""\"gan generate\" config file name."""
+default_configs_path = _join(_repo_path, "aidesign_gan_default_configs")
+"""Default configs path."""
+default_app_data_path = _join(default_configs_path, "app_data")
+"""Default app data path."""
+default_gan_model_path = _join(default_configs_path, "gan_model")
+"""Default GAN model path."""
+default_test_data_path = _join(default_configs_path, "test_data")
+"""Default test data path."""
 
-format_config: str = "format_config.json"
-"""Format config file name."""
-coords_config_name: str = "coords_config.json"
-"""Coords config file name."""
-modelers_config_name: str = "modelers_config.json"
-"""Modelers config file name."""
-discriminator_struct_name: str = "discriminator_struct.py"
-"""Discriminator struct file name."""
-generator_struct_name: str = "generator_struct.py"
-"""Generator struct file name."""
+gan_train_status_name = "gan_train_status.json"
+"""\"gan train\" satatus name."""
+gan_generate_status_name = "gan_generate_status.json"
+"""\"gan generate\" status name."""
 
+format_config_name = "format_config.json"
+"""Format config name."""
+coords_config_name = "coords_config.json"
+"""Coords config name."""
+modelers_config_name = "modelers_config.json"
+"""Modelers config name."""
+disc_struct_name = "discriminator_struct.py"
+"""Discriminator struct name."""
+gen_struct_name = "generator_struct.py"
+"""Generator struct name."""
 
-discriminator_state_name: str = "discriminator_state.pt"
-"""Discriminator state file name."""
-discriminator_optim_name: str = "discriminator_optim.pt"
-"""Discriminator optimizer file name."""
-generator_state_name: str = "generator_state.pt"
-"""Generator state file name."""
-generator_optim_name: str = "generator_optim.pt"
-"""Generator optimizer file name."""
+disc_state_name = "discriminator_state.pt"
+"""Discriminator state name."""
+disc_optim_name = "discriminator_optim.pt"
+"""Discriminator optimizer name."""
+gen_state_name = "generator_state.pt"
+"""Generator state name."""
+gen_optim_name = "generator_optim.pt"
+"""Generator optimizer name."""

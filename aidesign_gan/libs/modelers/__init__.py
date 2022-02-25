@@ -9,10 +9,21 @@ Arjovsky, et al., 2017. Wasserstein Generative Adversarial Networks. https://arx
 # First added by username: liu-yucheng
 # Last updated by username: liu-yucheng
 
-from aidesign_gan.libs.modelers import modeler
 from aidesign_gan.libs.modelers import disc_modeler
 from aidesign_gan.libs.modelers import gen_modeler
+from aidesign_gan.libs.modelers import helpers
+from aidesign_gan.libs.modelers import modeler
 
-Modeler = modeler.Modeler
+# Shortcuts
+
 DiscModeler = disc_modeler.DiscModeler
 GenModeler = gen_modeler.GenModeler
+Modeler = modeler.Modeler
+
+load_model = helpers.load_model
+save_model = helpers.save_model
+load_optim = helpers.load_optim
+save_optim = helpers.save_optim
+find_model_sizes = helpers.find_model_sizes
+
+# End of shortcuts

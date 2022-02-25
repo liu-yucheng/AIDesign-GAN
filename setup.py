@@ -13,43 +13,32 @@ The "entry_points" parameter of the setup function specifies the function to cal
 # Last updated by username: liu-yucheng
 
 import setuptools
+import shutil
+from os import path as ospath
 
-# Aliases
-
+_copytree = shutil.copytree
+_exists = ospath.exists
 _find_packages = setuptools.find_packages
 _setup = setuptools.setup
 
-# End of aliases
 
-
-def _make_default_app_data():
+def _ensure_app_data():
     from aidesign_gan.libs import defaults
-    from aidesign_gan.libs import statuses
-    from aidesign_gan.libs import utils
 
-    # Aliases
+    path = defaults.app_data_path
 
-    _init_folder = utils.init_folder
-    _TrainStatus = statuses.GANTrainStatus
-    _GenStatus = statuses.GANGenerateStatus
-
-    # End of aliases
-
-    _init_folder(defaults.app_data_path)
-
-    gan_train_status = _TrainStatus()
-    gan_generate_status = _GenStatus()
-
-    gan_train_status.load()
-    gan_generate_status.load()
-
-    print(f"Ensured app data at: {defaults.app_data_path}")
+    if _exists(path):
+        print(f"Ensured app data at: {path}")
+    else:
+        default_path = defaults.default_app_data_path
+        _copytree(default_path, path, dirs_exist_ok=True)
+        print(f"Created app data at: {path}")
 
 
 def main():
     _setup(
         name="aidesign-gan",
-        version="0.66.0",
+        version="0.67.0",
         description="AIDesign GAN Modeling Application",
         author="Yucheng Liu (From The AIDesign Team)",
         packages=_find_packages(),
@@ -60,16 +49,13 @@ def main():
         }  # ,
         # test_suite="aidesign_gan.tests"
     )
-    _make_default_app_data()
+
+    _ensure_app_data()
 
     # Check main command availability
     from aidesign_gan.exes import gan as _
     print("Commands available: gan")
 
-# Top level code
-
 
 if __name__ == "__main__":
     main()
-
-# End of top level code

@@ -11,16 +11,16 @@ from torch import nn
 from torch import optim
 
 from aidesign_gan.libs import optims as libs_optims
-from aidesign_gan.libs.modelers import helpers
+from aidesign_gan.libs.modelers import _helpers
 
 _Adam = optim.Adam
 _join = ospath.join
-_load_model = helpers.load_model
-_load_optim = helpers.load_optim
+_load_model = _helpers.load_model
+_load_optim = _helpers.load_optim
 _Module = nn.Module
 _PredAdam = libs_optims.PredAdam
-_save_model = helpers.save_model
-_save_optim = helpers.save_optim
+_save_model = _helpers.save_model
+_save_optim = _helpers.save_optim
 _Union = typing.Union
 
 

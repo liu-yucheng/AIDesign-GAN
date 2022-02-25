@@ -44,7 +44,7 @@ class GenCoord(_Coord):
         """Sets up self.result."""
         path = _join(self.model_path, "Generation-Results")
         self.results = _GenResults(path, self.logs)
-        self.results.init_folders()
+        self.results.ensure_folders()
         self.results_ready = True
 
         self.results.logln("Completed results setup")

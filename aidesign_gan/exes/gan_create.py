@@ -11,19 +11,23 @@ Can be launched directly.
 
 import copy
 import pathlib
+import shutil
 import sys
 
 from os import path as ospath
 
 from aidesign_gan.libs import configs
+from aidesign_gan.libs import defaults
 from aidesign_gan.libs import structs
-from aidesign_gan.libs import utils
 
 # Aliases
 
 _argv = sys.argv
+_copytree = shutil.copytree
 _deepcopy = copy.deepcopy
 _exists = ospath.exists
+_join = ospath.join
+_isabs = ospath.isabs
 _isdir = ospath.isdir
 _Path = pathlib.Path
 _stderr = sys.stderr
@@ -32,7 +36,6 @@ _CoordsConfig = configs.CoordsConfig
 _DiscStruct = structs.DStruct
 _FormatConfig = configs.FormatConfig
 _GenStruct = structs.GStruct
-_init_folder = utils.init_folder
 _ModelersConfig = configs.ModelersConfig
 
 # End of aliases
@@ -119,20 +122,24 @@ def run():
     elif argv_copy_length == 1:
         path_to_model = argv_copy.pop(0)
         path_to_model = str(path_to_model)
-        path_to_model = "./" + path_to_model
+
+        if not _isabs(path_to_model):
+            path_to_model = _join(".", path_to_model)
 
         model_exists = _exists(path_to_model)
         model_is_dir = _isdir(path_to_model)
+        
         if model_exists and model_is_dir:
             path_to_model = str(_Path(path_to_model).resolve())
             print(model_exists_info.format(path_to_model), file=_stderr)
             exit(1)
+        
         if model_exists and (not model_is_dir):
             path_to_model = str(_Path(path_to_model).resolve())
             print(model_is_not_dir_info.format(path_to_model), file=_stderr)
             exit(1)
 
-        _init_folder(path_to_model)
+        _copytree(defaults.default_gan_model_path, path_to_model, dirs_exist_ok=True)
         path_to_model = str(_Path(path_to_model).resolve())
 
         format_config = _FormatConfig(path_to_model)
@@ -141,11 +148,11 @@ def run():
         d_struct = _DiscStruct(path_to_model)
         g_struct = _GenStruct(path_to_model)
 
-        format_config.load()
-        coords_config.load()
-        modelers_config.load()
-        d_struct.load()
-        g_struct.load()
+        format_config.save()
+        coords_config.save()
+        modelers_config.save()
+        d_struct.save()
+        g_struct.save()
 
         print(info.format(path_to_model))
         exit(0)

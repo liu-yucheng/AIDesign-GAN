@@ -712,15 +712,3 @@ def clamp_int(inval, bound1, bound2):
         result = ceil
 
     return result
-
-
-def init_folder(path, clean=False):
-    """Initializes a folder given a path.
-
-    Args:
-        path: the path to the folder
-        clean: whether to clean up the folder
-    """
-    if clean and os.path.exists(path):
-        shutil.rmtree(path)
-    pathlib.Path(path).mkdir(exist_ok=True)

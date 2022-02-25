@@ -47,7 +47,7 @@ class TrainCoord(_Coord):
         """Sets up self.result."""
         path = _join(self.model_path, "Training-Results")
         self.results = _TrainResults(path, self.logs)
-        self.results.init_folders()
+        self.results.ensure_folders()
         self.results_ready = True
         self.results.logln("Completed results setup")
 

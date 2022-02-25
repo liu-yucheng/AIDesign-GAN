@@ -10,18 +10,20 @@ Can be launched directly.
 # Last updated by username: liu-yucheng
 
 import copy
+import shutil
 import sys
+from os import path as ospath
 
 from aidesign_gan.libs import defaults
 from aidesign_gan.libs import statuses
-from aidesign_gan.libs import utils
 
 # Aliases
 
 _argv = sys.argv
+_copytree = shutil.copytree
 _deepcopy = copy.deepcopy
+_exists = ospath.exists
 _GenStatus = statuses.GANGenerateStatus
-_init_folder = utils.init_folder
 _stderr = sys.stderr
 _TrainStatus = statuses.GANTrainStatus
 
@@ -76,18 +78,20 @@ def run():
     assert argv_copy_length >= 0
 
     if argv_copy_length == 0:
-        _init_folder(defaults.app_data_path, clean=True)
+        if not _exists(defaults.app_data_path):
+            _copytree(defaults.default_app_data_path, defaults.app_data_path, dirs_exist_ok=True)
 
         gan_train_status = _TrainStatus()
         gan_generate_status = _GenStatus()
-        gan_train_status.load()
-        gan_generate_status.load()
+        gan_train_status.save()
+        gan_generate_status.save()
 
         print(info.format(defaults.app_data_path))
         exit(0)
     else:  # elif argv_copy_length > 0:
         print(too_many_args_info.format(argv_copy_length), file=_stderr)
         exit(1)
+    # end if
 
 
 def main():

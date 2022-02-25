@@ -10,20 +10,20 @@ from os import path as ospath
 from torch import nn
 
 from aidesign_gan.libs import structs
-from aidesign_gan.libs import utils
+from aidesign_gan.libs.modelers import helpers
 from aidesign_gan.libs.modelers import modeler
 
 _DiscStruct = structs.DStruct
-_find_model_sizes = utils.find_model_sizes
-_find_params_init_func = utils.find_params_init_func
+_find_model_sizes = helpers.find_model_sizes
+_find_params_init_func = helpers.find_params_init_func
 _join = ospath.join
 _logit = torch.logit
 _Modeler = modeler.Modeler
 _Module = nn.Module
 _no_grad = torch.no_grad
-_paral_model = utils.paral_model
-_prep_batch_and_labels = utils.prep_batch_and_labels
-_setup_pred_adam = utils.setup_pred_adam
+_paral_model = helpers.paral_model
+_prep_batch_and_labels = helpers.prep_batch_and_labels
+_setup_pred_adam = helpers.setup_pred_adam
 _tanh = torch.tanh
 _Tensor = torch.Tensor
 

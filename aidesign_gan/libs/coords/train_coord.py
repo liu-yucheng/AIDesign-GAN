@@ -21,7 +21,7 @@ _join = ospath.join
 _ModelersConfig = configs.ModelersConfig
 _PredAltSGDAlgo = algos.PredAltSGDAlgo
 _TrainContext = contexts.TrainContext
-_TrainResults = results.TrainingResults
+_TrainResults = results.TrainResults
 
 
 class TrainCoord(_Coord):

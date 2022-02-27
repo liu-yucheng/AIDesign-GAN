@@ -129,7 +129,7 @@ class PredAltSGDAlgo(_Algo):
             c.latest.dgz2, c.latest.lg = dgz2, lg
             lds.append(ld)
             lgs.append(lg)
-            r.log_batch_2("t")
+            r.log_batch_v2("t")
 
             c.loops.train.index += 1
         # end for
@@ -162,7 +162,7 @@ class PredAltSGDAlgo(_Algo):
             dx, ld = c.mods.d.valid(real_batch, c.labels.real)
             c.latest.dx, c.latest.ld = dx, ld
             ldrs.append(ld)
-            r.log_batch_2("vdr")
+            r.log_batch_v2("vdr")
             c.loops.valid.index += 1
 
         ldfs = []
@@ -173,7 +173,7 @@ class PredAltSGDAlgo(_Algo):
             dgz, ld = c.mods.d.valid(fake_batch, c.labels.fake)
             c.latest.dgz, c.latest.ld = dgz, ld
             ldfs.append(ld)
-            r.log_batch_2("vdf")
+            r.log_batch_v2("vdf")
             c.loops.valid.index += 1
 
         lds = []
@@ -199,7 +199,7 @@ class PredAltSGDAlgo(_Algo):
             dgz2, lg = c.mods.g.valid(c.mods.d.model, noises, c.labels.real)
             c.latest.dgz2, c.latest.lg = dgz2, lg
             lgs.append(lg)
-            r.log_batch_2("vg")
+            r.log_batch_v2("vg")
             c.loops.valid.index += 1
 
         epoch_lg = _nparray(lgs).mean()
@@ -271,8 +271,8 @@ class PredAltSGDAlgo(_Algo):
             self._save_best_d()
             self._valid_g()
             self._save_best_g()
-            r.save_d_losses()
-            r.save_g_losses()
+            r.save_disc_losses()
+            r.save_gen_losses()
             r.save_generated_images()
             r.save_tvg()
             r.logln("-")

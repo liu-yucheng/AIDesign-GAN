@@ -139,7 +139,7 @@ class FairPredAltSGDAlgo(_Algo):
 
             lds.append(ld)
             lgs.append(lg)
-            r.log_batch_3("t")
+            r.log_batch_v3("t")
 
             c.loops.train.index += 1
         # end for
@@ -201,7 +201,7 @@ class FairPredAltSGDAlgo(_Algo):
             c.latest.lgcf = lgcf
             c.latest.lg = lg
 
-            r.log_batch_3("v")
+            r.log_batch_v3("v")
 
             c.loops.valid.index += 1
         # end for
@@ -260,8 +260,8 @@ class FairPredAltSGDAlgo(_Algo):
             self._train_dg()
             self._valid_dg()
             self._save_best_dg()
-            r.save_d_losses()
-            r.save_g_losses()
+            r.save_disc_losses()
+            r.save_gen_losses()
             r.save_generated_images()
             r.save_tvg()
             r.logln("-")

@@ -14,7 +14,6 @@ from torchvision import utils as tv_utils
 from aidesign_gan.libs import configs
 from aidesign_gan.libs import contexts
 from aidesign_gan.libs import results
-from aidesign_gan.libs import utils
 from aidesign_gan.libs.coords import coord
 
 _ceil = math.ceil
@@ -40,56 +39,73 @@ class GenCoord(_Coord):
         """
         super().__init__(model_path, log)
 
-    def setup_results(self):
-        """Sets up self.result."""
-        path = _join(self.model_path, "Generation-Results")
-        self.results = _GenResults(path, self.logs)
-        self.results.ensure_folders()
-        self.results_ready = True
+    def _prep_results(self):
+        """Prepares self.result."""
+        super()._prep_results()
 
-        self.results.logln("Completed results setup")
+        path = _join(self._model_path, "Generation-Results")
+        self._results = _GenResults(path, self._logs)
+        self._results.ensure_folders()
+        self._results_ready = True
 
-    def setup_context(self):
-        """Sets up self.context."""
-        if not self.results_ready:
-            self.setup_results()
+        self._results.logln("Completed results setup")
 
-        self.coords_config = _CoordsConfig(self.model_path)
-        self.coords_config.load()
-        self.modelers_config = _ModelersConfig(self.model_path)
-        self.modelers_config.load()
+    def _prep_context(self):
+        """Prepares self.context."""
+        super()._prep_context()
 
-        self.results.log_configs(self.coords_config, self.modelers_config)
-        self.context = _GenContext()
-        self.results.bind_context(self.context)
-        config = self.coords_config["generation"]
+        if not self._results_ready:
+            self._prep_results()
 
-        self.context.setup_rand(config)
-        self.results.log_rand()
+        self._ccfg = _CoordsConfig(self._model_path)
+        self._ccfg.load()
+        self._mcfg = _ModelersConfig(self._model_path)
+        self._mcfg.load()
 
-        self.context.setup_hw(config)
-        self.results.log_hw()
+        self._results.log_config_locs(self._ccfg.location, self._mcfg.location)
+        self._context = _GenContext()
+        self._results.context = self._context
+        config = self._ccfg["generation"]
 
-        self.context.setup_all(self.coords_config, self.modelers_config)
-        self.results.log_g()
+        self._context.setup_rand(config)
+        self._results.log_rand()
 
-        self.context_ready = True
-        self.results.logln("Completed context setup")
+        self._context.setup_hw(config)
+        self._results.log_hw()
 
-    def normalize_images(self):
+        self._context.setup_all(self._ccfg, self._mcfg)
+        self._results.log_g()
+
+        self._context_ready = True
+        self._results.logln("Completed context setup")
+
+    def prep(self):
+        """Prepares everything that the start method needs."""
+        if not self._results_ready:
+            self._prep_results()
+
+        if not self._context_ready:
+            self._prep_context()
+
+        self._prepared = True
+
+    def _normalize_images(self):
         """Normalizes the images."""
-        r = self.results
-        c = self.context
+        r = self._results
+        c = self._context
 
-        for index in range(len(c.images.to_save)):
-            c.images.to_save[index] = _make_grid(c.images.to_save[index], normalize=True, value_range=(-0.75, 0.75))
+        images_to_save_len = len(c.images.to_save)
+
+        for index in range(images_to_save_len):
+            orig = c.images.to_save[index]
+            c.images.to_save[index] = _make_grid(orig, normalize=True, value_range=(-0.75, 0.75))
 
         r.logln("Normalized images")
 
-    def convert_images_to_grids(self):
+    def _convert_images_to_grids(self):
         """Converts the images to grids."""
-        r = self.results
-        c = self.context
+        r = self._results
+        c = self._context
 
         orig_list = c.images.to_save
         c.images.to_save = []
@@ -108,16 +124,13 @@ class GenCoord(_Coord):
 
         r.logln("Converted images to grids")
 
-    def start_generation(self):
-        """Starts the generation."""
-        if not self.results_ready:
-            self.setup_results()
+    def start(self):
+        """Starts the generation process."""
+        if not self._prepared:
+            self.prep()
 
-        if not self.context_ready:
-            self.setup_context()
-
-        r = self.results
-        c = self.context
+        r = self._results
+        c = self._context
 
         r.logln("Started generation")
         c.images.to_save = []
@@ -132,10 +145,10 @@ class GenCoord(_Coord):
         # end while
 
         c.images.to_save = _torch_cat(c.images.to_save)
-        self.normalize_images()
+        self._normalize_images()
 
         if c.grids.enabled:
-            self.convert_images_to_grids()
+            self._convert_images_to_grids()
 
         r.save_generated_images()
         r.logln("Completed generation")

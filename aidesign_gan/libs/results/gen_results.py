@@ -31,20 +31,26 @@ class GenResults(_Results):
         """
         super().__init__(path, logs)
 
-    def log_g(self):
-        """Logs the G modelers info."""
-        self.check_context()
-        c: _GenContext = self.context
+    def log_g(self, context=None):
+        """Logs the G modelers info.
+
+        Args:
+            context: optional context
+        """
+        c: _GenContext = self.find_context(context)
 
         self.logln(f"G's size: {c.g.size}")
         self.logln(f"G's training size: {c.g.training_size}")
         self.logln(f"==== G's struct ====")
         self.logln(str(c.g.model))
 
-    def log_batch(self):
-        """Logs the batch info."""
-        self.check_context()
-        c: _GenContext = self.context
+    def log_batch(self, context=None):
+        """Logs the batch info.
+
+        Args:
+            context: optional context
+        """
+        c: _GenContext = self.find_context(context)
 
         needs_log = c.batch_prog.index == 0
         needs_log = needs_log or (c.batch_prog.index + 1) % 15 == 0
@@ -54,10 +60,13 @@ class GenResults(_Results):
 
         self.logln(f"Generated image batch {c.batch_prog.index + 1} / {c.batch_prog.count}")
 
-    def save_generated_images(self):
-        """Saves the generated images."""
-        self.check_context()
-        c: _GenContext = self.context
+    def save_generated_images(self, context=None):
+        """Saves the generated images.
+
+        Args:
+            context: optional context
+        """
+        c: _GenContext = self.find_context(context)
 
         for index, image in enumerate(c.images.to_save):
             now = _now()

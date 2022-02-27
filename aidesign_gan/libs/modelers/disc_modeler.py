@@ -13,7 +13,7 @@ from aidesign_gan.libs import structs
 from aidesign_gan.libs.modelers import _helpers
 from aidesign_gan.libs.modelers import modeler
 
-_DiscStruct = structs.DStruct
+_DiscStruct = structs.DiscStruct
 _find_model_sizes = _helpers.find_model_sizes
 _find_params_init_func = _helpers.find_params_init_func
 _join = ospath.join

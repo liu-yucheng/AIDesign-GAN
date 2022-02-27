@@ -56,7 +56,7 @@ class Struct:
         utils.save_text(self.definition, self.location)
 
 
-class DStruct(Struct):
+class DiscStruct(Struct):
     """Discriminator structure."""
 
     def __init__(self, model_path):
@@ -125,7 +125,7 @@ self.model = nn.Sequential(
         # fmt: on
 
 
-class GStruct(Struct):
+class GenStruct(Struct):
     """Generator structure."""
 
     def __init__(self, model_path):

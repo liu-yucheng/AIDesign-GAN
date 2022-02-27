@@ -33,9 +33,9 @@ _Path = pathlib.Path
 _stderr = sys.stderr
 
 _CoordsConfig = configs.CoordsConfig
-_DiscStruct = structs.DStruct
+_DiscStruct = structs.DiscStruct
 _FormatConfig = configs.FormatConfig
-_GenStruct = structs.GStruct
+_GenStruct = structs.GenStruct
 _ModelersConfig = configs.ModelersConfig
 
 # End of aliases
@@ -128,12 +128,12 @@ def run():
 
         model_exists = _exists(path_to_model)
         model_is_dir = _isdir(path_to_model)
-        
+
         if model_exists and model_is_dir:
             path_to_model = str(_Path(path_to_model).resolve())
             print(model_exists_info.format(path_to_model), file=_stderr)
             exit(1)
-        
+
         if model_exists and (not model_is_dir):
             path_to_model = str(_Path(path_to_model).resolve())
             print(model_is_not_dir_info.format(path_to_model), file=_stderr)

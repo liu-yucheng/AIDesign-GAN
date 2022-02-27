@@ -18,7 +18,7 @@ _Algo = algo.Algo
 _nparray = numpy.array
 _rand_bool = utils.rand_bool
 _TrainContext = contexts.TrainContext
-_TrainResults = results.TrainingResults
+_TrainResults = results.TrainResults
 
 # End of aliases
 

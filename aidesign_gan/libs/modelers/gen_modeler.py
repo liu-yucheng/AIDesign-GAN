@@ -15,7 +15,7 @@ from aidesign_gan.libs.modelers import modeler
 
 _find_model_sizes = _helpers.find_model_sizes
 _find_params_init_func = _helpers.find_params_init_func
-_GenStruct = structs.GStruct
+_GenStruct = structs.GenStruct
 _join = ospath.join
 _logit = torch.logit
 _Modeler = modeler.Modeler

@@ -1,4 +1,4 @@
-"""Module of the results classes."""
+"""Training results."""
 
 # Copyright 2022 Yucheng Liu. GNU GPL3 license.
 # GNU GPL3 license copy: https://www.gnu.org/licenses/gpl-3.0.txt
@@ -15,98 +15,34 @@ from os import path as ospath
 from torchvision import utils as vutils
 
 from aidesign_gan.libs import contexts
-from aidesign_gan.libs import utils
+from aidesign_gan.libs.results import results
 
-_Context = contexts.Context
-_GenContext = contexts.GenContext
+_axis = pyplot.axis
+_axvline = pyplot.axvline
+_ceil = math.ceil
+_close = pyplot.close
+_figure = pyplot.figure
+_gca = pyplot.gca
+_imshow = pyplot.imshow
 _join = ospath.join
+_legend = pyplot.legend
+_Line2D = lines.Line2D
 _makedirs = os.makedirs
+_make_grid = vutils.make_grid
+_now = datetime.datetime.now
+_np_transpose = numpy.transpose
+_plot = pyplot.plot
+_savefig = pyplot.savefig
+_subplots = pyplot.subplots
+_title = pyplot.title
 _TrainContext = contexts.TrainContext
+_Results = results.Results
+_xlabel = pyplot.xlabel
+_xticks = pyplot.xticks
+_ylabel = pyplot.ylabel
 
 
-class Results:
-    """The super class of the results classes."""
-
-    def __init__(self, path, logs):
-        """Inits self with the given args.
-
-        Args:
-            path: the root path of the results
-            logs: the log file objects
-        """
-        self.path = path
-        """Root path of the results."""
-        self.logs = logs
-        """Log file objects."""
-        self.context = None
-        """Context to be bind."""
-
-    def ensure_folders(self):
-        """Ensures the result folders.
-
-        This function is abstract and does nothing.
-        """
-        pass
-
-    def bind_context(self, context):
-        """Binds a context to self.
-
-        Args:
-            context: the context to bind
-        """
-        self.context = context
-
-    def check_context(self):
-        """Check if self.context is not None.
-
-        Raises:
-            ValueError: if self.context is None
-        """
-        if self.context is None:
-            raise ValueError("self.context cannot be None")
-
-    def logstr(self, string=""):
-        """Logs a string.
-
-        Args:
-            string: the string to log
-        """
-        utils.logstr(self.logs, string)
-
-    def logln(self, line=""):
-        """Logs a line.
-
-        Args:
-            line: the line to log
-        """
-        utils.logln(self.logs, line)
-
-    def log_configs(self, coords_config, modelers_config):
-        """Logs the coords and modelers config info.
-
-        Args:
-            coords_config: the coords config
-            modelers_config: the modelers config
-        """
-        self.logln(f"Coords config: {coords_config.location}")
-        self.logln(f"Modelers config: {modelers_config.location}")
-
-    def log_rand(self):
-        """Logs the random info."""
-        self.check_context()
-        c: _Context = self.context
-
-        self.logln(f"Random seed ({c.rand.mode}): {c.rand.seed}")
-
-    def log_hw(self):
-        """Logs the torch hardware info."""
-        self.check_context()
-        c: _Context = self.context
-
-        self.logln(f"Torch device: {c.hw.device}; GPU count: {c.hw.gpu_count}")
-
-
-class TrainingResults(Results):
+class TrainResults(_Results):
     """Training results."""
 
     def __init__(self, path, logs):
@@ -117,13 +53,14 @@ class TrainingResults(Results):
             logs: the log file objects
         """
         super().__init__(path, logs)
-        self.gen_img_path = _join(path, "Generated-Images")
+
+        self.gen_img_path = _join(self.path, "Generated-Images")
         """Generated images path."""
 
     def ensure_folders(self):
         """Ensures the result folders."""
-        _makedirs(self.path, exist_ok=True)
-        self.logln(f"Ensured folder: {self.path}")
+        super().ensure_folders()
+
         _makedirs(self.gen_img_path, exist_ok=True)
         self.logln(f"Ensured folder: {self.gen_img_path}")
 
@@ -577,19 +514,19 @@ class TrainingResults(Results):
         batch = batch[0].cpu()
         batch = batch[:c.data.batch_size]
 
-        grid = vutils.make_grid(
-            batch, nrow=math.ceil(c.data.batch_size ** 0.5), padding=2, normalize=True, value_range=(-0.75, 0.75)
+        grid = _make_grid(
+            batch, nrow=_ceil(c.data.batch_size ** 0.5), padding=2, normalize=True, value_range=(-0.75, 0.75)
         )
         grid = grid.cpu()
-        grid = numpy.transpose(grid, (1, 2, 0))
+        grid = _np_transpose(grid, (1, 2, 0))
 
         location = _join(self.path, "Training-Images.jpg")
-        figure = pyplot.figure(figsize=(8, 8))
-        pyplot.axis("off")
-        pyplot.title("Training Images")
-        pyplot.imshow(grid)
-        pyplot.savefig(location, dpi=160)
-        pyplot.close(figure)
+        figure = _figure(figsize=(8, 8))
+        _axis("off")
+        _title("Training Images")
+        _imshow(grid)
+        _savefig(location, dpi=160)
+        _close(figure)
 
         self.logln("Saved training images")
 
@@ -602,19 +539,19 @@ class TrainingResults(Results):
         batch = batch[0].cpu()
         batch = batch[:c.data.batch_size]
 
-        grid = vutils.make_grid(
-            batch, nrow=math.ceil(c.data.batch_size ** 0.5), padding=2, normalize=True, value_range=(-0.75, 0.75)
+        grid = _make_grid(
+            batch, nrow=_ceil(c.data.batch_size ** 0.5), padding=2, normalize=True, value_range=(-0.75, 0.75)
         )
         grid = grid.cpu()
-        grid = numpy.transpose(grid, (1, 2, 0))
+        grid = _np_transpose(grid, (1, 2, 0))
 
         location = _join(self.path, "Validation-Images.jpg")
-        figure = pyplot.figure(figsize=(8, 8))
-        pyplot.axis("off")
-        pyplot.title("Validation Images")
-        pyplot.imshow(grid)
-        pyplot.savefig(location, dpi=160)
-        pyplot.close(figure)
+        figure = _figure(figsize=(8, 8))
+        _axis("off")
+        _title("Validation Images")
+        _imshow(grid)
+        _savefig(location, dpi=160)
+        _close(figure)
 
         self.logln("Saved validation images")
 
@@ -625,24 +562,24 @@ class TrainingResults(Results):
 
         batch = c.mods.g.test(c.noises.ref_batch)
 
-        grid = vutils.make_grid(
-            batch, nrow=math.ceil(c.data.batch_size ** 0.5), padding=2, normalize=True, value_range=(-0.75, 0.75)
+        grid = _make_grid(
+            batch, nrow=_ceil(c.data.batch_size ** 0.5), padding=2, normalize=True, value_range=(-0.75, 0.75)
         )
         grid = grid.cpu()
-        grid = numpy.transpose(grid, (1, 2, 0))
+        grid = _np_transpose(grid, (1, 2, 0))
 
-        now = datetime.datetime.now()
+        now = _now()
         timestamp = f"Time-{now.year:04}{now.month:02}{now.day:02}-{now.hour:02}{now.minute:02}{now.second:02}-"\
             f"{now.microsecond:06}"
         file_name = f"Before-Training-{timestamp}.jpg"
 
         location = _join(self.gen_img_path, file_name)
-        figure = pyplot.figure(figsize=(8, 8))
-        pyplot.axis("off")
-        pyplot.title(f"Generated Images Before Any Training")
-        pyplot.imshow(grid)
-        pyplot.savefig(location, dpi=120)
-        pyplot.close(figure)
+        figure = _figure(figsize=(8, 8))
+        _axis("off")
+        _title(f"Generated Images Before Any Training")
+        _imshow(grid)
+        _savefig(location, dpi=120)
+        _close(figure)
 
         self.logln("Saved images before training")
 
@@ -653,23 +590,23 @@ class TrainingResults(Results):
 
         batch = c.mods.g.test(c.noises.ref_batch)
 
-        grid = vutils.make_grid(
-            batch, nrow=math.ceil(c.data.batch_size ** 0.5), padding=2, normalize=True, value_range=(-0.75, 0.75)
+        grid = _make_grid(
+            batch, nrow=_ceil(c.data.batch_size ** 0.5), padding=2, normalize=True, value_range=(-0.75, 0.75)
         )
         grid = grid.cpu()
-        grid = numpy.transpose(grid, (1, 2, 0))
+        grid = _np_transpose(grid, (1, 2, 0))
 
-        now = datetime.datetime.now()
+        now = _now()
         timestamp = f"Time-{now.year:04}{now.month:02}{now.day:02}-{now.hour:02}{now.minute:02}{now.second:02}-"\
             f"{now.microsecond:06}"
         file_name = f"Iter-{c.loops.iteration.index + 1}-Epoch-{c.loops.epoch.index + 1}-{timestamp}.jpg"
         location = _join(self.gen_img_path, file_name)
-        figure = pyplot.figure(figsize=(8, 8))
-        pyplot.axis("off")
-        pyplot.title(f"Iter {c.loops.iteration.index + 1} Epoch {c.loops.epoch.index + 1} Generated Images")
-        pyplot.imshow(grid)
-        pyplot.savefig(location, dpi=120)
-        pyplot.close(figure)
+        figure = _figure(figsize=(8, 8))
+        _axis("off")
+        _title(f"Iter {c.loops.iteration.index + 1} Epoch {c.loops.epoch.index + 1} Generated Images")
+        _imshow(grid)
+        _savefig(location, dpi=120)
+        _close(figure)
 
         self.logln("Saved generated images")
 
@@ -687,35 +624,35 @@ class TrainingResults(Results):
         collapse_x_list = [epoch_count * x[0] + x[1] + 1 for x in c.collapses.epochs]
 
         location = _join(self.path, "Discriminator-Losses.jpg")
-        figure = pyplot.figure(figsize=(10, 5))
-        pyplot.title("Discriminator Losses")
+        figure = _figure(figsize=(10, 5))
+        _title("Discriminator Losses")
 
-        pyplot.plot(epoch_list, c.losses.train.d, alpha=0.8, color="b", label="Training")
-        pyplot.plot(epoch_list, c.losses.valid.d, alpha=0.8, color="r", label="Validation")
+        _plot(epoch_list, c.losses.train.d, alpha=0.8, color="b", label="Training")
+        _plot(epoch_list, c.losses.valid.d, alpha=0.8, color="r", label="Validation")
         for x in iter_x_list:
-            pyplot.axvline(x, alpha=0.6, color="gray")
+            _axvline(x, alpha=0.6, color="gray")
         for x in rb_x_list:
-            pyplot.axvline(x, alpha=0.6, color="purple")
+            _axvline(x, alpha=0.6, color="purple")
         for x in collapse_x_list:
-            pyplot.axvline(x, alpha=0.6, color="orange")
+            _axvline(x, alpha=0.6, color="orange")
 
-        pyplot.xlabel("Epoch No.")
-        pyplot.xticks(epoch_list)
-        pyplot.ylabel("Loss")
+        _xlabel("Epoch No.")
+        _xticks(epoch_list)
+        _ylabel("Loss")
 
-        box = pyplot.gca().get_position()
-        pyplot.gca().set_position([box.x0 * 0.825, box.y0, box.width * 0.9, box.height])
-        handles, labels = pyplot.gca().get_legend_handles_labels()
-        handles.append(lines.Line2D([0], [0], alpha=0.6, color="gray"))
+        box = _gca().get_position()
+        _gca().set_position([box.x0 * 0.825, box.y0, box.width * 0.9, box.height])
+        handles, labels = _gca().get_legend_handles_labels()
+        handles.append(_Line2D([0], [0], alpha=0.6, color="gray"))
         labels.append("Iteration")
-        handles.append(lines.Line2D([0], [0], alpha=0.6, color="purple"))
+        handles.append(_Line2D([0], [0], alpha=0.6, color="purple"))
         labels.append("Rollback")
-        handles.append(lines.Line2D([0], [0], alpha=0.6, color="orange"))
+        handles.append(_Line2D([0], [0], alpha=0.6, color="orange"))
         labels.append("Training Collapse")
-        pyplot.legend(handles=handles, labels=labels, bbox_to_anchor=(1.125, 0.5), loc="center", fontsize="small")
+        _legend(handles=handles, labels=labels, bbox_to_anchor=(1.125, 0.5), loc="center", fontsize="small")
 
-        pyplot.savefig(location, dpi=160)
-        pyplot.close(figure)
+        _savefig(location, dpi=160)
+        _close(figure)
 
         self.logln("Saved D losses plot")
 
@@ -733,35 +670,35 @@ class TrainingResults(Results):
         collapse_x_list = [epoch_count * x[0] + x[1] + 1 for x in c.collapses.epochs]
 
         location = _join(self.path, "Generator-Losses.jpg")
-        figure = pyplot.figure(figsize=(10, 5))
-        pyplot.title("Generator Losses")
+        figure = _figure(figsize=(10, 5))
+        _title("Generator Losses")
 
-        pyplot.plot(epoch_list, c.losses.train.g, alpha=0.8, color="b", label="Training")
-        pyplot.plot(epoch_list, c.losses.valid.g, alpha=0.8, color="r", label="Validation")
+        _plot(epoch_list, c.losses.train.g, alpha=0.8, color="b", label="Training")
+        _plot(epoch_list, c.losses.valid.g, alpha=0.8, color="r", label="Validation")
         for x in iter_x_list:
-            pyplot.axvline(x, alpha=0.6, color="gray")
+            _axvline(x, alpha=0.6, color="gray")
         for x in rb_x_list:
-            pyplot.axvline(x, alpha=0.6, color="purple")
+            _axvline(x, alpha=0.6, color="purple")
         for x in collapse_x_list:
-            pyplot.axvline(x, alpha=0.6, color="orange")
+            _axvline(x, alpha=0.6, color="orange")
 
-        pyplot.xlabel("Epoch No.")
-        pyplot.xticks(epoch_list)
-        pyplot.ylabel("Loss")
+        _xlabel("Epoch No.")
+        _xticks(epoch_list)
+        _ylabel("Loss")
 
-        box = pyplot.gca().get_position()
-        pyplot.gca().set_position([box.x0 * 0.825, box.y0, box.width * 0.9, box.height])
-        handles, labels = pyplot.gca().get_legend_handles_labels()
-        handles.append(lines.Line2D([0], [0], alpha=0.6, color="gray"))
+        box = _gca().get_position()
+        _gca().set_position([box.x0 * 0.825, box.y0, box.width * 0.9, box.height])
+        handles, labels = _gca().get_legend_handles_labels()
+        handles.append(_Line2D([0], [0], alpha=0.6, color="gray"))
         labels.append("Iteration")
-        handles.append(lines.Line2D([0], [0], alpha=0.6, color="purple"))
+        handles.append(_Line2D([0], [0], alpha=0.6, color="purple"))
         labels.append("Rollback")
-        handles.append(lines.Line2D([0], [0], alpha=0.6, color="orange"))
+        handles.append(_Line2D([0], [0], alpha=0.6, color="orange"))
         labels.append("Training Collapse")
-        pyplot.legend(handles=handles, labels=labels, bbox_to_anchor=(1.125, 0.5), loc="center", fontsize="small")
+        _legend(handles=handles, labels=labels, bbox_to_anchor=(1.125, 0.5), loc="center", fontsize="small")
 
-        pyplot.savefig(location, dpi=160)
-        pyplot.close(figure)
+        _savefig(location, dpi=160)
+        _close(figure)
 
         self.logln("Saved G losses plot")
 
@@ -780,27 +717,27 @@ class TrainingResults(Results):
 
         gbatch = c.mods.g.test(c.noises.ref_batch)
 
-        tgrid = vutils.make_grid(
-            tbatch, nrow=math.ceil(c.data.batch_size ** 0.5), padding=2, normalize=True, value_range=(-0.75, 0.75)
+        tgrid = _make_grid(
+            tbatch, nrow=_ceil(c.data.batch_size ** 0.5), padding=2, normalize=True, value_range=(-0.75, 0.75)
         )
-        vgrid = vutils.make_grid(
-            vbatch, nrow=math.ceil(c.data.batch_size ** 0.5), padding=2, normalize=True, value_range=(-0.75, 0.75)
+        vgrid = _make_grid(
+            vbatch, nrow=_ceil(c.data.batch_size ** 0.5), padding=2, normalize=True, value_range=(-0.75, 0.75)
         )
-        ggrid = vutils.make_grid(
-            gbatch, nrow=math.ceil(c.data.batch_size ** 0.5), padding=2, normalize=True, value_range=(-0.75, 0.75)
+        ggrid = _make_grid(
+            gbatch, nrow=_ceil(c.data.batch_size ** 0.5), padding=2, normalize=True, value_range=(-0.75, 0.75)
         )
 
         tgrid = tgrid.cpu()
         vgrid = vgrid.cpu()
         ggrid = ggrid.cpu()
 
-        tgrid = numpy.transpose(tgrid, (1, 2, 0))
-        vgrid = numpy.transpose(vgrid, (1, 2, 0))
-        ggrid = numpy.transpose(ggrid, (1, 2, 0))
+        tgrid = _np_transpose(tgrid, (1, 2, 0))
+        vgrid = _np_transpose(vgrid, (1, 2, 0))
+        ggrid = _np_transpose(ggrid, (1, 2, 0))
 
         location = _join(self.path, "Training-Validation-Generated.jpg")
-        figure = pyplot.figure(figsize=(24, 24))
-        sp_figure, axes = pyplot.subplots(1, 3)
+        figure = _figure(figsize=(24, 24))
+        sp_figure, axes = _subplots(1, 3)
         sp1, sp2, sp3 = axes[0], axes[1], axes[2]
         sp1.axis("off")
         sp1.set_title("Training Images")
@@ -812,75 +749,8 @@ class TrainingResults(Results):
         sp3.set_title("Generated Images")
         sp3.imshow(ggrid)
         sp_figure.tight_layout()
-        pyplot.savefig(location, dpi=240)
-        pyplot.close(sp_figure)
-        pyplot.close(figure)
+        _savefig(location, dpi=240)
+        _close(sp_figure)
+        _close(figure)
 
         self.logln("Saved TVG figure")
-
-
-class GenerationResults(Results):
-    """Generation results."""
-
-    def __init__(self, path, logs):
-        """Inits self with the given args.
-
-        Args:
-            path: the root path of the results
-            logs: the log file objects
-        """
-        super().__init__(path, logs)
-
-    def ensure_folders(self):
-        """Ensures the result folders."""
-        _makedirs(self.path, exist_ok=True)
-        self.logln(f"Ensured folder: {self.path}")
-
-    def log_g(self):
-        """Logs the G modelers info."""
-        self.check_context()
-        c: _GenContext = self.context
-
-        self.logln(f"G's size: {c.g.size}")
-        self.logln(f"G's training size: {c.g.training_size}")
-        self.logln(f"==== G's struct ====")
-        self.logln(str(c.g.model))
-
-    def log_batch(self):
-        """Logs the batch info."""
-        self.check_context()
-        c: _GenContext = self.context
-
-        needs_log = c.batch_prog.index == 0
-        needs_log = needs_log or (c.batch_prog.index + 1) % 15 == 0
-        needs_log = needs_log or c.batch_prog.index == c.batch_prog.count - 1
-        if not needs_log:
-            return
-
-        self.logln(f"Generated image batch {c.batch_prog.index + 1} / {c.batch_prog.count}")
-
-    def save_generated_images(self):
-        """Saves the generated images."""
-        self.check_context()
-        c: _GenContext = self.context
-
-        for index, image in enumerate(c.images.to_save):
-            now = datetime.datetime.now()
-            timestamp = f"Time-{now.year:04}{now.month:02}{now.day:02}-{now.hour:02}{now.minute:02}{now.second:02}-"\
-                f"{now.microsecond:06}"
-
-            name = ""
-            if c.grids.enabled:
-                name += "Grid-"
-            else:
-                name += "Image-"
-            name += f"{index + 1}-{timestamp}.jpg"
-
-            location = _join(self.path, name)
-            vutils.save_image(image, location, "JPEG")
-
-        count = len(c.images.to_save)
-        if c.grids.enabled:
-            self.logln(f"Generated {count} grids, each has {c.grids.size_each} images")
-        else:
-            self.logln(f"Generated {count} images")

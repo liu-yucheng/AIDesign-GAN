@@ -11,89 +11,130 @@ from aidesign_gan.libs import defaults
 from aidesign_gan.libs import utils
 
 _join = ospath.join
+_load_json = utils.load_json
+_save_json = utils.save_json
 
 
 class Status:
-    """Super class of the status classes.
+    """Status base class."""
 
-    Users can access all entries in the items attribute of this class with subscripts of this class.
-    """
+    default_loc = None
+    """Default location."""
+    default_name = None
+    """Default name."""
 
-    def __init__(self):
-        """Inits self."""
-        self.location: str = None
-        """Status file location."""
-        self.items: dict = {}
-        """Status items."""
-
-    def __getitem__(self, key):
-        """Finds the item corresponding to the given key.
-
-        This function makes self[key] a shorthand of self.items[key].
+    @classmethod
+    def load(cls, from_file):
+        """Loads the status from a file to a dict.
 
         Args:
-            key: the key
+            from_file: a file location
 
         Returns:
-            self.items[key]: the corresponding item
+            to_dict: the loaded dict
         """
-        return self.items[key]
+        from_file = str(from_file)
+        to_dict = _load_json(from_file)
+        to_dict = dict(to_dict)
+        return to_dict
 
-    def __setitem__(self, key, value):
-        """Sets the item corresponding to the key to a specified value.
+    @classmethod
+    def load_default(cls):
+        """Loads the default status.
 
-        This function makes self[key] = value a shorthand of self.items[key] = value.
+        Returns:
+            result: the result
+        """
+        result = cls.load(cls.default_loc)
+        return result
+
+    @classmethod
+    def load_from_path(cls, path):
+        """Loads the status named cls.default_name from a path.
 
         Args:
-            key: the key
+            path: a path
+
+        Returns:
+            result: the result
         """
-        self.items[key] = value
+        path = str(path)
+        loc = _join(path, cls.default_name)
+        result = cls.load(loc)
+        return result
 
-    def load(self):
-        """Loads the status items from a JSON file.
+    @classmethod
+    def save(cls, from_dict, to_file):
+        """Saves a status from a dict to a file.
 
-        If the file does not exist, the function saves the current status.
-
-        Raises:
-            ValueError: if self.location is None
+        Args:
+            from_dict: a status dict to save
+            to_file: a file location
         """
-        if self.location is None:
-            raise ValueError("self.location cannot be None")
-        try:
-            self.items = utils.load_json(self.location)
-            self.items = dict(self.items)
-        except FileNotFoundError:
-            utils.save_json(self.items, self.location)
+        from_dict = dict(from_dict)
+        to_file = str(to_file)
+        _save_json(from_dict, to_file)
 
-    def save(self):
-        """Saves the config to a JSON file.
+    @classmethod
+    def save_to_path(cls, from_dict, path):
+        """Saves the status from a dict to a file named cls.default_name in a path.
 
-        Raises:
-            ValueError: if self.location is None
+        Args:
+            from_dict: a dict to save
+            path: a path
         """
-        if self.location is None:
-            raise ValueError("self.location cannot be None")
-        utils.save_json(self.items, self.location)
+        from_dict = dict(from_dict)
+        loc = _join(path, cls.default_name)
+        cls.save(from_dict, loc)
+
+    @classmethod
+    def verify(cls, from_dict):
+        """Verifies a status from a dict.
+
+        Args:
+            from_dict: a status dictionary to verify
+
+        Returns:
+            result: the verified dict"""
+        from_dict = dict(from_dict)
+        result = from_dict
+        return result
 
 
 class GANTrainStatus(Status):
     """Status of the "gan train" command."""
 
-    def __init__(self):
-        super().__init__()
-        self.location = _join(defaults.app_data_path, defaults.gan_train_status_name)
-        self.items = {
-            "dataset_path": None,
-            "model_path": None
-        }
+    default_loc = _join(defaults.default_app_data_path, defaults.gan_train_status_name)
+    default_name = defaults.gan_train_status_name
+
+    @classmethod
+    def verify(cls, from_dict):
+        result = super().verify(from_dict)
+        dataset_path = result["dataset_path"]
+
+        if dataset_path is not None:
+            result["dataset_path"] = str(dataset_path)
+
+        model_path = result["model_path"]
+
+        if model_path is not None:
+            result["model_path"] = str(model_path)
+
+        return result
 
 
 class GANGenerateStatus(Status):
     """Status of the "gan generate" command."""
 
-    def __init__(self):
-        super().__init__()
-        self.location = _join(defaults.app_data_path, defaults.gan_generate_status_name)
-        self.items = {
-            "model_path": None
-        }
+    default_loc = _join(defaults.default_app_data_path, defaults.gan_generate_status_name)
+    default_name = defaults.gan_generate_status_name
+
+    @classmethod
+    def verify(cls, from_dict):
+        result = super().verify(from_dict)
+        model_path = result["model_path"]
+
+        if model_path is not None:
+            result["model_path"] = str(model_path)
+
+        return result

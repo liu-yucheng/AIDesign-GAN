@@ -15,6 +15,7 @@ import sys
 
 from os import path as ospath
 
+from aidesign_gan.libs import defaults
 from aidesign_gan.libs import statuses
 
 # Aliases
@@ -22,11 +23,12 @@ from aidesign_gan.libs import statuses
 _argv = sys.argv
 _deepcopy = copy.deepcopy
 _exists = ospath.exists
+_isabs = ospath.isabs
 _isdir = ospath.isdir
+_join = ospath.join
 _Path = pathlib.Path
 _stderr = sys.stderr
-
-_GANTrainStatus = statuses.GANTrainStatus
+_TrainStatus = statuses.GANTrainStatus
 
 # End of aliases
 
@@ -113,21 +115,24 @@ def run():
     elif argv_copy_length == 1:
         path_to_dataset = argv_copy.pop(0)
         path_to_dataset = str(path_to_dataset)
-        path_to_dataset = "./" + path_to_dataset
+
+        if not _isabs(path_to_dataset):
+            path_to_dataset = _join(".", path_to_dataset)
+
         path_to_dataset = str(_Path(path_to_dataset).resolve())
 
         if not _exists(path_to_dataset):
             print(dataset_does_not_exist_info.format(path_to_dataset), file=_stderr)
             exit(1)
+
         if not _isdir(path_to_dataset):
             print(dataset_is_not_dir_info.format(path_to_dataset), file=_stderr)
             exit(1)
 
-        gan_train_status = _GANTrainStatus()
-        gan_train_status.load()
-
-        gan_train_status["dataset_path"] = path_to_dataset
-        gan_train_status.save()
+        status = _TrainStatus.load_from_path(defaults.app_data_path)
+        status["dataset_path"] = path_to_dataset
+        status = _TrainStatus.verify(status)
+        _TrainStatus.save_to_path(status, defaults.app_data_path)
 
         print(info.format(path_to_dataset))
         exit(0)

@@ -34,9 +34,10 @@ class PredAltSGDAlgo(_Algo):
         """Inits self."""
         super().__init__()
 
-    def _train_and_step_d(self, real_batch, fake_batch):
+    def _train_and_step_d(self, real_batch, fake_batch, context=None, results=None):
         """Returns (dx, ldr, dgz, ldf)."""
-        c: _TrainContext = self.context
+        c: _TrainContext = self.find_context(context)
+        _ = results
 
         not_1st_batch = c.loops.train.index > 0
 
@@ -55,11 +56,11 @@ class PredAltSGDAlgo(_Algo):
             c.mods.g.restore()
 
         return dx, ldr, dgz, ldf
-    # end def
 
-    def _train_and_step_g(self, noises):
+    def _train_and_step_g(self, noises, context=None, results=None):
         """Returns (dgz2, lg)."""
-        c: _TrainContext = self.context
+        c: _TrainContext = self.find_context(context)
+        _ = results
 
         not_1st_batch = c.loops.train.index > 0
 
@@ -74,13 +75,12 @@ class PredAltSGDAlgo(_Algo):
             c.mods.d.restore()
 
         return dgz2, lg
-    # end def
 
-    def _train_dg(self):
-        r: _TrainResults = self.results
-        c: _TrainContext = self.context
+    def _train_d_and_g(self, context=None, results=None):
+        c: _TrainContext = self.find_context(context)
+        r: _TrainResults = self.find_results(results)
 
-        r.logln("Started training both D and G")
+        r.logln("Started training discriminator and generator")
 
         lds = []
         lgs = []
@@ -104,12 +104,12 @@ class PredAltSGDAlgo(_Algo):
 
             if reverse_order:
                 # Train G, and then train D
-                g_results = self._train_and_step_g(g_noises)
-                d_results = self._train_and_step_d(d_real_batch, d_fake_batch)
+                g_results = self._train_and_step_g(g_noises, context, results)
+                d_results = self._train_and_step_d(d_real_batch, d_fake_batch, context, results)
             else:  # elif not reverse order:
                 # Train D, and then train G (original order)
-                d_results = self._train_and_step_d(d_real_batch, d_fake_batch)
-                g_results = self._train_and_step_g(g_noises)
+                d_results = self._train_and_step_d(d_real_batch, d_fake_batch, context, results)
+                g_results = self._train_and_step_g(g_noises, context, results)
 
             # Parse the training results
             dx, ldr, dgz, ldf = d_results
@@ -146,13 +146,12 @@ class PredAltSGDAlgo(_Algo):
         c.losses.train.g.append(epoch_lg)
         r.log_epoch_loss("td")
         r.log_epoch_loss("tg")
-    # end def
 
-    def _valid_d(self):
-        r: _TrainResults = self.results
-        c: _TrainContext = self.context
+    def _valid_d(self, context=None, results=None):
+        c: _TrainContext = self.find_context(context)
+        r: _TrainResults = self.find_results(results)
 
-        r.logln("Started validating D")
+        r.logln("Started validating discriminator")
 
         ldrs = []
         c.loops.valid.index = 0
@@ -184,13 +183,12 @@ class PredAltSGDAlgo(_Algo):
         epoch_ld = _nparray(lds).mean()
         c.losses.valid.d.append(epoch_ld)
         r.log_epoch_loss("vd")
-    # end def
 
-    def _valid_g(self):
-        r: _TrainResults = self.results
-        c: _TrainContext = self.context
+    def _valid_g(self, context=None, results=None):
+        c: _TrainContext = self.find_context(context)
+        r: _TrainResults = self.find_results(results)
 
-        r.logln("Started validating G")
+        r.logln("Started validating generator")
 
         lgs = []
         c.loops.valid.index = 0
@@ -205,12 +203,11 @@ class PredAltSGDAlgo(_Algo):
         epoch_lg = _nparray(lgs).mean()
         c.losses.valid.g.append(epoch_lg)
         r.log_epoch_loss("vg")
-    # end def
 
-    def _save_best_d(self):
+    def _save_best_d(self, context=None, results=None):
         """Saves the best D."""
-        r: _TrainResults = self.results
-        c: _TrainContext = self.context
+        c: _TrainContext = self.find_context(context)
+        r: _TrainResults = self.find_results(results)
 
         r.log_best_losses("d")
 
@@ -230,12 +227,11 @@ class PredAltSGDAlgo(_Algo):
         else:
             c.mods.d.save()
             r.log_model_action("save", "d")
+        # end if
 
-    # end def
-
-    def _save_best_g(self):
-        r: _TrainResults = self.results
-        c: _TrainContext = self.context
+    def _save_best_g(self, context=None, results=None):
+        c: _TrainContext = self.find_context(context)
+        r: _TrainResults = self.find_results(results)
 
         r.log_best_losses("g")
 
@@ -255,53 +251,55 @@ class PredAltSGDAlgo(_Algo):
         else:
             c.mods.g.save()
             r.log_model_action("save", "g")
+        # end if
 
-    # end def
-
-    def _run_iter(self):
-        r: _TrainResults = self.results
-        c: _TrainContext = self.context
+    def _run_iter(self, context=None, results=None):
+        c: _TrainContext = self.find_context(context)
+        r: _TrainResults = self.find_results(results)
 
         c.loops.epoch.index = 0
 
         while c.loops.epoch.index < c.loops.epoch.count:
             r.log_epoch("Started", "")
-            self._train_dg()
-            self._valid_d()
-            self._save_best_d()
-            self._valid_g()
-            self._save_best_g()
+            self._train_d_and_g(context, results)
+            self._valid_d(context, results)
+            self._save_best_d(context, results)
+            self._valid_g(context, results)
+            self._save_best_g(context, results)
             r.save_disc_losses()
             r.save_gen_losses()
-            r.save_generated_images()
-            r.save_tvg()
-            r.logln("-")
+            r.save_gen_imgs()
+            r.save_tvg_fig()
+            r.logln("--")
+            r.flushlogs()
             c.loops.epoch.index += 1
+        # end while
 
-    # end def
+    def start(self, context=None, results=None):
+        """Starts the algorithm.
 
-    def start(self):
-        """Starts the algorithm."""
-        super().start()
+        Args:
+            context: optional context
+            results: optional results
+        """
+        super().start(context, results)
 
-        self.check_context_and_results()
-        r: _TrainResults = self.results
-        c: _TrainContext = self.context
+        c: _TrainContext = self.find_context(context)
+        r: _TrainResults = self.find_results(results)
 
         r.logln("Started predictive alternating SGD algorithm")
         r.log_pred_factor()
         r.logln("-")
-        r.save_training_images()
-        r.save_validation_images()
-        r.save_images_before_training()
+        r.save_train_imgs()
+        r.save_valid_imgs()
+        r.save_imgs_before_train()
 
         c.loops.iteration.index = 0
 
         while c.loops.iteration.index < c.loops.iteration.count:
             r.log_iter("Started")
-            self._run_iter()
+            self._run_iter(context, results)
             r.logln("-")
+            r.flushlogs()
             c.loops.iteration.index += 1
-
-    # end def
-# end class
+        # ene while

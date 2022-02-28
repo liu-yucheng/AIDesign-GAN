@@ -15,6 +15,7 @@ import sys
 
 from os import path as ospath
 
+from aidesign_gan.libs import defaults
 from aidesign_gan.libs import statuses
 
 # Aliases
@@ -23,7 +24,9 @@ _argv = sys.argv
 _deepcopy = copy.deepcopy
 _exists = ospath.exists
 _GenStatus = statuses.GANGenerateStatus
+_isabs = ospath.isabs
 _isdir = ospath.isdir
+_join = ospath.join
 _Path = pathlib.Path
 _stderr = sys.stderr
 _TrainStatus = statuses.GANTrainStatus
@@ -112,25 +115,31 @@ def run():
     elif argv_copy_length == 1:
         path_to_model = argv_copy.pop(0)
         path_to_model = str(path_to_model)
-        path_to_model = "./" + path_to_model
+
+        if not _isabs(path_to_model):
+            path_to_model = _join(".", path_to_model)
+
         path_to_model = str(_Path(path_to_model).resolve())
 
         if not _exists(path_to_model):
             print(model_does_not_exist_info.format(path_to_model), file=_stderr)
             exit(1)
+
         if not _isdir(path_to_model):
             print(model_is_not_dir_info.format(path_to_model), file=_stderr)
             exit(1)
 
-        gan_train_status = _TrainStatus()
-        gan_generate_status = _GenStatus()
-        gan_train_status.load()
-        gan_generate_status.load()
+        train_status = _TrainStatus.load_from_path(defaults.app_data_path)
+        gen_status = _GenStatus.load_from_path(defaults.app_data_path)
 
-        gan_train_status["model_path"] = path_to_model
-        gan_generate_status["model_path"] = path_to_model
-        gan_train_status.save()
-        gan_generate_status.save()
+        train_status["model_path"] = path_to_model
+        gen_status["model_path"] = path_to_model
+
+        train_status = _TrainStatus.verify(train_status)
+        gen_status = _GenStatus.verify(gen_status)
+
+        _TrainStatus.save_to_path(train_status, defaults.app_data_path)
+        _GenStatus.save_to_path(gen_status, defaults.app_data_path)
 
         print(info.format(path_to_model))
         exit(0)

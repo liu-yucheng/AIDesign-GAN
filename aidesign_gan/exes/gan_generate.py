@@ -9,7 +9,6 @@ Can be launched directly.
 # First added by username: liu-yucheng
 # Last updated by username: liu-yucheng
 
-
 import copy
 import datetime
 import sys
@@ -18,6 +17,7 @@ import typing
 from os import path as ospath
 
 from aidesign_gan.libs import coords
+from aidesign_gan.libs import defaults
 from aidesign_gan.libs import statuses
 from aidesign_gan.libs import utils
 
@@ -205,10 +205,9 @@ def run():
     argv_copy_length = len(argv_copy)
     assert argv_copy_length >= 0
     if argv_copy_length == 0:
-        gan_generate_status = _GenStatus()
-        gan_generate_status.load()
+        gen_status = _GenStatus.load_from_path(defaults.app_data_path)
+        model_path = gen_status["model_path"]
 
-        model_path = gan_generate_status["model_path"]
         if model_path is None:
             print(none_model_info, file=_stderr)
             exit(1)
@@ -218,21 +217,21 @@ def run():
         tab_width1 = 4
         tab_width2 = 8
         tab1 = " " * tab_width1
-        gan_generate_lines = []
-        gan_generate_info = ""
+        gen_lines = []
+        gen_info = ""
 
-        for key in gan_generate_status.items:
+        for key in gen_status:
             tab2 = " " * (tab_width2 - len(key) % tab_width2)
-            val = gan_generate_status[key]
+            val = gen_status[key]
             val = str(val)
             line = f"{tab1}{key}:{tab2}{val}"
-            gan_generate_lines.append(line)
+            gen_lines.append(line)
         # end for
 
-        gan_generate_info = "\n".join(gan_generate_lines)
+        gen_info = "\n".join(gen_lines)
 
         timed_input = _TimedInput()
-        print(info.format(gan_generate_info))
+        print(info.format(gen_info))
         answer = timed_input.take(timeout)
 
         if answer is None:

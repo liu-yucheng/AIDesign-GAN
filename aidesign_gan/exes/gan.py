@@ -31,6 +31,7 @@ try:
         _version = _packages[0].version
 except Exception as _:
     pass
+# end try
 
 brief_usage = "gan <command> ..."
 """Brief usage."""

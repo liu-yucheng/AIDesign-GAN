@@ -53,6 +53,9 @@ class Results:
         Ensures that there is at least 1 context to use.
         NOTE: Context usage priorities: context_arg > self.context
 
+        Args:
+            context_arg: the context argument
+
         Returns:
             context: the context to use
 
@@ -63,7 +66,7 @@ class Results:
 
         if context_arg is None and self.context is None:
             err_info = str(
-                f"At least 1 of the following must be non-None:\n"
+                f"At least 1 of the following items must be non-None:\n"
                 f"  context_arg: {context_arg}\n"
                 f"  self.context: {self.context}"
             )

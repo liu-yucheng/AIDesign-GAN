@@ -334,6 +334,8 @@ class TrainResults(_Results):
             info += f"  D(G(Z)) = {c.latest.dgz:.6f} L(G) = {c.latest.lg:.6f}"
         # end if
 
+        info += "\n"
+        info += "---"
         self.logln(info)
 
     def log_batch_v2(self, batch_type, context=None):
@@ -402,6 +404,8 @@ class TrainResults(_Results):
             # end if
         # end if
 
+        info += "\n"
+        info += "---"
         self.logln(info)
 
     def log_batch_v3(self, batch_type, context=None):
@@ -470,7 +474,7 @@ class TrainResults(_Results):
             "L(G,X): {}  L(G,G(Z)): {}\n"
             "L(G,Cluster,X): {}  L(G,Cluster,G(Z)): {}\n"
             "L(G): {}\n"
-            "----"
+            "----\n"
         ).format(
             f"{c.latest.dx2:.6f}", f"{c.latest.dgz2:.6f}",
             f"{c.latest.lgr:.6f}", f"{c.latest.lgf:.6f}",
@@ -478,6 +482,7 @@ class TrainResults(_Results):
             f"{c.latest.lg:.6f}"
         )
 
+        info += "---"
         self.logln(info)
 
     def log_epoch_loss(self, loss_type, context=None):
@@ -567,11 +572,11 @@ class TrainResults(_Results):
         c: _TrainContext = self.find_context(context)
 
         if model_type == "d":
-            model_name = "D"
+            model_name = "discriminator"
             es_count = c.loops.es.d
             rb_count = c.loops.rb.d
         elif model_type == "g":
-            model_name = "G"
+            model_name = "generator"
             es_count = c.loops.es.g
             rb_count = c.loops.rb.g
         else:
@@ -594,7 +599,7 @@ class TrainResults(_Results):
 
         self.logln(info)
 
-    def save_training_images(self, context=None):
+    def save_train_imgs(self, context=None):
         """Saves the first batch of the training images.
 
         Args:
@@ -622,7 +627,7 @@ class TrainResults(_Results):
 
         self.logln("Saved training images")
 
-    def save_validation_images(self, context=None):
+    def save_valid_imgs(self, context=None):
         """Saves the first batch of the validation images.
 
         Args:
@@ -650,7 +655,7 @@ class TrainResults(_Results):
 
         self.logln("Saved validation images")
 
-    def save_images_before_training(self, context=None):
+    def save_imgs_before_train(self, context=None):
         """Saves a batch of the generated images grid before any training.
 
         Args:
@@ -681,7 +686,7 @@ class TrainResults(_Results):
 
         self.logln("Saved images before training")
 
-    def save_generated_images(self, context=None):
+    def save_gen_imgs(self, context=None):
         """Saves a batch of the generated images.
 
         Args:
@@ -809,7 +814,7 @@ class TrainResults(_Results):
 
         self.logln("Saved G losses plot")
 
-    def save_tvg(self, context=None):
+    def save_tvg_fig(self, context=None):
         """Saves the TVG (training-validation-generated) figure.
 
         Args:

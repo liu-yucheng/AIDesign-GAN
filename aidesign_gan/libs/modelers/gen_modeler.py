@@ -50,10 +50,10 @@ class GenModeler(_Modeler):
         super().__init__(model_path, config, device, gpu_count, loss_func)
 
         # Setup self.model
-        struct = _GenStruct(self.model_path)
-        struct.location = _join(self.model_path, self.config["struct_name"])
-        struct.load()
-        exec(struct.definition)
+        struct_loc = _join(self.model_path, self.config["struct_name"])
+        struct_def = _GenStruct.load(struct_loc)
+        exec(struct_def)
+
         self.model = self.model.to(self.device)
         self.model = _paral_model(self.model, self.device, self.gpu_count)
 

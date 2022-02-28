@@ -22,11 +22,17 @@ _stderr = sys.stderr
 
 # End of aliases
 
-# Init _version
+# Initialize _version
 _version = "<unknown version>"
-_packages = _require("aidesign-gan")
-if len(_packages) > 0:
-    _version = _packages[0].version
+
+try:
+    _packages = _require("aidesign-gan")
+
+    if len(_packages) > 0:
+        _version = _packages[0].version
+except Exception as _:
+    pass
+# end try
 
 brief_usage = "gan welcome"
 """Brief usage."""

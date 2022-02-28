@@ -48,7 +48,7 @@ class GenCoord(_Coord):
         self._results.ensure_folders()
         self._results_ready = True
 
-        self._results.logln("Completed results setup")
+        self._results.logln("Coordinator prepared results")
 
     def _prep_context(self):
         """Prepares self.context."""
@@ -77,7 +77,7 @@ class GenCoord(_Coord):
         self._results.log_g()
 
         self._context_ready = True
-        self._results.logln("Completed context setup")
+        self._results.logln("Coordinator prepared context")
 
     def prep(self):
         """Prepares everything that the start method needs."""
@@ -88,6 +88,8 @@ class GenCoord(_Coord):
             self._prep_context()
 
         self._prepared = True
+        self._results.logln("Coordinator completed preparation")
+        self._results.flushlogs()
 
     def _normalize_images(self):
         """Normalizes the images."""
@@ -152,3 +154,4 @@ class GenCoord(_Coord):
 
         r.save_generated_images()
         r.logln("Completed generation")
+        r.flushlogs()

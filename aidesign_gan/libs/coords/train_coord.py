@@ -51,7 +51,7 @@ class TrainCoord(_Coord):
         self._results = _TrainResults(path, self._logs)
         self._results.ensure_folders()
         self._results_ready = True
-        self._results.logln("Completed results setup")
+        self._results.logln("Coordinator prepared results")
 
     def _prep_context(self):
         """Sets up self.context."""
@@ -108,7 +108,7 @@ class TrainCoord(_Coord):
         self._context.setup_noises()
 
         self._context_ready = True
-        self._results.logln("Completed context setup")
+        self._results.logln("Coordinator prepared context")
 
     def _prep_algo(self):
         """Prepares self.algo.
@@ -136,8 +136,7 @@ class TrainCoord(_Coord):
         self._results.log_algo(algo_name)
         self._algo.bind_context_and_results(self._context, self._results)
         self._algo_ready = True
-
-        self._results.logln("Completed algo setup")
+        self._results.logln("Coordinator prepared algorithm")
 
     def prep(self):
         """Prepares everything that the start method needs."""
@@ -151,6 +150,8 @@ class TrainCoord(_Coord):
             self._prep_algo()
 
         self._prepared = True
+        self._results.logln("Coordinator completed preparation")
+        self._results.flushlogs()
 
     def start(self):
         """Starts the training process."""
@@ -158,7 +159,9 @@ class TrainCoord(_Coord):
             self.prep()
 
         r = self._results
+
         r.logln("Started training")
         r.logln("-")
         self._algo.start()
         r.logln("Completed training")
+        r.flushlogs()

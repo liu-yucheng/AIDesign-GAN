@@ -158,7 +158,8 @@ Model path: {model_path}
 
     try:
         coord = _GenCoord(model_path, all_logs)
-        coord.start_generation()
+        coord.prep()
+        coord.start()
     except BaseException as base_exception:
         _logstr(err_logs, _format_exc())
 

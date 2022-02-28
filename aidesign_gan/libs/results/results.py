@@ -6,6 +6,7 @@
 # Last updated by username: liu-yucheng
 
 import os
+import typing
 
 from aidesign_gan.libs import contexts
 from aidesign_gan.libs import utils
@@ -15,6 +16,7 @@ _flushlogs = utils.flushlogs
 _logln = utils.logln
 _logstr = utils.logstr
 _makedirs = os.makedirs
+_Union = typing.Union
 
 
 class Results:
@@ -34,7 +36,7 @@ class Results:
         """Results root path."""
         self.logs = logs
         """Log file objects."""
-        self.context = None
+        self.context: _Union[_Context, None] = None
         """Context.
 
         Used to replace the context parameters of the context-involved results functions.
@@ -45,22 +47,37 @@ class Results:
         _makedirs(self.path, exist_ok=True)
         self.logln(f"Ensured folder: {self.path}")
 
-    def bind_context(self, context):
-        """Binds a context to self.
+    def find_context(self, context_arg):
+        """Finds the context to use.
 
-        Args:
-            context: the context to bind
-        """
-        self.context = context
+        Ensures that there is at least 1 context to use.
+        NOTE: Context usage priorities: context_arg > self.context
 
-    def check_context(self):
-        """Check if self.context is not None.
+        Returns:
+            context: the context to use
 
         Raises:
-            ValueError: if self.context is None
+            ValueError: if both context_arg and self.context are None
         """
-        if self.context is None:
-            raise ValueError("self.context cannot be None")
+        context_arg: _Union[_Context, None] = context_arg
+
+        if context_arg is None and self.context is None:
+            err_info = str(
+                f"At least 1 of the following must be non-None:\n"
+                f"  context_arg: {context_arg}\n"
+                f"  self.context: {self.context}"
+            )
+
+            raise ValueError(err_info)
+        # end if
+
+        if context_arg is not None:
+            context = context_arg
+        elif self.context is not None:
+            context = self.context
+        # end if
+
+        return context
 
     def logstr(self, string=""):
         """Logs a string.
@@ -82,26 +99,42 @@ class Results:
         """Flushes every log in self.logs."""
         _flushlogs(self.logs)
 
-    def log_configs(self, coords_config, modelers_config):
+    def log_config_locs(self, ccfg_loc, mcfg_loc):
         """Logs the coords and modelers config info.
 
         Args:
-            coords_config: the coords config
-            modelers_config: the modelers config
+            ccfg_loc: coords config location
+            mcfg_loc: modelers config location
         """
-        self.logln(f"Coords config: {coords_config.location}")
-        self.logln(f"Modelers config: {modelers_config.location}")
+        ccfg_loc = str(ccfg_loc)
+        mcfg_loc = str(mcfg_loc)
 
-    def log_rand(self):
-        """Logs the random info."""
-        self.check_context()
-        c: _Context = self.context
+        info = str(
+            f"Used the coords config at: {ccfg_loc}\n"
+            f"Used the modelers config at: {mcfg_loc}"
+        )
 
-        self.logln(f"Random seed ({c.rand.mode}): {c.rand.seed}")
+        self.logln(info)
 
-    def log_hw(self):
-        """Logs the torch hardware info."""
-        self.check_context()
-        c: _Context = self.context
+    def log_rand(self, context=None):
+        """Logs the random info.
 
-        self.logln(f"Torch device: {c.hw.device}; GPU count: {c.hw.gpu_count}")
+        Args:
+            context: optional context
+        """
+        c: _Context = self.find_context(context)
+
+        info = f"Random seed ({c.rand.mode}): {c.rand.seed}"
+        self.logln(info)
+
+    def log_hw(self, context=None):
+        """Logs the torch hardware info.
+
+        Args:
+            context: optional context
+        """
+
+        c: _Context = self.find_context(context)
+
+        info = f"PyTorch device: \"{c.hw.device}\"  GPU count: {c.hw.gpu_count}"
+        self.logln(info)

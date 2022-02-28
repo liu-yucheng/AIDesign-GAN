@@ -102,19 +102,19 @@ class Results:
         """Flushes every log in self.logs."""
         _flushlogs(self.logs)
 
-    def log_config_locs(self, ccfg_loc, mcfg_loc):
+    def log_config_locs(self, cconfig_loc, mconfig_loc):
         """Logs the coords and modelers config info.
 
         Args:
-            ccfg_loc: coords config location
-            mcfg_loc: modelers config location
+            cconfig_loc: coords config location
+            mconfig_loc: modelers config location
         """
-        ccfg_loc = str(ccfg_loc)
-        mcfg_loc = str(mcfg_loc)
+        cconfig_loc = str(cconfig_loc)
+        mconfig_loc = str(mconfig_loc)
 
         info = str(
-            f"Used the coords config at: {ccfg_loc}\n"
-            f"Used the modelers config at: {mcfg_loc}"
+            f"Used the coords config at: {cconfig_loc}\n"
+            f"Used the modelers config at: {mconfig_loc}"
         )
 
         self.logln(info)

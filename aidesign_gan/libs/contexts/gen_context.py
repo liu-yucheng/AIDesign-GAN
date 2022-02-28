@@ -63,14 +63,14 @@ class GenContext(_Context):
         self.batch_prog = GenContext.BatchProg()
         """Generation batch progress info."""
 
-    def setup_all(self, coords_config, modelers_config):
+    def setup_all(self, model_path, cconfig, mconfig):
         """Sets up the entire context.
 
         Sets up self.g, self.images, self.grids, and self.noises.
 
         Args:
-            coords_config: the coords config
-            modelers_config: the modelers config
+            cconfig: the coords config
+            mconfig: the modelers config
 
         Raises:
             ValueError: if self.hw.device is None
@@ -79,14 +79,14 @@ class GenContext(_Context):
             raise ValueError("self.hw.device cannot be None")
 
         # Setup self.g
-        model_path = modelers_config.model_path
-        config = modelers_config["generator"]
+        model_path = str(model_path)
+        config = mconfig["generator"]
         loss_func = _BCELoss()
         self.g = _GenModeler(model_path, config, self.hw.device, self.hw.gpu_count, loss_func, train=False)
         self.g.load()
 
         # Setup self.images
-        config = coords_config["generation"]
+        config = cconfig["generation"]
         self.images.count = config["image_count"]
         self.images.per_batch = config["images_per_batch"]
         self.images.to_save = []

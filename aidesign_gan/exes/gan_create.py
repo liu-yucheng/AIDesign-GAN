@@ -142,13 +142,9 @@ def run():
         _copytree(defaults.default_gan_model_path, path_to_model, dirs_exist_ok=True)
         path_to_model = str(_Path(path_to_model).resolve())
 
-        format_config = _FormatConfig(path_to_model)
-        coords_config = _CoordsConfig(path_to_model)
-        modelers_config = _ModelersConfig(path_to_model)
-
-        format_config.save()
-        coords_config.save()
-        modelers_config.save()
+        format_config = _FormatConfig.load_default()
+        format_config = _FormatConfig.verify(format_config)
+        _FormatConfig.save_to_path(format_config, path_to_model)
 
         print(info.format(path_to_model))
         exit(0)

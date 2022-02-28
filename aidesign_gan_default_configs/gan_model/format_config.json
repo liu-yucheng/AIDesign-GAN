@@ -1,9 +1,4 @@
 {
-    "aidesign_gan_version": "unknown",
-    "aidesign_gan_repo_tag": "unknown",
-    "coords_config_version": "unknown",
-    "discriminator_struct_version": "unknown",
-    "format_config_version": "unknown",
-    "generator_struct_version": "unknown",
-    "modelers_config_version": "unknown"
+    "aidesign_gan_version": "<unknown version>",
+    "aidesign_gan_repo_tag": "<unknown version>"
 }

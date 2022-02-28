@@ -17,6 +17,7 @@ import typing
 from os import path as ospath
 
 from aidesign_gan.libs import coords
+from aidesign_gan.libs import defaults
 from aidesign_gan.libs import statuses
 from aidesign_gan.libs import utils
 
@@ -219,11 +220,9 @@ def run():
     assert argv_copy_length >= 0
 
     if argv_copy_length == 0:
-        gan_train_status = _TrainStatus()
-        gan_train_status.load()
-
-        dataset_path = gan_train_status["dataset_path"]
-        model_path = gan_train_status["model_path"]
+        train_status = _TrainStatus.load_from_path(defaults.app_data_path)
+        dataset_path = train_status["dataset_path"]
+        model_path = train_status["model_path"]
 
         if dataset_path is None:
             print(none_dataset_info, file=_stderr)
@@ -238,19 +237,19 @@ def run():
         tab_width1 = 4
         tab_width2 = 8
         tab1 = " " * tab_width1
-        gan_train_lines = []
-        gan_train_info = ""
+        train_lines = []
+        train_info = ""
 
-        for key in gan_train_status.items:
+        for key in train_status:
             tab2 = " " * (tab_width2 - len(key) % tab_width2)
-            val = gan_train_status[key]
+            val = train_status[key]
             line = f"{tab1}{key}:{tab2}{val}"
-            gan_train_lines.append(line)
+            train_lines.append(line)
 
-        gan_train_info = "\n".join(gan_train_lines)
+        train_info = "\n".join(train_lines)
 
         timed_input = _TimedInput()
-        print(info.format(gan_train_info))
+        print(info.format(train_info))
         answer = timed_input.take(timeout)
 
         if answer is None:

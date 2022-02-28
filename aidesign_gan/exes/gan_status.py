@@ -87,36 +87,34 @@ def run():
             _copytree(defaults.default_app_data_path, defaults.app_data_path, dirs_exist_ok=True)
 
         app_data_info = defaults.app_data_path
-        gan_train_info = ""
-        gan_generate_info = ""
+        train_info = ""
+        gen_info = ""
 
-        gan_train_status = _TrainStatus()
-        gan_generate_status = _GenStatus()
-        gan_train_status.load()
-        gan_generate_status.load()
+        train_status = _TrainStatus.load_from_path(defaults.app_data_path)
+        gen_status = _GenStatus.load_from_path(defaults.app_data_path)
 
         tab_width1 = 4
         tab_width2 = 8
         tab1 = " " * tab_width1
-        gan_train_lines = []
-        gan_generate_lines = []
+        train_lines = []
+        gen_lines = []
 
-        for key in gan_train_status.items:
+        for key in train_status:
             tab2 = " " * (tab_width2 - len(key) % tab_width2)
-            val = gan_train_status[key]
+            val = train_status[key]
             line = f"{tab1}{key}:{tab2}{val}"
-            gan_train_lines.append(line)
+            train_lines.append(line)
 
-        for key in gan_generate_status.items:
+        for key in gen_status:
             tab2 = " " * (tab_width2 - len(key) % tab_width2)
-            val = gan_generate_status[key]
+            val = gen_status[key]
             line = f"{tab1}{key}:{tab2}{val}"
-            gan_generate_lines.append(line)
+            gen_lines.append(line)
 
-        gan_train_info = "\n".join(gan_train_lines)
-        gan_generate_info = "\n".join(gan_generate_lines)
+        train_info = "\n".join(train_lines)
+        gen_info = "\n".join(gen_lines)
 
-        print(info.format(app_data_info, gan_train_info, gan_generate_info))
+        print(info.format(app_data_info, train_info, gen_info))
         exit(0)
     else:  # elif argv_copy_length > 0:
         print(too_many_args_info.format(argv_copy_length), file=_stderr)

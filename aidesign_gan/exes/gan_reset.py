@@ -81,10 +81,11 @@ def run():
         if not _exists(defaults.app_data_path):
             _copytree(defaults.default_app_data_path, defaults.app_data_path, dirs_exist_ok=True)
 
-        gan_train_status = _TrainStatus()
-        gan_generate_status = _GenStatus()
-        gan_train_status.save()
-        gan_generate_status.save()
+        train_status = _TrainStatus.load_default()
+        gen_status = _GenStatus.load_default()
+
+        _TrainStatus.save_to_path(train_status, defaults.app_data_path)
+        _GenStatus.save_to_path(gen_status, defaults.app_data_path)
 
         print(info.format(defaults.app_data_path))
         exit(0)

@@ -145,14 +145,10 @@ def run():
         format_config = _FormatConfig(path_to_model)
         coords_config = _CoordsConfig(path_to_model)
         modelers_config = _ModelersConfig(path_to_model)
-        d_struct = _DiscStruct(path_to_model)
-        g_struct = _GenStruct(path_to_model)
 
         format_config.save()
         coords_config.save()
         modelers_config.save()
-        d_struct.save()
-        g_struct.save()
 
         print(info.format(path_to_model))
         exit(0)

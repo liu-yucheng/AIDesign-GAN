@@ -1,4 +1,4 @@
-"""Module of the NN struct (neural network structure) classes.
+"""Structures.
 
 ==== References ====
 Odena, et al., 2016. Deconvolution and Checkerboard Artifacts. https://distill.pub/2016/deconv-checkerboard/
@@ -18,180 +18,91 @@ from aidesign_gan.libs import defaults
 from aidesign_gan.libs import utils
 
 _join = ospath.join
+_load_text = utils.load_text
+_save_text = utils.save_text
 
 
 class Struct:
-    """Super class of the NN struct classes."""
+    """Struct base class."""
 
-    def __init__(self):
-        """Inits self."""
-        self.location = None
-        """Structure file location."""
-        self.definition = ""
-        """Structure definition."""
+    default_loc = None
+    """Default location."""
+    default_name = None
+    """Default name."""
 
-    def load(self):
-        """Loads the struct definition.
+    @classmethod
+    def load(cls, from_file):
+        """Loads the struct from a file to a str.
 
-        If the file does not exist, the function saves the current stuct.
+        Args:
+            from_file: a file location
 
-        Raises:
-            ValueError: if self.location is None
+        Returns:
+            to_str: the loaded str
         """
-        if self.location is None:
-            raise ValueError("self.location cannot be None")
-        try:
-            self.definition = utils.load_text(self.location)
-        except FileNotFoundError:
-            utils.save_text(self.definition, self.location)
+        from_file = str(from_file)
+        to_str = _load_text(from_file)
+        return to_str
 
-    def save(self):
-        """Saves the struct definition.
+    @classmethod
+    def load_default(cls):
+        """Loads the default struct.
 
-        Raises:
-            ValueError: if self.location is None
+        Returns:
+            result: the result
         """
-        if self.location is None:
-            raise ValueError("struct.location cannot be None")
-        utils.save_text(self.definition, self.location)
+        result = cls.load(cls.default_loc)
+        return result
+
+    @classmethod
+    def load_from_path(cls, path):
+        """Loads the struct named cls.default_name from a path.
+
+        Args:
+            path: a path
+
+        Returns:
+            result: the result
+        """
+        path = str(path)
+        loc = _join(path, cls.default_name)
+        result = cls.load(loc)
+        return result
+
+    @classmethod
+    def save(cls, from_str, to_file):
+        """Saves a struct from a str to a file.
+
+        Args:
+            from_dict: a status dict to save
+            to_file: a file location
+        """
+        from_str = str(from_str)
+        to_file = str(to_file)
+        _save_text(from_str, to_file)
+
+    @classmethod
+    def save_to_path(cls, from_dict, path):
+        """Saves the struct from a dict to a file named cls.default_name in a path.
+
+        Args:
+            from_dict: a dict to save
+            path: a path
+        """
+        from_dict = dict(from_dict)
+        loc = _join(path, cls.default_name)
+        cls.save(from_dict, loc)
 
 
 class DiscStruct(Struct):
     """Discriminator structure."""
 
-    def __init__(self, model_path):
-        """Inits self with the given args.
-
-        Args:
-            model_path: the model path
-
-        Raises:
-            ValueError: if model_path is None
-        """
-        super().__init__()
-        if model_path is None:
-            raise ValueError("Argument model_path cannot be None")
-        self.location = _join(model_path, defaults.disc_struct_name)
-        # fmt: off
-        self.definition = r"""# D (Discriminator)
-# CNN (Convolutional Neural Network)
-# Resize convolution
-
-from torch import nn
-
-self = self
-ir = self.config["image_resolution"]
-ic = self.config["image_channel_count"]
-fm = self.config["feature_map_size"]
-
-# NOTE:
-# nn.Conv2d positional params: in_channels, out_channels, kernel_size, stride, padding
-# nn.Upsample positional params: size
-# nn.LeakyReLU positional params: negative_slope, inplace
-# nn.BatchNorm2d positional params: num_features
-
-_Conv2d = nn.Conv2d
-_Upsample = nn.Upsample
-_LeakyReLU = nn.LeakyReLU
-_BatchNorm2d = nn.BatchNorm2d
-_Sigmoid = nn.Sigmoid
-
-self.model = nn.Sequential(
-    # Layer group 1. input group
-    _Conv2d(ic, fm, 5, 1, 2, bias=False),
-    _Upsample(int(ir // 2), mode="bicubic", align_corners=False),
-    _LeakyReLU(0.2, True),
-    # 2.
-    _Conv2d(fm, int(3 * fm), 3, 1, 1, bias=False),
-    _Upsample(int(ir // 4), mode="bilinear", align_corners=False),
-    _BatchNorm2d(int(3 * fm)),
-    _LeakyReLU(0.2, True),
-    # 3.
-    _Conv2d(int(3 * fm), int(5 * fm), 3, 1, 1, bias=False),
-    _Upsample(int(ir // 8), mode="bilinear", align_corners=False),
-    _BatchNorm2d(int(5 * fm)),
-    _LeakyReLU(0.2, True),
-    # 4.
-    _Conv2d(int(5 * fm), int(7 * fm), 3, 1, 1, bias=False),
-    _Upsample(4, mode="bilinear", align_corners=False),
-    _BatchNorm2d(int(7 * fm)),
-    _LeakyReLU(0.2, True),
-    # 5. output group
-    _Conv2d(int(7 * fm), 1, 3, 1, 1, bias=False),
-    _Upsample(1, mode="bicubic", align_corners=False),
-    _Sigmoid()
-)
-"""
-        # fmt: on
+    default_loc = _join(defaults.default_gan_model_path, defaults.disc_struct_name)
+    default_name = defaults.disc_struct_name
 
 
 class GenStruct(Struct):
     """Generator structure."""
 
-    def __init__(self, model_path):
-        """Inits self with the given args.
-
-        Args:
-            model_path: the model path
-
-        Raises:
-            ValueError: if argument model_path is None
-        """
-        super().__init__()
-        if model_path is None:
-            raise ValueError("Argument model_path cannot be None")
-        self.location = _join(model_path, defaults.gen_struct_name)
-        # fmt: off
-        self.definition = r"""# G (Generator)
-# CNN (Convolutional Neural Network)
-# Resize transposed convolution
-
-from torch import nn
-
-self = self
-zr = self.config["noise_resolution"]
-zc = self.config["noise_channel_count"]
-ir = self.config["image_resolution"]
-ic = self.config["image_channel_count"]
-fm = self.config["feature_map_size"]
-
-# NOTE:
-# nn.ConvTranspose2d positional params: in_channels, out_channels, kernel_size, stride, padding
-# nn.Upsample positional params: size
-# nn.ReLU positional params: inplace
-# nn.BatchNorm2d positional params: num_features
-
-_ConvTranspose2d = nn.ConvTranspose2d
-_Upsample = nn.Upsample
-_ReLU = nn.ReLU
-_BatchNorm2d = nn.BatchNorm2d
-_Tanh = nn.Tanh
-
-self.model = nn.Sequential(
-    # Layer group 1. input group
-    _Upsample(4, mode="bicubic", align_corners=False),
-    _ConvTranspose2d(zc, int(7 * fm), 3, 1, 1, bias=False),
-    _BatchNorm2d(int(7 * fm)),
-    _ReLU(True),
-    # 2.
-    _Upsample(int(ir // 8), mode="bilinear", align_corners=False),
-    _ConvTranspose2d(int(7 * fm), int(5 * fm), 3, 1, 1, bias=False),
-    _BatchNorm2d(int(5 * fm)),
-    _ReLU(True),
-    # 3.
-    _Upsample(int(ir // 4), mode="bilinear", align_corners=False),
-    _ConvTranspose2d(int(5 * fm), int(3 * fm), 3, 1, 1, bias=False),
-    _BatchNorm2d(int(3 * fm)),
-    _ReLU(True),
-    # 4.
-    _Upsample(int(ir // 2), mode="bilinear", align_corners=False),
-    _ConvTranspose2d(int(3 * fm), fm, 3, 1, 1, bias=False),
-    _BatchNorm2d(fm),
-    _ReLU(True),
-    # 5. output group
-    _Upsample(ir, mode="bicubic", align_corners=False),
-    _ConvTranspose2d(fm, ic, 5, 1, 2, bias=False),
-    _Tanh()
-)
-"""
-        # fmt: on
+    default_loc = _join(defaults.default_gan_model_path, defaults.gen_struct_name)
+    default_name = defaults.gen_struct_name

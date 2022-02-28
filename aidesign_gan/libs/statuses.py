@@ -1,4 +1,4 @@
-"""Module of the app part statuses."""
+"""Statuses."""
 
 # Copyright 2022 Yucheng Liu. GNU GPL3 license.
 # GNU GPL3 license copy: https://www.gnu.org/licenses/gpl-3.0.txt
@@ -105,7 +105,9 @@ class GANTrainStatus(Status):
     """Status of the "gan train" command."""
 
     default_loc = _join(defaults.default_app_data_path, defaults.gan_train_status_name)
+    """Default location."""
     default_name = defaults.gan_train_status_name
+    """Default name."""
 
     @classmethod
     def verify(cls, from_dict):
@@ -127,7 +129,9 @@ class GANGenerateStatus(Status):
     """Status of the "gan generate" command."""
 
     default_loc = _join(defaults.default_app_data_path, defaults.gan_generate_status_name)
+    """Default location."""
     default_name = defaults.gan_generate_status_name
+    """Default name."""
 
     @classmethod
     def verify(cls, from_dict):

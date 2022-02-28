@@ -23,10 +23,14 @@ class Coord:
         """Model path."""
         self._logs = logs
         """Log file objects"""
-        self._ccfg = None
+        self._cconfig = None
         """Coords config."""
-        self._mcfg = None
+        self._cconfig_loc = None
+        """Coords config location."""
+        self._mconfig = None
         """Modelers config."""
+        self._mconfig_loc = None
+        """Modelers config location."""
         self._results = None
         """Results."""
         self._context = None

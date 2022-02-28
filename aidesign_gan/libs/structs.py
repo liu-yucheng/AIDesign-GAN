@@ -98,11 +98,15 @@ class DiscStruct(Struct):
     """Discriminator structure."""
 
     default_loc = _join(defaults.default_gan_model_path, defaults.disc_struct_name)
+    """Default location."""
     default_name = defaults.disc_struct_name
+    """Default name."""
 
 
 class GenStruct(Struct):
     """Generator structure."""
 
     default_loc = _join(defaults.default_gan_model_path, defaults.gen_struct_name)
+    """Default location."""
     default_name = defaults.gen_struct_name
+    """Default name."""

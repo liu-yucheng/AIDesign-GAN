@@ -13,6 +13,7 @@ from torchvision import utils as tv_utils
 
 from aidesign_gan.libs import configs
 from aidesign_gan.libs import contexts
+from aidesign_gan.libs import defaults
 from aidesign_gan.libs import results
 from aidesign_gan.libs.coords import coord
 
@@ -57,15 +58,19 @@ class GenCoord(_Coord):
         if not self._results_ready:
             self._prep_results()
 
-        self._ccfg = _CoordsConfig(self._model_path)
-        self._ccfg.load()
-        self._mcfg = _ModelersConfig(self._model_path)
-        self._mcfg.load()
+        self._cconfig = _CoordsConfig.load_from_path(self._model_path)
+        self._cconfig_loc = _join(self._model_path, defaults.coords_config_name)
+        self._cconfig = _CoordsConfig.verify(self._cconfig)
 
-        self._results.log_config_locs(self._ccfg.location, self._mcfg.location)
+        self._mconfig = _ModelersConfig.load_from_path(self._model_path)
+        self._mconfig_loc = _join(self._model_path, defaults.modelers_config_name)
+        self._mconfig = _ModelersConfig.verify(self._mconfig)
+
+        self._results.log_config_locs(self._cconfig_loc, self._mconfig_loc)
+
         self._context = _GenContext()
         self._results.context = self._context
-        config = self._ccfg["generation"]
+        config = self._cconfig["generation"]
 
         self._context.setup_rand(config)
         self._results.log_rand()
@@ -73,7 +78,7 @@ class GenCoord(_Coord):
         self._context.setup_hw(config)
         self._results.log_hw()
 
-        self._context.setup_all(self._ccfg, self._mcfg)
+        self._context.setup_all(self._model_path, self._cconfig, self._mconfig)
         self._results.log_g()
 
         self._context_ready = True

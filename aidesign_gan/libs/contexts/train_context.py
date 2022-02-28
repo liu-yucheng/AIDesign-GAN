@@ -294,7 +294,7 @@ class TrainContext(_Context):
         self.data.valid.size = valid_size
         self.data.valid.batch_count = valid_batch_count
 
-    def setup_mods(self, config):
+    def setup_mods(self, model_path, config):
         """Sets up self.mods and its attributes with the given args.
 
         Args:
@@ -306,7 +306,7 @@ class TrainContext(_Context):
         if self.hw.device is None:
             raise ValueError("self.hw.device cannot be None")
 
-        model_path = config.model_path
+        model_path = str(model_path)
         d_config = config["discriminator"]
         g_config = config["generator"]
         loss_func = _BCELoss()

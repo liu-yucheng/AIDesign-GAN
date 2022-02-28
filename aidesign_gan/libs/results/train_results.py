@@ -65,15 +65,19 @@ class TrainResults(_Results):
         self.logln(f"Ensured folder: {self.gen_img_path}")
 
     def log_data(self, context=None):
-        """Logs the data loaders info.
+        """Logs the dataset info.
 
         Args:
             context: optional context
         """
         c: _TrainContext = self.find_context(context)
 
-        self.logln(f"Data total size: {c.data.size}; Data size to use: {c.data.size_to_use}")
-        self.logln(f"Training set size: {c.data.train.size}; Validation set size: {c.data.valid.size}")
+        info = str(
+            f"Dataset:  Total size: {c.data.size}  Size to use: {c.data.size_to_use}\n"
+            f"Subsets:  Training set size: {c.data.train.size}  Validation set size: {c.data.valid.size}"
+        )
+
+        self.logln(info)
 
     def log_mods(self, context=None):
         """Logs the modelers info.
@@ -87,39 +91,43 @@ class TrainResults(_Results):
         d_lr = d_config["learning_rate"]
         d_beta1 = d_config["beta1"]
         d_beta2 = d_config["beta2"]
-        self.logstr(
-            str(
-                "D's modeler:\n"
-                "  Model:  Size: {}  Training size: {}  Struct: (See below)\n"
-                "  Adam optimizer:  Learning rate: {}  Beta 1: {}  Beta 2: {}\n"
-                "==== D's model struct ====\n"
-                "{}\n"
-            ).format(
-                c.mods.d.size,
-                c.mods.d.training_size,
-                d_lr, d_beta1, d_beta2,
-                str(c.mods.d.model)
-            )
+
+        d_info = str(
+            "- Discriminator modeler\n"
+            "Model:  Size: {}  Training size: {}  Struct: See below\n"
+            "Adam optimizer:  Learning rate: {:g}  Beta 1: {:g}  Beta 2: {:g}\n"
+            "- Discriminator model struct\n"
+            "{}\n"
+            "-"
+        ).format(
+            c.mods.d.size,
+            c.mods.d.training_size,
+            d_lr, d_beta1, d_beta2,
+            str(c.mods.d.model)
         )
+
+        self.logln(d_info)
 
         g_config = c.mods.g.config["adam_optimizer"]
         g_lr = g_config["learning_rate"]
         g_beta1 = g_config["beta1"]
         g_beta2 = g_config["beta2"]
-        self.logstr(
-            str(
-                "G's modeler:\n"
-                "  Model:  Size: {}  Training size: {}  Struct: (See below)\n"
-                "  Adam optimizer:  Learning rate: {}  Beta 1: {}  Beta 2: {}\n"
-                "==== G's model struct ====\n"
-                "{}\n"
-            ).format(
-                c.mods.g.size,
-                c.mods.g.training_size,
-                g_lr, g_beta1, g_beta2,
-                str(c.mods.g.model)
-            )
+
+        g_info = str(
+            "- Generator modeler\n"
+            "Model:  Size: {}  Training size: {}  Struct: See below\n"
+            "Adam optimizer:  Learning rate: {:g}  Beta 1: {:g}  Beta 2: {:g}\n"
+            "- Generator model struct\n"
+            "{}\n"
+            "-"
+        ).format(
+            c.mods.g.size,
+            c.mods.g.training_size,
+            g_lr, g_beta1, g_beta2,
+            str(c.mods.g.model)
         )
+
+        self.logln(g_info)
 
     def log_mode(self, context=None):
         """Logs the training mode info.
@@ -139,7 +147,7 @@ class TrainResults(_Results):
         """
         c: _TrainContext = self.find_context(context)
 
-        self.logln("Labels:  Real: {}  Fake: {}".format(f"{c.labels.real:.6f}", f"{c.labels.fake:.6f}"))
+        self.logln(f"Labels:  Real: {c.labels.real:g}  Fake: {c.labels.fake:g}")
 
     def log_algo(self, algo_name):
         """Logs the training algorithm.
@@ -158,30 +166,36 @@ class TrainResults(_Results):
         """
         c: _TrainContext = self.find_context(context)
 
-        d_dx_factor = c.mods.d.config["fairness"]["dx_factor"]
-        d_dgz_factor = c.mods.d.config["fairness"]["dgz_factor"]
-        d_cluster_dx_factor = c.mods.d.config["fairness"]["cluster_dx_factor"]
-        d_cluster_dgz_factor = c.mods.d.config["fairness"]["cluster_dgz_factor"]
+        df_config = c.mods.d.config["fairness"]
+        d_dx_factor = df_config["dx_factor"]
+        d_dgz_factor = df_config["dgz_factor"]
+        d_cluster_dx_factor = df_config["cluster_dx_factor"]
+        d_cluster_dgz_factor = df_config["cluster_dgz_factor"]
 
-        g_dx_factor = c.mods.g.config["fairness"]["dx_factor"]
-        g_dgz_factor = c.mods.g.config["fairness"]["dgz_factor"]
-        g_cluster_dx_factor = c.mods.g.config["fairness"]["cluster_dx_factor"]
-        g_cluster_dgz_factor = c.mods.g.config["fairness"]["cluster_dgz_factor"]
+        gf_config = c.mods.g.config["fairness"]
+        g_dx_factor = gf_config["dx_factor"]
+        g_dgz_factor = gf_config["dgz_factor"]
+        g_cluster_dx_factor = gf_config["cluster_dx_factor"]
+        g_cluster_dgz_factor = gf_config["cluster_dgz_factor"]
 
-        self.logstr(
-            str(
-                "Fairness:\n"
-                "  D:  D(X) factor: {}  D(G(Z)) factor: {}\n"
-                "      Cluster D(X) factor: {}  Cluster D(G(Z)) factor: {}\n"
-                "  G:  D(X) factor: {}  D(G(Z)) factor: {}\n"
-                "      Cluster D(X) factor: {}  Cluster D(G(Z)) factor: {}\n"
-            ).format(
-                f"{d_dx_factor:.6f}", f"{d_dgz_factor:.6f}",
-                f"{d_cluster_dx_factor:.6f}", f"{d_cluster_dgz_factor:.6f}",
-                f"{g_dx_factor:.6f}", f"{g_dgz_factor:.6f}",
-                f"{g_cluster_dx_factor:.6f}", f"{g_cluster_dgz_factor:.6f}"
-            )
+        info = str(
+            "- Fairness:\n"
+            "-- Discriminator\n"
+            "D(X) factor: {:g}  D(G(Z)) factor: {:g}\n"
+            "Cluster D(X) factor: {:g}  Cluster D(G(Z)) factor: {:g}\n"
+            "-- Generator\n"
+            "D(X) factor: {:g}  D(G(Z)) factor: {:g}\n"
+            "Cluster D(X) factor: {:g}  Cluster D(G(Z)) factor: {:g}\n"
+            "--\n"
+            "-"
+        ).format(
+            d_dx_factor, d_dgz_factor,
+            d_cluster_dx_factor, d_cluster_dgz_factor,
+            g_dx_factor, g_dgz_factor,
+            g_cluster_dx_factor, g_cluster_dgz_factor
         )
+
+        self.logln(info)
 
     def log_pred_factor(self, context=None):
         """Logs the prediction factor.
@@ -194,13 +208,8 @@ class TrainResults(_Results):
         d_pred_factor = c.mods.d.optim.pred_factor
         g_pred_factor = c.mods.g.optim.pred_factor
 
-        self.logstr(
-            str(
-                "Prediction factor:  D: {}  G: {}\n"
-            ).format(
-                f"{d_pred_factor:.6f}", f"{g_pred_factor:.6f}"
-            )
-        )
+        info = f"Prediction factor:  Discriminator: {d_pred_factor:g}  Generator: {g_pred_factor:g}"
+        self.logln(info)
 
     def log_iter(self, prefix, context=None):
         """Logs the iter info.
@@ -211,11 +220,13 @@ class TrainResults(_Results):
         """
         c: _TrainContext = self.find_context(context)
 
-        self.logstr("==== ==== ")
+        info = "- {} iter {} / {}".format(
+            prefix,
+            c.loops.iteration.index + 1,
+            c.loops.iteration.count
+        )
 
-        self.logstr(f"{prefix} iter {c.loops.iteration.index + 1} / {c.loops.iteration.count}")
-
-        self.logstr(" ==== ====\n")
+        self.logln(info)
 
     def log_epoch(self, prefix, epoch_type, context=None):
         """Logs the epoch info.
@@ -227,15 +238,16 @@ class TrainResults(_Results):
         """
         c: _TrainContext = self.find_context(context)
 
-        self.logstr("==== ")
+        info = "-- {} epoch {}.{}{} / {}.{}{}".format(
+            prefix,
+            c.loops.iteration.index + 1, epoch_type, c.loops.epoch.index + 1,
+            c.loops.iteration.count, epoch_type, c.loops.epoch.count
+        )
 
-        self.logstr(f"{prefix} epoch {c.loops.iteration.index + 1}.{epoch_type}{c.loops.epoch.index + 1} / ")
-        self.logstr(f"{c.loops.iteration.count}.{epoch_type}{c.loops.epoch.count}")
+        self.logln(info)
 
-        self.logstr(" ====\n")
-
-    def find_train_needs_log(self, context=None):
-        """Finds if the current training batch needs to be logged.
+    def _find_train_needs_log(self, context=None):
+        """Finds whether the current training batch needs to be logged.
 
         Returns:
             result: whether the batch needs to be logged
@@ -248,7 +260,7 @@ class TrainResults(_Results):
         result = result or c.loops.train.index == c.data.train.batch_count - 1
         return result
 
-    def find_valid_needs_log(self, context=None):
+    def _find_valid_needs_log(self, context=None):
         """Finds if the current validation batch needs to be logged.
 
         Returns:
@@ -262,6 +274,68 @@ class TrainResults(_Results):
         result = result or c.loops.valid.index == c.data.valid.batch_count - 1
         return result
 
+    def log_batch(self, epoch_type, batch_type, context=None):
+        """Logs the batch info for the iter level algo.
+
+        Args:
+            epoch_type: epoch type [d|g]
+            batch_type: batch type [tr|tf|vr|vf|t|v]
+            context: optional context
+        """
+        epoch_type = str(epoch_type)
+        batch_type = str(batch_type)
+
+        c: _TrainContext = self.find_context(context)
+
+        needs_log = False
+
+        if "t" in batch_type:
+            needs_log = self._find_train_needs_log()
+        elif "v" in batch_type:
+            needs_log = self._find_valid_needs_log()
+        # end if
+
+        if not needs_log:
+            return
+
+        if "t" in batch_type:
+            batch_index = c.loops.train.index
+            batch_count = c.loops.train.count
+        elif "v" in batch_type:
+            batch_index = c.loops.valid.index
+            batch_count = c.loops.valid.count
+        else:
+            batch_index = None
+            batch_count = None
+        # end if
+
+        info = "--- Batch {}.{}{}.{}{} / {}.{}{}.{}{}\n".format(
+            c.loops.iteration.index + 1,
+            epoch_type, c.loops.epoch.index + 1,
+            batch_type, batch_index + 1,
+            c.loops.iteration.count,
+            epoch_type, c.loops.epoch.count,
+            batch_type, batch_count
+        )
+
+        if "d" in epoch_type:
+            if "t" in batch_type:
+                info += f"D(X): {c.latest.dx:.6f}  D(G(Z)): {c.latest.dgz:.6f}"
+            elif "v" in batch_type:
+                if "r" in batch_type:
+                    info += f"D(X): {c.latest.dx:.6f}"
+                elif "f" in batch_type:
+                    info += f"D(G(Z)): {c.latest.dgz:.6f}"
+                # end if
+            # end if
+
+            info += f"  L(D) = {c.latest.ld:.6f}"
+        elif "g" in epoch_type:
+            info += f"  D(G(Z)) = {c.latest.dgz:.6f} L(G) = {c.latest.lg:.6f}"
+        # end if
+
+        self.logln(info)
+
     def log_batch_v2(self, batch_type, context=None):
         """Logs the batch info.
 
@@ -270,53 +344,65 @@ class TrainResults(_Results):
         Designed to log the results of PredAltSGDAlgo.
 
         Args:
-            batch_type: batch type (t/vdr/vdf/vg)
+            batch_type: batch type [t|vdr|vdf|vg]
             context: optional context
         """
+        batch_type = str(batch_type)
+
         c: _TrainContext = self.find_context(context)
 
         needs_log = False
+
         if "t" in batch_type:
-            needs_log = self.find_train_needs_log()
+            needs_log = self._find_train_needs_log()
         elif "v" in batch_type:
-            needs_log = self.find_valid_needs_log()
+            needs_log = self._find_valid_needs_log()
+        # end if
+
         if not needs_log:
             return
 
-        batch_index = None
-        batch_count = None
         if "t" in batch_type:
             batch_index = c.loops.train.index
             batch_count = c.loops.train.count
         elif "v" in batch_type:
             batch_index = c.loops.valid.index
             batch_count = c.loops.valid.count
+        else:
+            batch_index = None
+            batch_count = None
+        # end if
 
-        self.logstr("Batch {}.{}.{}{} /".format(
+        info = "--- Batch {}.{}.{}{} / {}.{}.{}{}\n".format(
             c.loops.iteration.index + 1,
             c.loops.epoch.index + 1,
-            batch_type, batch_index + 1
-        ))
-        self.logstr(" {}.{}.{}{}:".format(
+            batch_type, batch_index + 1,
             c.loops.iteration.count,
             c.loops.epoch.count,
             batch_type, batch_count
-        ))
+        )
 
         if "t" in batch_type:
-            self.logstr("\n")
-            self.logstr(f"  D:  D(X): {c.latest.dx:.6f}  D(G(Z)): {c.latest.dgz:.6f}  L(D): {c.latest.ld:.6f}\n")
-            self.logstr(f"  G:  D(G(Z)): {c.latest.dgz2:.6f}  L(G): {c.latest.lg:.6f}")
+            info += str(
+                f"---- Discriminator\n"
+                f"D(X): {c.latest.dx:.6f}  D(G(Z)): {c.latest.dgz:.6f}  L(D): {c.latest.ld:.6f}\n"
+                f"---- Generator\n"
+                f"D(G(Z)): {c.latest.dgz2:.6f}  L(G): {c.latest.lg:.6f}\n"
+                f"----"
+            )
         elif "v" in batch_type:
             if "d" in batch_type:
                 if "r" in batch_type:
-                    self.logstr(f"  D(X): {c.latest.dx:.6f}  L(D): {c.latest.ld:.6f}")
+                    info += f"D(X): {c.latest.dx:.6f}  L(D): {c.latest.ld:.6f}"
                 elif "f" in batch_type:
-                    self.logstr(f"  D(G(Z)): {c.latest.dgz:.6f}  L(D): {c.latest.ld:.6f}")
+                    info += f"D(G(Z)): {c.latest.dgz:.6f}  L(D): {c.latest.ld:.6f}"
+                # end if
             elif "g" in batch_type:
-                self.logstr(f"  D(G(Z)): {c.latest.dgz2:.6f}  L(G): {c.latest.lg:.6f}")
+                info += f"D(G(Z)): {c.latest.dgz2:.6f}  L(G): {c.latest.lg:.6f}"
+            # end if
+        # end if
 
-        self.logstr("\n")
+        self.logln(info)
 
     def log_batch_v3(self, batch_type, context=None):
         """Logs the batch info.
@@ -325,77 +411,88 @@ class TrainResults(_Results):
         Designed to log the results of FairPredAltSGDAlgo.
 
         Args:
-            batch_type: batch type (t/v)
+            batch_type: batch type [t/v]
             context: optional context
         """
+        batch_type = str(batch_type)
+
         c: _TrainContext = self.find_context(context)
 
         needs_log = False
+
         if "t" in batch_type:
-            needs_log = self.find_train_needs_log()
+            needs_log = self._find_train_needs_log()
         elif "v" in batch_type:
-            needs_log = self.find_valid_needs_log()
+            needs_log = self._find_valid_needs_log()
+        # end if
+
         if not needs_log:
             return
 
-        batch_index = None
-        batch_count = None
         if "t" in batch_type:
             batch_index = c.loops.train.index
             batch_count = c.loops.train.count
         elif "v" in batch_type:
             batch_index = c.loops.valid.index
             batch_count = c.loops.valid.count
+        else:
+            batch_index = None
+            batch_count = None
+        # end if
 
-        self.logstr("Batch {}.{}.{}{} /".format(
+        info = "--- Batch {}.{}.{}{} / {}.{}.{}{}\n".format(
             c.loops.iteration.index + 1,
             c.loops.epoch.index + 1,
-            batch_type, batch_index + 1
-        ))
-        self.logstr(" {}.{}.{}{}:".format(
+            batch_type, batch_index + 1,
             c.loops.iteration.count,
             c.loops.epoch.count,
             batch_type, batch_count
-        ))
+        )
 
-        self.logstr("\n")
-        self.logstr(
-            str(
-                "     D:  D(X): {}  D(G(Z)): {}\n"
-                "  L(D):  L(D,X): {}  L(D,G(Z)): {}\n"
-                "         L(D,Cluster,X): {}  L(D,Cluster,G(Z)): {}\n"
-                "         L(D): {}\n"
-            ).format(
-                f"{c.latest.dx:.6f}", f"{c.latest.dgz:.6f}",
-                f"{c.latest.ldr:.6f}", f"{c.latest.ldf:.6f}",
-                f"{c.latest.ldcr:.6f}", f"{c.latest.ldcf:.6f}",
-                f"{c.latest.ld:.6f}"
-            )
+        info += str(
+            "---- Discriminator\n"
+            "D(X): {}  D(G(Z)): {}\n"
+            "---- Loss of discriminator\n"
+            "L(D,X): {}  L(D,G(Z)): {}\n"
+            "L(D,Cluster,X): {}  L(D,Cluster,G(Z)): {}\n"
+            "L(D): {}\n"
+        ).format(
+            f"{c.latest.dx:.6f}", f"{c.latest.dgz:.6f}",
+            f"{c.latest.ldr:.6f}", f"{c.latest.ldf:.6f}",
+            f"{c.latest.ldcr:.6f}", f"{c.latest.ldcf:.6f}",
+            f"{c.latest.ld:.6f}"
         )
-        self.logstr(
-            str(
-                "     G:  D(X): {}  D(G(Z)): {}\n"
-                "  L(G):  L(G,X): {}  L(G,G(Z)): {}\n"
-                "         L(G,Cluster,X): {}  L(G,Cluster,G(Z)): {}\n"
-                "         L(G): {}\n"
-            ).format(
-                f"{c.latest.dx2:.6f}", f"{c.latest.dgz2:.6f}",
-                f"{c.latest.lgr:.6f}", f"{c.latest.lgf:.6f}",
-                f"{c.latest.lgcr:.6f}", f"{c.latest.lgcf:.6f}",
-                f"{c.latest.lg:.6f}"
-            )
+
+        info += str(
+            "---- Generator\n"
+            "D(X): {}  D(G(Z)): {}\n"
+            "---- Loss of generator\n"
+            "L(G,X): {}  L(G,G(Z)): {}\n"
+            "L(G,Cluster,X): {}  L(G,Cluster,G(Z)): {}\n"
+            "L(G): {}\n"
+            "----"
+        ).format(
+            f"{c.latest.dx2:.6f}", f"{c.latest.dgz2:.6f}",
+            f"{c.latest.lgr:.6f}", f"{c.latest.lgf:.6f}",
+            f"{c.latest.lgcr:.6f}", f"{c.latest.lgcf:.6f}",
+            f"{c.latest.lg:.6f}"
         )
+
+        self.logln(info)
 
     def log_epoch_loss(self, loss_type, context=None):
         """Logs the epoch loss info.
 
         Args:
-            loss_type: loss type (td/vd/tg/vg)
+            loss_type: loss type [td|vd|tg|vg]
             context: optional context
         """
+        loss_type = str(loss_type)
+
         c: _TrainContext = self.find_context(context)
 
         loss = None
+
         if loss_type == "td":
             loss = c.losses.train.d[-1]
         elif loss_type == "vd":
@@ -404,61 +501,71 @@ class TrainResults(_Results):
             loss = c.losses.train.g[-1]
         elif loss_type == "vg":
             loss = c.losses.valid.g[-1]
+        # end if
 
-        self.logstr("Epoch")
+        info = "Epoch"
 
         if "d" in loss_type:
-            self.logstr(" D")
+            info += " discriminator"
         elif "g" in loss_type:
-            self.logstr(" G")
+            info += " generator"
+        # end if
 
         if "t" in loss_type:
-            self.logstr(" training")
+            info += " training"
         elif "v" in loss_type:
-            self.logstr(" validation")
+            info += " validation"
+        # end if
 
-        self.logstr(f" loss: {loss:.6f}\n")
+        info += f" loss: {loss:.6f}"
+        self.logln(info)
 
     def log_best_losses(self, model_type, context=None):
         """Logs the best loss info.
 
         Args:
-            model_type: model type (d/g)
+            model_type: model type [d|g]
             context: optional context
         """
+        model_type = str(model_type)
+
         c: _TrainContext = self.find_context(context)
+
+        info = ""
 
         if model_type == "d":
             curr_loss = c.losses.valid.d[-1]
             prev_best = c.bests.d
-            self.logstr("D:")
+            info += "Discriminator:"
         elif model_type == "g":
             curr_loss = c.losses.valid.g[-1]
             prev_best = c.bests.g
-            self.logstr("G:")
+            info += "Generator:"
+        # end if
 
-        self.logstr(f"  Curr loss: {curr_loss:.6f}")
+        info += f"  Current loss: {curr_loss:.6f}"
 
         if prev_best is None:
-            self.logstr("  Prev best loss: None")
+            info += f"  Previous best loss: None"
         else:
-            self.logstr(f"  Prev best loss: {prev_best:.6f}")
+            info += f"  Previous best loss: {prev_best:.6f}"
+        # end if
 
-        self.logstr("\n")
+        self.logln(info)
 
     def log_model_action(self, action_type, model_type, context=None):
         """Logs the model action info.
 
         Args:
-            action_type: action type (save/es/rb/load)
-            model_type: model type (d/g)
+            action_type: action type [save|es|rb|load]
+            model_type: model type [d|g]
             context: optional context
         """
+        action_type = str(action_type)
+        model_type = str(model_type)
+
         c: _TrainContext = self.find_context(context)
 
-        model_name = None
-        es_count = None
-        rb_count = None
         if model_type == "d":
             model_name = "D"
             es_count = c.loops.es.d
@@ -467,15 +574,25 @@ class TrainResults(_Results):
             model_name = "G"
             es_count = c.loops.es.g
             rb_count = c.loops.rb.g
+        else:
+            model_name = None
+            es_count = None
+            rb_count = None
+        # end if
+
+        info = ""
 
         if action_type == "save":
-            self.logln(f"Saved {model_name}")
+            info += f"Saved {model_name}"
         elif action_type == "es":
-            self.logln(f"Early stopped {model_name}, count {es_count} / {c.loops.es.max}")
+            info += f"Early stopped {model_name}  Early stop count: {es_count} / {c.loops.es.max}"
         elif action_type == "rb":
-            self.logln(f"Rollbacked {model_name}, count {rb_count} / {c.loops.rb.max}")
+            info += f"Rolled back {model_name}  Rollback count: {rb_count} / {c.loops.rb.max}"
         elif action_type == "load":
-            self.logln(f"Loaded {model_name}")
+            info += f"Loaded {model_name}"
+        # end if
+
+        self.logln(info)
 
     def save_training_images(self, context=None):
         """Saves the first batch of the training images.

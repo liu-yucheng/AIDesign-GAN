@@ -31,51 +31,79 @@ class GenResults(_Results):
         """
         super().__init__(path, logs)
 
-    def log_g(self):
-        """Logs the G modelers info."""
-        self.check_context()
-        c: _GenContext = self.context
+    def log_g(self, context=None):
+        """Logs the G modelers info.
 
-        self.logln(f"G's size: {c.g.size}")
-        self.logln(f"G's training size: {c.g.training_size}")
-        self.logln(f"==== G's struct ====")
-        self.logln(str(c.g.model))
+        Args:
+            context: optional context
+        """
+        c: _GenContext = self.find_context(context)
 
-    def log_batch(self):
-        """Logs the batch info."""
-        self.check_context()
-        c: _GenContext = self.context
+        info = str(
+            "- Generator modeler\n"
+            "Model:  Size: {}  Training size: {}  Struct: See below\n"
+            "- Generator model structure\n"
+            "{}\n"
+            "-"
+        ).format(
+            c.g.size, c.g.training_size,
+            str(c.g.model)
+        )
+
+        self.logln(info)
+
+    def log_batch(self, context=None):
+        """Logs the batch info.
+
+        Args:
+            context: optional context
+        """
+        c: _GenContext = self.find_context(context)
 
         needs_log = c.batch_prog.index == 0
         needs_log = needs_log or (c.batch_prog.index + 1) % 15 == 0
         needs_log = needs_log or c.batch_prog.index == c.batch_prog.count - 1
+
         if not needs_log:
             return
 
         self.logln(f"Generated image batch {c.batch_prog.index + 1} / {c.batch_prog.count}")
 
-    def save_generated_images(self):
-        """Saves the generated images."""
-        self.check_context()
-        c: _GenContext = self.context
+    def save_generated_images(self, context=None):
+        """Saves the generated images.
+
+        Args:
+            context: optional context
+        """
+        c: _GenContext = self.find_context(context)
 
         for index, image in enumerate(c.images.to_save):
-            now = _now()
-            timestamp = f"Time-{now.year:04}{now.month:02}{now.day:02}-{now.hour:02}{now.minute:02}{now.second:02}-"\
-                f"{now.microsecond:06}"
-
             name = ""
-            if c.grids.enabled:
-                name += "Grid-"
-            else:
-                name += "Image-"
-            name += f"{index + 1}-{timestamp}.jpg"
 
+            if c.grids.enabled:
+                name += f"Grid-{index + 1}"
+            else:
+                name += f"Image-{index + 1}"
+            # end if
+
+            now = _now()
+
+            timestamp = str(
+                f"Time-{now.year:04}{now.month:02}{now.day:02}-{now.hour:02}{now.minute:02}{now.second:02}-"
+                f"{now.microsecond:06}"
+            )
+
+            name += f"-{timestamp}"
+            name += ".jpg"
             location = _join(self.path, name)
             _save_image(image, location, "JPEG")
 
         count = len(c.images.to_save)
+
         if c.grids.enabled:
-            self.logln(f"Generated {count} grids, each has {c.grids.size_each} images")
-        else:
-            self.logln(f"Generated {count} images")
+            info = f"Generated {count} grids, each has {c.grids.size_each} images"
+        else:  # elif not c.grids.enabled:
+            info = f"Generated {count} images"
+        # end if
+
+        self.logln(info)

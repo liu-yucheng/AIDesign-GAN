@@ -170,7 +170,8 @@ Dataset path:   {dataset_path}
 
     try:
         coord = _TrainCoord(dataset_path, model_path, all_logs)
-        coord.start_training()
+        coord.prep()
+        coord.start()
     except BaseException as base_exception:
         _logstr(err_logs, _format_exc())
 

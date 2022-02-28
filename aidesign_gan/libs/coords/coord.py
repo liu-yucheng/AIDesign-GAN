@@ -16,33 +16,52 @@ class Coord:
             model_path: the model path
             logs: the log file objects
         """
-        self.model_path = model_path
+        model_path = str(model_path)
+        logs = list(logs)
+
+        self._model_path = model_path
         """Model path."""
-        self.logs = logs
+        self._logs = logs
         """Log file objects"""
-
-        self.coords_config = None
-        """Coordinators configuration."""
-        self.modelers_config = None
-        """Modelers configuration."""
-        self.results = None
+        self._ccfg = None
+        """Coords config."""
+        self._mcfg = None
+        """Modelers config."""
+        self._results = None
         """Results."""
-        self.context = None
+        self._context = None
         """Context."""
-        self.results_ready = False
+        self._results_ready = False
         """Whether self.results is ready."""
-        self.context_ready = False
+        self._context_ready = False
         """Whether self.context is ready."""
+        self._prepared = False
+        """Whether self is prepared for the upcoming start method call."""
 
-    def setup_results(self):
-        """Supposed to set up self.result.
+    def _prep_results(self):
+        """Supposed to prepare self.result.
 
-        Does nothing.
+        This method is abstract and does nothing.
         """
         pass
 
-    def setup_context(self):
-        """Supposed to set up self.context.
+    def _prep_context(self):
+        """Supposed to prepare self.context.
 
-        Does nothing."""
+        This method is abstract and does nothing.
+        """
+        pass
+
+    def prep(self):
+        """Supposed to prepare everything that the start method needs.
+
+        This method is abstract and does nothing.
+        """
+        pass
+
+    def start(self):
+        """Supposed to start the coordinator's action.
+
+        This method is abstract and does nothing.
+        """
         pass

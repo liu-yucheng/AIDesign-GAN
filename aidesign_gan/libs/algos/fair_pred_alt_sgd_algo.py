@@ -39,9 +39,10 @@ class FairPredAltSGDAlgo(_Algo):
         """Inits self."""
         super().__init__()
 
-    def _train_and_step_d(self, real_batch, fake_noises):
+    def _train_and_step_d(self, real_batch, fake_noises, context=None, results=None):
         """Returns (dx, dgz, ldr, ldf, ldcr, ldcf, ld)."""
-        c: _TrainContext = self.context
+        c: _TrainContext = self.find_context(context)
+        _ = results
 
         can_predict = c.loops.train.index > 0
 
@@ -56,11 +57,11 @@ class FairPredAltSGDAlgo(_Algo):
             c.mods.g.restore()
 
         return train_results
-    # end def
 
-    def _train_and_step_g(self, real_batch, fake_noises):
+    def _train_and_step_g(self, real_batch, fake_noises, context=None, results=None):
         """Returns (dx2, dgz2, lgr, lgf, lgcr, lgcf, lg)."""
-        c: _TrainContext = self.context
+        c: _TrainContext = self.find_context(context)
+        _ = results
 
         can_predict = c.loops.train.index > 0
 
@@ -75,13 +76,12 @@ class FairPredAltSGDAlgo(_Algo):
             c.mods.d.restore()
 
         return train_results
-    # end def
 
-    def _train_dg(self):
-        r: _TrainResults = self.results
-        c: _TrainContext = self.context
+    def _train_d_and_g(self, context=None, results=None):
+        c: _TrainContext = self.find_context(context)
+        r: _TrainResults = self.find_results(results)
 
-        r.logln("Started training D and G")
+        r.logln("Started training discriminator and generator")
 
         lds = []
         lgs = []
@@ -101,12 +101,12 @@ class FairPredAltSGDAlgo(_Algo):
 
             if reverse_order:
                 # Train G, and then train D
-                g_results = self._train_and_step_g(real_batch, fake_noises)
-                d_results = self._train_and_step_d(real_batch, fake_noises)
+                g_results = self._train_and_step_g(real_batch, fake_noises, context, results)
+                d_results = self._train_and_step_d(real_batch, fake_noises, context, results)
             else:  # elif not reverse order:
                 # Train D, and then train G (original order)
-                d_results = self._train_and_step_d(real_batch, fake_noises)
-                g_results = self._train_and_step_g(real_batch, fake_noises)
+                d_results = self._train_and_step_d(real_batch, fake_noises, context, results)
+                g_results = self._train_and_step_g(real_batch, fake_noises, context, results)
 
             # Parse the training results
             dx, dgz, ldr, ldf, ldcr, ldcf, ld = d_results
@@ -156,13 +156,12 @@ class FairPredAltSGDAlgo(_Algo):
         c.losses.train.g.append(epoch_lg)
         r.log_epoch_loss("td")
         r.log_epoch_loss("tg")
-    # end def
 
-    def _valid_dg(self):
-        r: _TrainResults = self.results
-        c: _TrainContext = self.context
+    def _valid_d_and_g(self, context=None, results=None):
+        c: _TrainContext = self.find_context(context)
+        r: _TrainResults = self.find_results(results)
 
-        r.logln("Started validating D and G")
+        r.logln("Started validating discriminator and generator")
 
         lds = []
         lgs = []
@@ -214,11 +213,10 @@ class FairPredAltSGDAlgo(_Algo):
 
         r.log_epoch_loss("vd")
         r.log_epoch_loss("vg")
-    # end def
 
-    def _save_best_dg(self):
-        r: _TrainResults = self.results
-        c: _TrainContext = self.context
+    def _save_best_d_and_g(self, context=None, results=None):
+        c: _TrainContext = self.find_context(context)
+        r: _TrainResults = self.find_results(results)
 
         r.log_best_losses("d")
         r.log_best_losses("g")
@@ -247,35 +245,38 @@ class FairPredAltSGDAlgo(_Algo):
             c.mods.g.save()
             r.log_model_action("save", "g")
         # end if
-    # end def
 
-    def _run_iter(self):
-        r: _TrainResults = self.results
-        c: _TrainContext = self.context
+    def _run_iter(self, context=None, results=None):
+        c: _TrainContext = self.find_context(context)
+        r: _TrainResults = self.find_results(results)
 
         c.loops.epoch.index = 0
 
         while c.loops.epoch.index < c.loops.epoch.count:
             r.log_epoch("Started", "")
-            self._train_dg()
-            self._valid_dg()
-            self._save_best_dg()
+            self._train_d_and_g(context, results)
+            self._valid_d_and_g(context, results)
+            self._save_best_d_and_g(context, results)
             r.save_disc_losses()
             r.save_gen_losses()
-            r.save_generated_images()
-            r.save_tvg()
-            r.logln("-")
+            r.save_gen_imgs()
+            r.save_tvg_fig()
+            r.logln("--")
+            r.flushlogs()
             c.loops.epoch.index += 1
+        # end while
 
-    # end def
+    def start(self, context=None, results=None):
+        """Starts the algorithm.
 
-    def start(self):
-        """Starts the algorithm."""
-        super().start()
+        Args:
+            context: optional context
+            results: optional results
+        """
+        super().start(context, results)
 
-        self.check_context_and_results()
-        r: _TrainResults = self.results
-        c: _TrainContext = self.context
+        c: _TrainContext = self.find_context(context)
+        r: _TrainResults = self.find_results(results)
 
         r.logln("Started fair predictive alternating SGD algorithm")
         r.log_pred_factor()
@@ -287,17 +288,16 @@ class FairPredAltSGDAlgo(_Algo):
             r.log_fairness()
 
         r.logln("-")
-        r.save_training_images()
-        r.save_validation_images()
-        r.save_images_before_training()
+        r.save_train_imgs()
+        r.save_valid_imgs()
+        r.save_imgs_before_train()
 
         c.loops.iteration.index = 0
 
         while c.loops.iteration.index < c.loops.iteration.count:
             r.log_iter("Started")
-            self._run_iter()
+            self._run_iter(context, results)
             r.logln("-")
+            r.flushlogs()
             c.loops.iteration.index += 1
-
-    # end def
-# end class
+        # end while

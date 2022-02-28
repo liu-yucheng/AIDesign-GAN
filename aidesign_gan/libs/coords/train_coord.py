@@ -134,7 +134,8 @@ class TrainCoord(_Coord):
         # end if
 
         self._results.log_algo(algo_name)
-        self._algo.bind_context_and_results(self._context, self._results)
+        self._algo.context = self._context
+        self._algo.results = self._results
         self._algo_ready = True
         self._results.logln("Coordinator prepared algorithm")
 

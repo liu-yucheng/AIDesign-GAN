@@ -278,7 +278,12 @@ class FairPredAltSGDAlgo(_Algo):
         c: _TrainContext = self.find_context(context)
         r: _TrainResults = self.find_results(results)
 
-        r.logln("Started fair predictive alternating SGD algorithm")
+        info = str(
+            "Started fair predictive alternating SGD algorithm\n"
+            "-"
+        )
+
+        r.logln(info)
         r.log_pred_factor()
 
         has_fairness = c.mods.d.has_fairness
@@ -301,3 +306,10 @@ class FairPredAltSGDAlgo(_Algo):
             r.flushlogs()
             c.loops.iteration.index += 1
         # end while
+
+        info = str(
+            "-\n"
+            "Completed fair predictive alternating SGD algorithm"
+        )
+
+        r.logln(info)

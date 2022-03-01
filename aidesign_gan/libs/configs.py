@@ -241,25 +241,29 @@ class ModelersConfig(Config):
         cls._verify_float_ge_0(optim, "learning_rate")
         cls._verify_float_clamp(optim, "beta1", 0, 1)
         cls._verify_float_clamp(optim, "beta2", 0, 1)
-        cls._verify_float(optim, "pred_factor")
 
-        params = from_dict["params_init"]
+        if "pred_factor" in optim:
+            cls._verify_float(optim, "pred_factor")
 
-        conv = params["conv"]
-        cls._verify_float(conv, "weight_mean")
-        cls._verify_float_ge_0(conv, "weight_std")
+        if "params_init" in from_dict:
+            params = from_dict["params_init"]
 
-        bn = params["batch_norm"]
-        cls._verify_float(bn, "weight_mean")
-        cls._verify_float_ge_0(bn, "weight_std")
-        cls._verify_float(bn, "bias_mean")
-        cls._verify_float_ge_0(bn, "bias_std")
+            conv = params["conv"]
+            cls._verify_float(conv, "weight_mean")
+            cls._verify_float_ge_0(conv, "weight_std")
 
-        fair = from_dict["fairness"]
-        cls._verify_float(fair, "dx_factor")
-        cls._verify_float(fair, "dgz_factor")
-        cls._verify_float(fair, "cluster_dx_factor")
-        cls._verify_float(fair, "cluster_dgz_factor")
+            bn = params["batch_norm"]
+            cls._verify_float(bn, "weight_mean")
+            cls._verify_float_ge_0(bn, "weight_std")
+            cls._verify_float(bn, "bias_mean")
+            cls._verify_float_ge_0(bn, "bias_std")
+
+        if "fairness" in from_dict:
+            fair = from_dict["fairness"]
+            cls._verify_float(fair, "dx_factor")
+            cls._verify_float(fair, "dgz_factor")
+            cls._verify_float(fair, "cluster_dx_factor")
+            cls._verify_float(fair, "cluster_dgz_factor")
 
     @classmethod
     def verify(cls, from_dict):

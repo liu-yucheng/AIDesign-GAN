@@ -139,7 +139,12 @@ class GenCoord(_Coord):
         r = self._results
         c = self._context
 
-        r.logln("Started generation")
+        info = str(
+            "Started generation\n"
+            "-"
+        )
+
+        r.logln(info)
         c.images.to_save = []
         c.batch_prog.index = 0
 
@@ -158,5 +163,11 @@ class GenCoord(_Coord):
             self._convert_images_to_grids()
 
         r.save_generated_images()
-        r.logln("Completed generation")
+
+        info = str(
+            "-\n"
+            "Completed generation"
+        )
+
+        r.logln(info)
         r.flushlogs()

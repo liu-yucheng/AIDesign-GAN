@@ -44,6 +44,7 @@ Help: gan help
 
 """
 """Usage."""
+
 usage = usage.strip()
 
 # Nominal info strings
@@ -54,6 +55,7 @@ info = fr"""
 
 """
 """Primary info to display."""
+
 info = info.strip()
 
 # End of nominal info strings
@@ -67,6 +69,7 @@ Expects 0 arguments; Gets {{}} arguments
 
 """
 """Info to display when getting too many arguments."""
+
 too_many_args_info = too_many_args_info.strip()
 
 # End of error info strings
@@ -88,6 +91,7 @@ def run():
     else:  # elif argv_copy_length > 0:
         print(too_many_args_info.format(argv_copy_length), file=_stderr)
         exit(1)
+    # end if
 
 
 def main():
@@ -101,10 +105,6 @@ def main():
     argv_copy.pop(0)
     run()
 
-# Top level code
-
 
 if __name__ == "__main__":
     main()
-
-# End of top level code

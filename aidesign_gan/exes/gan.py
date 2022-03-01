@@ -43,6 +43,7 @@ Help: gan help
 
 """
 """Usage."""
+
 usage = usage.strip()
 
 # Nominal info strings
@@ -54,6 +55,7 @@ AIDesign-GAN (aidesign-gan) {_version}
 
 """
 """Primary info to display."""
+
 info = info.strip()
 
 # End of nominal info strings
@@ -66,6 +68,7 @@ unknown_cmd_info = fr"""
 
 """
 """Info to display when getting an unknown command."""
+
 unknown_cmd_info = unknown_cmd_info.strip()
 
 unknown_arg_info = fr"""
@@ -75,6 +78,7 @@ unknown_arg_info = fr"""
 
 """
 """Info to display when getting an unknown argument."""
+
 unknown_arg_info = unknown_arg_info.strip()
 
 # End of error info strings
@@ -87,7 +91,9 @@ def _run_command():
     global argv_copy
 
     argv_copy = [str(elem) for elem in argv_copy]
+
     assert len(argv_copy) > 0
+
     command = argv_copy.pop(0)
     command = str(command)
 
@@ -153,11 +159,8 @@ def main():
         argv_copy = _deepcopy(_argv)
         argv_copy.pop(0)
         _run_command()
-
-# Top level code
+    # end if
 
 
 if __name__ == '__main__':
     main()
-
-# End of top level code

@@ -26,17 +26,12 @@ _argv = sys.argv
 _copytree = shutil.copytree
 _deepcopy = copy.deepcopy
 _exists = ospath.exists
+_FormatConfig = configs.FormatConfig
 _join = ospath.join
 _isabs = ospath.isabs
 _isdir = ospath.isdir
 _Path = pathlib.Path
 _stderr = sys.stderr
-
-_CoordsConfig = configs.CoordsConfig
-_DiscStruct = structs.DiscStruct
-_FormatConfig = configs.FormatConfig
-_GenStruct = structs.GenStruct
-_ModelersConfig = configs.ModelersConfig
 
 # End of aliases
 
@@ -50,6 +45,7 @@ Help: gan help
 
 """
 """Usage."""
+
 usage = usage.strip()
 
 # Nominal info strings
@@ -60,6 +56,7 @@ Created a model at {{}}
 
 """
 """Primary info to display."""
+
 info = info.strip()
 
 # End of nominal info strings
@@ -73,6 +70,7 @@ Expects 1 arguments; Gets {{}} arguments
 
 """
 """Info to display when getting too few arguments."""
+
 too_few_args_info = too_few_args_info.strip()
 
 too_many_args_info = fr"""
@@ -83,6 +81,7 @@ Expects 1 arguments; Gets {{}} arguments
 
 """
 """Info to display when getting too many arguments."""
+
 too_many_args_info = too_many_args_info.strip()
 
 model_exists_info = fr"""
@@ -93,6 +92,7 @@ Please check the model at: {{}}
 
 """
 """Info to display when the model to create already exists."""
+
 model_exists_info = model_exists_info.strip()
 
 model_is_not_dir_info = fr"""
@@ -103,6 +103,7 @@ Please check the model at: {{}}
 
 """
 """Info to display when the model exists but not as a directory."""
+
 model_is_not_dir_info = model_is_not_dir_info.strip()
 
 # End of error info strings
@@ -165,10 +166,6 @@ def main():
     argv_copy.pop(0)
     run()
 
-# Top level code
-
 
 if __name__ == "__main__":
     main()
-
-# End of top level code

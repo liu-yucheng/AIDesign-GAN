@@ -40,6 +40,7 @@ Help: gan help
 
 """
 """Usage."""
+
 usage = usage.strip()
 
 # Nominal info strings
@@ -54,6 +55,7 @@ App data is at: {{}}
 
 """
 """Primary info to display."""
+
 info = info.strip()
 
 # End of nominal info strings
@@ -67,6 +69,7 @@ Expects 0 arguments; Gets {{}} arguments
 
 """
 """Info to display when getting too many arguments."""
+
 too_many_args_info = too_many_args_info.strip()
 
 # End of error info strings
@@ -104,12 +107,14 @@ def run():
             val = train_status[key]
             line = f"{tab1}{key}:{tab2}{val}"
             train_lines.append(line)
+        # end for
 
         for key in gen_status:
             tab2 = " " * (tab_width2 - len(key) % tab_width2)
             val = gen_status[key]
             line = f"{tab1}{key}:{tab2}{val}"
             gen_lines.append(line)
+        # end for
 
         train_info = "\n".join(train_lines)
         gen_info = "\n".join(gen_lines)
@@ -133,10 +138,6 @@ def main():
     argv_copy.pop(0)
     run()
 
-# Top level code
-
 
 if __name__ == "__main__":
     main()
-
-# End of top level code

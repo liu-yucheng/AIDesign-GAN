@@ -269,8 +269,12 @@ class AltSGDAlgo(_Algo):
         c: _TrainContext = self.find_context(context)
         r: _TrainResults = self.find_results(results)
 
-        r.logln("Started alternating SGD algorithm")
-        r.logln("-")
+        info = str(
+            "Started alternating SGD algorithm\n"
+            "-"
+        )
+
+        r.logln(info)
         r.save_train_imgs()
         r.save_valid_imgs()
         r.save_imgs_before_train()
@@ -284,3 +288,10 @@ class AltSGDAlgo(_Algo):
             r.flushlogs()
             c.loops.iteration.index += 1
         # end while
+
+        info = str(
+            "-\n"
+            "Completed alternating SGD algorithm"
+        )
+
+        r.logln(info)

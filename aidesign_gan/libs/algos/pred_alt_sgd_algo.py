@@ -287,7 +287,12 @@ class PredAltSGDAlgo(_Algo):
         c: _TrainContext = self.find_context(context)
         r: _TrainResults = self.find_results(results)
 
-        r.logln("Started predictive alternating SGD algorithm")
+        info = str(
+            "Started predictive alternating SGD algorithm\n"
+            "-"
+        )
+
+        r.logln(info)
         r.log_pred_factor()
         r.logln("-")
         r.save_train_imgs()
@@ -303,3 +308,10 @@ class PredAltSGDAlgo(_Algo):
             r.flushlogs()
             c.loops.iteration.index += 1
         # ene while
+
+        info = str(
+            "-\n"
+            "Completed predictive alternating SGD algorithm"
+        )
+
+        r.logln(info)

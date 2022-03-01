@@ -164,8 +164,18 @@ class TrainCoord(_Coord):
 
         r = self._results
 
-        r.logln("Started training")
-        r.logln("-")
+        info = str(
+            "Started training\n"
+            "-"
+        )
+
+        r.logln(info)
         self._algo.start()
-        r.logln("Completed training")
+
+        info = str(
+            "-\n"
+            "Completed training"
+        )
+
+        r.logln(info)
         r.flushlogs()

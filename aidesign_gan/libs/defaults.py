@@ -1,4 +1,8 @@
-"""Module of the default variables."""
+"""Default values.
+
+Not supposed to be changed.
+Change only if you know what you are doing.
+"""
 
 # Copyright 2022 Yucheng Liu. GNU GPL3 license.
 # GNU GPL3 license copy: https://www.gnu.org/licenses/gpl-3.0.txt
@@ -29,9 +33,9 @@ default_test_data_path = _join(default_configs_path, "test_data")
 """Default test data path."""
 
 gan_train_status_name = "gan_train_status.json"
-"""\"gan train\" satatus name."""
+""""gan train" satatus name."""
 gan_generate_status_name = "gan_generate_status.json"
-"""\"gan generate\" status name."""
+""""gan generate" status name."""
 
 format_config_name = "format_config.json"
 """Format config name."""

@@ -43,6 +43,7 @@ Help: gan help
 
 """
 """Usage."""
+
 usage = usage.strip()
 
 # Nominal info
@@ -53,6 +54,7 @@ Applied the selection to "gan train" and "gan generate"
 
 """
 """Primary info to display."""
+
 info = info.strip()
 
 # End of nominal info strings
@@ -66,6 +68,7 @@ Expects 1 arguments; Gets {{}} arguments
 
 """
 """Info to display when getting too few arguments."""
+
 too_few_args_info = too_few_args_info.strip()
 
 too_many_args_info = fr"""
@@ -76,6 +79,7 @@ Expects 1 arguments; Gets {{}} arguments
 
 """
 """Info to display when getting too many arguments."""
+
 too_many_args_info = too_many_args_info.strip()
 
 model_does_not_exist_info = fr"""
@@ -86,6 +90,7 @@ Please check if the model is present at: {{}}
 
 """
 """Info to display when the selected model does not exist."""
+
 model_does_not_exist_info = model_does_not_exist_info.strip()
 
 model_is_not_dir_info = fr"""
@@ -96,6 +101,7 @@ Please check if the model appears as a directory at: {{}}
 
 """
 """Info to display when the selected model is not a directory."""
+
 model_is_not_dir_info = model_is_not_dir_info.strip()
 
 # End of error info strings
@@ -146,6 +152,7 @@ def run():
     else:  # elif argv_copy_length > 1:
         print(too_many_args_info.format(argv_copy_length), file=_stderr)
         exit(1)
+    # end if
 
 
 def main():
@@ -159,10 +166,6 @@ def main():
     argv_copy.pop(0)
     run()
 
-# Top level code
-
 
 if __name__ == "__main__":
     main()
-
-# End of top level code

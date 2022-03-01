@@ -49,6 +49,7 @@ Help: gan help
 
 """
 """Usage."""
+
 usage = usage.strip()
 
 timeout = float(30)
@@ -66,6 +67,7 @@ Do you want to continue? [ Y (Yes) | n (no) ]: < default: Yes, timeout: {timeout
 
 """
 """Primary info to display."""
+
 info = info.strip()
 
 will_start_session_info = fr"""
@@ -75,6 +77,7 @@ Will start a training session
 
 """
 """Info to display when the session starts."""
+
 will_start_session_info = will_start_session_info.strip()
 
 completed_session_info = fr"""
@@ -84,6 +87,7 @@ Completed the training session
 
 """
 """Info to display when the session completes."""
+
 completed_session_info = completed_session_info.strip()
 
 aborted_session_info = fr"""
@@ -92,6 +96,7 @@ Aborted the training session
 
 """
 """Info to display when the user aborts the session."""
+
 aborted_session_info = aborted_session_info.strip()
 
 # End of nominal info strings
@@ -104,6 +109,7 @@ Expects 0 arguments; Gets {{}} arguments
 
 """
 """Info to display when getting too many arguments."""
+
 too_many_args_info = too_many_args_info.strip()
 
 none_dataset_info = fr"""
@@ -114,6 +120,7 @@ Please select a dataset with the "gan dataset <path-to-dataset>" command
 
 """
 """Info to display when the dataset selection is None."""
+
 none_dataset_info = none_dataset_info.strip()
 
 none_model_info = fr"""
@@ -124,6 +131,7 @@ Please select a model with the "gan model <path-to-model>" command
 
 """
 """Info to display when the model selection is None."""
+
 none_model_info = none_model_info.strip()
 
 stopped_session_info = fr"""
@@ -133,6 +141,7 @@ Stopped the training session
 
 """
 """Info to display when the session stops from an exception."""
+
 stopped_session_info = stopped_session_info.strip()
 
 # End of error info strings
@@ -165,8 +174,8 @@ Dataset path:   {dataset_path}
 -
 
     """
-    start_info = start_info.strip()
 
+    start_info = start_info.strip()
     _logln(all_logs, start_info)
 
     try:
@@ -175,7 +184,6 @@ Dataset path:   {dataset_path}
         coord.start()
     except BaseException as base_exception:
         _logstr(err_logs, _format_exc())
-
         end_time = _now()
         execution_time = end_time - start_time
 
@@ -186,8 +194,8 @@ Execution stopped after: {execution_time} (days, hours: minutes: seconds)
 End of AIDesign-GAN training session (stopped)
 
         """
-        stop_info = stop_info.strip()
 
+        stop_info = stop_info.strip()
         _logln(all_logs, stop_info)
         log_file.close()
         raise base_exception
@@ -203,8 +211,8 @@ Execution time: {execution_time} (days, hours: minutes: seconds)
 End of AIDesign-GAN training session
 
     """
-    end_info = end_info.strip()
 
+    end_info = end_info.strip()
     _logln(all_logs, end_info)
     log_file.close()
 
@@ -227,6 +235,7 @@ def run():
         if dataset_path is None:
             print(none_dataset_info, file=_stderr)
             exit(1)
+
         if model_path is None:
             print(none_model_info, file=_stderr)
             exit(1)
@@ -245,6 +254,7 @@ def run():
             val = train_status[key]
             line = f"{tab1}{key}:{tab2}{val}"
             train_lines.append(line)
+        # end for
 
         train_info = "\n".join(train_lines)
 
@@ -258,6 +268,7 @@ def run():
         elif len(answer) <= 0:
             answer = "Yes"
             print(f"{answer} (default)")
+        # end if
 
         print("-")
 
@@ -300,10 +311,6 @@ def main():
     argv_copy.pop(0)
     run()
 
-# Top level code
-
 
 if __name__ == "__main__":
     main()
-
-# End of top level code

@@ -5,10 +5,6 @@
 # First added by username: liu-yucheng
 # Last updated by username: liu-yucheng
 
-import os
-import pathlib
-import shutil
-
 # timedinput imports
 import asyncio
 import sys
@@ -25,8 +21,6 @@ import random
 
 # batchlog imports
 # import typing
-
-from aidesign_gan.libs import optims
 
 # timedinput aliases
 _create_subprocess_exec = asyncio.create_subprocess_exec

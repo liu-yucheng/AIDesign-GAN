@@ -1,4 +1,4 @@
-"""Module of the optims (optimizers).
+"""Optimizers.
 
 ==== References ====
 PyTorch Adam source code. https://pytorch.org/docs/stable/_modules/torch/optim/adam.html#Adam
@@ -10,12 +10,18 @@ Yadav, et al., 2018. Stabilizing Adversarial Nets With Prediction Methods. https
 # First added by username: liu-yucheng
 # Last updated by username: liu-yucheng
 
-from torch import optim
 import math
 import torch
+from torch import optim
+
+_Optimizer = optim.Optimizer
+_sqrt = math.sqrt
+_Tensor = torch.Tensor
+_torch_maximum = torch.maximum
+_zeros_like = torch.zeros_like
 
 
-class PredAdam(optim.Optimizer):
+class PredAdam(_Optimizer):
     """Predictive Adam optimizer.
 
     An Adam optimizer with the predict and restore extra functions.
@@ -35,12 +41,16 @@ class PredAdam(optim.Optimizer):
         """
         if not 0.0 <= lr:
             raise ValueError(f"Invalid learning rate: {lr}")
+
         if not 0.0 <= eps:
             raise ValueError(f"Invalid epsilon value: {eps}")
+
         if not 0.0 <= betas[0] < 1.0:
             raise ValueError(f"Invalid beta parameter at index 0: {betas[0]}")
+
         if not 0.0 <= betas[1] < 1.0:
             raise ValueError(f"Invalid beta parameter at index 1: {betas[1]}")
+
         if not 0.0 <= weight_decay:
             raise ValueError(f"Invalid weight_decay value: {weight_decay}")
 
@@ -55,19 +65,25 @@ class PredAdam(optim.Optimizer):
 
         Args:
             closure: a closure that reevaluates the model and returns the loss
+
+        Returns:
+            loss: the loss, if a non-None closure argument gets passed
         """
         # print("step called")  # Debug
-
         loss = None
+
         if closure is not None:
             loss = closure()
 
         for group in self.param_groups:
             for param in group["params"]:
+                param: _Tensor
+
                 if param.grad is None:
                     continue
+
                 if param.grad.is_sparse:
-                    raise RuntimeError('Adam does not support sparse gradients, please consider SparseAdam instead')
+                    raise RuntimeError("Adam does not support sparse gradients, please consider SparseAdam instead")
 
                 grad = param.grad.data
                 state = self.state[param]
@@ -76,21 +92,25 @@ class PredAdam(optim.Optimizer):
                 if len(state) == 0:
                     state["step"] = 0
                     # Exponential moving average of gradient values
-                    state["exp_avg"] = torch.zeros_like(param, memory_format=torch.preserve_format)
+                    state["exp_avg"] = _zeros_like(param, memory_format=torch.preserve_format)
                     # Exponential moving average of squared gradient values
-                    state["exp_avg_sq"] = torch.zeros_like(param, memory_format=torch.preserve_format)
+                    state["exp_avg_sq"] = _zeros_like(param, memory_format=torch.preserve_format)
+
                     if group["amsgrad"]:
                         # Maintains max of all exp. moving avg. of sq. grad. values
-                        state['max_exp_avg_sq'] = torch.zeros_like(param, memory_format=torch.preserve_format)
+                        state["max_exp_avg_sq"] = _zeros_like(param, memory_format=torch.preserve_format)
+
                     # Add a restore point
                     state["restore_point"] = param.data.clone()
+                # end if
 
                 state["step"] += 1
 
-                exp_avg = state["exp_avg"]
-                exp_avg_sq = state["exp_avg_sq"]
+                exp_avg: _Tensor = state["exp_avg"]
+                exp_avg_sq: _Tensor = state["exp_avg_sq"]
+
                 if group["amsgrad"]:
-                    max_exp_avg_sq = state["max_exp_avg_sq"]
+                    max_exp_avg_sq: _Tensor = state["max_exp_avg_sq"]
 
                 beta1, beta2 = group["betas"]
                 bias_correction1 = 1 - beta1 ** state["step"]
@@ -105,46 +125,58 @@ class PredAdam(optim.Optimizer):
 
                 if group["amsgrad"]:
                     # Maintains the maximum of all 2nd moment running avg. till now
-                    torch.maximum(max_exp_avg_sq, exp_avg_sq, out=max_exp_avg_sq)
+                    _torch_maximum(max_exp_avg_sq, exp_avg_sq, out=max_exp_avg_sq)
                     # Use the max. for normalizing running avg. of gradient
-                    denom = (max_exp_avg_sq.sqrt() / math.sqrt(bias_correction2)).add_(group["eps"])
+                    denom = (max_exp_avg_sq.sqrt() / _sqrt(bias_correction2)).add_(group["eps"])
                 else:
-                    denom = (exp_avg_sq.sqrt() / math.sqrt(bias_correction2)).add_(group["eps"])
+                    denom = (exp_avg_sq.sqrt() / _sqrt(bias_correction2)).add_(group["eps"])
+                # end if
 
                 step_size = group["lr"] / bias_correction1
                 param.data.addcdiv_(exp_avg, denom, value=-step_size)
             # end for
         # end for
+
         return loss
 
     def predict(self, closure=None):
         """Performs a predictive optimization step.
 
-        Let the previous state be P1, the current state be P2, and the next state be P3. This function will update the
-        state to _P3_, where _P3_ = P2 + (P2 - P1). This _P3_ can be seen as the prediction of P3. This function will
-        save P2 to a restore point for later restoration.
+        Let the previous state be S1, the current state be S2, and the next state be S3.
+        This function will update the state to S3*, where S3* = S2 + (S2 - S1) = 2 * S2 - S1.
+        This S3* can be seen as a predictor of S3.
+        This function will save S2 to a restore point for later restoration.
 
         Args:
             closure: a closure that reevaluates the model and returns the loss
+
+        Returns:
+            loss: the loss, if a non-None closure argument gets passed
         """
         loss = None
+
         if closure is not None:
             loss = closure()
 
         for group in self.param_groups:
             for param in group["params"]:
+                param: _Tensor
+
                 if param.grad is None:
                     continue
+
                 state = self.state[param]
                 # Find the pred_incr (predictive incrementation)
-                pred_incr = param.data.sub(state["restore_point"])
+                restore_point: _Tensor = state["restore_point"]
+                pred_incr = param.data.sub(restore_point)
                 pred_incr.mul_(self.pred_factor)
                 # Save the current state as the restore point
-                state["restore_point"].copy_(param.data)
+                restore_point.copy_(param.data)
                 # Apply the pred_incr to complete the prediction
                 param.data.add_(pred_incr)
             # end for
         # end for
+
         return loss
 
     def restore(self, closure=None):
@@ -155,17 +187,25 @@ class PredAdam(optim.Optimizer):
 
         Args:
             closure: a closure that reevaluates the model and returns the loss
+
+        Returns:
+            loss: the loss, if a non-None closure argument gets passed
         """
         loss = None
+
         if closure is not None:
             loss = closure()
 
         for group in self.param_groups:
             for param in group["params"]:
+                param: _Tensor
+
                 if param.grad is None:
                     continue
+
                 state = self.state[param]
                 param.data.copy_(state["restore_point"])
             # end for
         # end for
+
         return loss

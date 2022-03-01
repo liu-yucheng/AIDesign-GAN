@@ -49,6 +49,7 @@ Help: gan help
 
 """
 """Usage."""
+
 usage = usage.strip()
 
 timeout = float(30)
@@ -66,6 +67,7 @@ Do you want to continue? [ Y (Yes) | n (no) ]: < default: Yes, timeout: {timeout
 
 """
 """Primary info to display."""
+
 info = info.strip()
 
 will_start_session_info = fr"""
@@ -75,6 +77,7 @@ Will start a generation session
 
 """
 """Info to display when the session starts."""
+
 will_start_session_info = will_start_session_info.strip()
 
 completed_session_info = fr"""
@@ -84,6 +87,7 @@ Completed the generation session
 
 """
 """Info to display when the session completes."""
+
 completed_session_info = completed_session_info.strip()
 
 aborted_session_info = fr"""
@@ -92,6 +96,7 @@ Aborted the generation session
 
 """
 """Info to display when the user aborts the session."""
+
 aborted_session_info = aborted_session_info.strip()
 
 # End of nominal info strings
@@ -105,6 +110,7 @@ Expects 0 arguments; Gets {{}} arguments
 
 """
 """Info to display when getting too many arguments."""
+
 too_many_args_info = too_many_args_info.strip()
 
 none_model_info = fr"""
@@ -115,6 +121,7 @@ Please select a model with the "gan model <path-to-model>" command
 
 """
 """Info to display when the model selection is None."""
+
 none_model_info = none_model_info.strip()
 
 stopped_session_info = fr"""
@@ -124,6 +131,7 @@ Stopped the generation session
 
 """
 """Info to display when the session stops from an exception."""
+
 stopped_session_info = stopped_session_info.strip()
 
 # End of error info strings
@@ -152,8 +160,8 @@ Model path: {model_path}
 -
 
     """
-    start_info = start_info.strip()
 
+    start_info = start_info.strip()
     _logln(all_logs, start_info)
 
     try:
@@ -162,7 +170,6 @@ Model path: {model_path}
         coord.start()
     except BaseException as base_exception:
         _logstr(err_logs, _format_exc())
-
         end_time = _now()
         execution_time = end_time - start_time
 
@@ -173,8 +180,8 @@ Execution stopped after: {execution_time} (days, hours: minutes: seconds)
 End of AIDesign-GAN generation session (stopped from an exception)
 
         """
-        stop_info = stop_info.strip()
 
+        stop_info = stop_info.strip()
         _logln(all_logs, stop_info)
         log_file.close()
         raise base_exception
@@ -190,8 +197,8 @@ Execution time: {execution_time} (days, hours: minutes: seconds)
 End of AIDesign-GAN generation session
 
     """
-    end_info = end_info.strip()
 
+    end_info = end_info.strip()
     _logln(all_logs, end_info)
     log_file.close()
 
@@ -203,7 +210,9 @@ def run():
     global log_loc
 
     argv_copy_length = len(argv_copy)
+
     assert argv_copy_length >= 0
+
     if argv_copy_length == 0:
         gen_status = _GenStatus.load_from_path(defaults.app_data_path)
         model_path = gen_status["model_path"]
@@ -240,6 +249,7 @@ def run():
         elif len(answer) <= 0:
             answer = "Yes"
             print(f"{answer} (default)")
+        # end if
 
         print("-")
 
@@ -251,6 +261,7 @@ def run():
                 _start_session()
             except BaseException as base_exception:
                 exit_code = 1
+
                 if isinstance(base_exception, SystemExit):
                     exit_code = base_exception.code
 
@@ -281,10 +292,6 @@ def main():
     argv_copy.pop(0)
     run()
 
-# Top level code
-
 
 if __name__ == "__main__":
     main()
-
-# End of top level code

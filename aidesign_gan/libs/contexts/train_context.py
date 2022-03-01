@@ -21,7 +21,7 @@ from aidesign_gan.libs.contexts import context
 _BCELoss = nn.BCELoss
 _BICUBIC = transforms.InterpolationMode.BICUBIC
 _CenterCrop = transforms.CenterCrop
-_clamp = utils.clamp_float
+_clamp_float = utils.clamp_float
 _Compose = transforms.Compose
 _Context = context.Context
 _DataLoader = data.DataLoader
@@ -207,7 +207,6 @@ class TrainContext(_Context):
 
     def __init__(self):
         """Inits self."""
-
         super().__init__()
 
         self.data = TrainContext.Data()
@@ -267,7 +266,7 @@ class TrainContext(_Context):
         subset_ratio = _nparray([train_weight, valid_weight])
         subset_ratio = subset_ratio / subset_ratio.sum()
         prop_to_use = percents_to_use / 100
-        prop_to_use = _clamp(prop_to_use, 0, 1)
+        prop_to_use = _clamp_float(prop_to_use, 0, 1)
         size_to_use = int(prop_to_use * size)
         train_start, train_end = 0, int(subset_ratio[0] * size_to_use)
         valid_start, valid_end = train_end, size_to_use
@@ -330,6 +329,7 @@ class TrainContext(_Context):
             raise ValueError("self.mods.d cannot be None")
 
         mode = config["mode"]
+
         if mode == "new":
             self.mods.d.save()
             self.mods.g.save()
@@ -338,6 +338,7 @@ class TrainContext(_Context):
             self.mods.g.load()
         else:
             raise ValueError(f"Unknown training mode {mode}")
+        # end if
 
         self.mode = mode
 
@@ -351,8 +352,8 @@ class TrainContext(_Context):
             self.labels.real = float(1)
             self.labels.fake = float(0)
         else:  # elif config is not None:
-            real = _clamp(config["real"], 0, 1)
-            fake = _clamp(config["fake"], 0, 1)
+            real = _clamp_float(config["real"], 0, 1)
+            fake = _clamp_float(config["fake"], 0, 1)
 
             self.labels.real = real
             self.labels.fake = fake
@@ -447,6 +448,7 @@ class TrainContext(_Context):
             raise ValueError("self.mods.d cannot be None")
 
         valid = []
+
         for real_batch in self.data.valid.loader:
             real_batch = real_batch[0]
             batch_size = real_batch.size()[0]
@@ -454,6 +456,7 @@ class TrainContext(_Context):
 
             noise_batch = self.mods.g.generate_noises(batch_size)
             valid.append(noise_batch)
+        # end for
 
         ref_batch = self.mods.g.generate_noises(self.data.batch_size)
 

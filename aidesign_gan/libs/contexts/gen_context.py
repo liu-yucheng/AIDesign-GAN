@@ -106,6 +106,7 @@ class GenContext(_Context):
             noise_batch = self.g.generate_noises(noise_count)
             noise_batches.append(noise_batch)
             noises_left -= noise_count
+        # end while
 
         self.noise_batches = noise_batches
 

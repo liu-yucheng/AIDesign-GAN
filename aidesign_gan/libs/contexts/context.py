@@ -74,6 +74,7 @@ class Context:
             mode = "auto"
             _randseed(None)
             seed = _randint(0, 2 ** 32 - 1)
+        # end if
 
         _nprandseed(seed)
         _randseed(seed)
@@ -94,8 +95,10 @@ class Context:
         gpu_count = config["gpu_count"]
 
         device_name = "cpu"
+
         if _torch_cuda_is_available() and gpu_count > 0:
             device_name = "cuda:0"
+
         device = _torch_device(device_name)
 
         self.hw.device = device

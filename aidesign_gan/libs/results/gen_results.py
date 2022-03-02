@@ -22,20 +22,22 @@ _Results = results.Results
 class GenResults(_Results):
     """Generation results."""
 
-    def __init__(self, path, logs):
+    def __init__(self, path, logs, debug_level=0):
         """Inits self with the given args.
 
         Args:
             path: the root path of the results
             logs: the log file objects
+            debug_level: an optional debug level
         """
-        super().__init__(path, logs)
+        super().__init__(path, logs, debug_level)
 
-    def log_g(self, context=None):
-        """Logs the G modelers info.
+    def log_g(self, context=None, debug_level=0):
+        """Logs the generator modelers info.
 
         Args:
             context: optional context
+            debug_level: an optional debug level
         """
         c: _GenContext = self.find_context(context)
 
@@ -50,13 +52,14 @@ class GenResults(_Results):
             str(c.g.model)
         )
 
-        self.logln(info)
+        self.logln(info, debug_level)
 
-    def log_batch(self, context=None):
+    def log_batch(self, context=None, debug_level=0):
         """Logs the batch info.
 
         Args:
             context: optional context
+            debug_level: an optional debug level
         """
         c: _GenContext = self.find_context(context)
 
@@ -67,13 +70,14 @@ class GenResults(_Results):
         if not needs_log:
             return
 
-        self.logln(f"Generated image batch {c.batch_prog.index + 1} / {c.batch_prog.count}")
+        self.logln(f"Generated image batch {c.batch_prog.index + 1} / {c.batch_prog.count}", debug_level)
 
-    def save_generated_images(self, context=None):
+    def save_generated_images(self, context=None, debug_level=0):
         """Saves the generated images.
 
         Args:
             context: optional context
+            debug_level: an optional debug level
         """
         c: _GenContext = self.find_context(context)
 
@@ -95,7 +99,7 @@ class GenResults(_Results):
 
             name += f"-{timestamp}"
             name += ".jpg"
-            location = _join(self.path, name)
+            location = _join(self._path, name)
             _save_image(image, location, "JPEG")
 
         count = len(c.images.to_save)
@@ -106,4 +110,4 @@ class GenResults(_Results):
             info = f"Generated {count} images"
         # end if
 
-        self.logln(info)
+        self.logln(info, debug_level)

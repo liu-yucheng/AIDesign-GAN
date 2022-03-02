@@ -31,21 +31,22 @@ _torch_cat = torch.cat
 class GenCoord(_Coord):
     """Generation coordinator."""
 
-    def __init__(self, model_path, log):
+    def __init__(self, model_path, logs, debug_level=0):
         """Inits self with the given args.
 
         Args:
             model_path: the model path
-            log: the log file object
+            log: the log file objects
+            debug_level: an optional debug level
         """
-        super().__init__(model_path, log)
+        super().__init__(model_path, logs, debug_level)
 
     def _prep_results(self):
         """Prepares self.result."""
         super()._prep_results()
 
         path = _join(self._model_path, "Generation-Results")
-        self._results = _GenResults(path, self._logs)
+        self._results = _GenResults(path, self._logs, self._debug_level)
         self._results.ensure_folders()
         self._results_ready = True
 

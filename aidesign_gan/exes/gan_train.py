@@ -179,7 +179,7 @@ Dataset path:   {dataset_path}
     _logln(all_logs, start_info)
 
     try:
-        coord = _TrainCoord(dataset_path, model_path, all_logs)
+        coord = _TrainCoord(dataset_path, model_path, all_logs, debug_level=1)
         coord.prep()
         coord.start()
     except BaseException as base_exception:

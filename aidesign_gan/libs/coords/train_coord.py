@@ -27,15 +27,16 @@ _TrainResults = results.TrainResults
 class TrainCoord(_Coord):
     """Training coordinator."""
 
-    def __init__(self, dataset_path, model_path, logs):
+    def __init__(self, dataset_path, model_path, logs, debug_level=0):
         """Inits self with the given args.
 
         Args:
             dataset_path: the dataset path
             model_path: the model path
             logs: the log file objects
+            debug_level: an optional debug level
         """
-        super().__init__(model_path, logs)
+        super().__init__(model_path, logs, debug_level)
 
         self._dataset_path = dataset_path
         """Data path."""
@@ -49,7 +50,7 @@ class TrainCoord(_Coord):
         super()._prep_results()
 
         path = _join(self._model_path, "Training-Results")
-        self._results = _TrainResults(path, self._logs)
+        self._results = _TrainResults(path, self._logs, self._debug_level)
         self._results.ensure_folders()
         self._results_ready = True
         self._results.logln("Coordinator prepared results")

@@ -9,20 +9,24 @@
 class Coord:
     """Coordinator base class."""
 
-    def __init__(self, model_path, logs):
+    def __init__(self, model_path, logs, debug_level=0):
         """Inits self with the given args.
 
         Args:
             model_path: the model path
             logs: the log file objects
+            debug_level: an optional debug level
         """
         model_path = str(model_path)
         logs = list(logs)
+        debug_level = int(debug_level)
 
         self._model_path = model_path
         """Model path."""
         self._logs = logs
         """Log file objects"""
+        self._debug_level = debug_level
+        """Debug level."""
         self._cconfig = None
         """Coords config."""
         self._cconfig_loc = None

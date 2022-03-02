@@ -45,30 +45,36 @@ _Results = results.Results
 class TrainResults(_Results):
     """Training results."""
 
-    def __init__(self, path, logs):
+    def __init__(self, path, logs, debug_level=0):
         """Inits self with the given args.
 
         Args:
             path: the root path of the results
             logs: the log file objects
+            debug_level: an optional debug level
         """
-        super().__init__(path, logs)
+        super().__init__(path, logs, debug_level)
 
-        self.gen_img_path = _join(self.path, "Generated-Images")
+        self._gen_imgs_path = _join(self._path, "Generated-Images")
         """Generated images path."""
 
-    def ensure_folders(self):
-        """Ensures the result folders."""
-        super().ensure_folders()
+    def ensure_folders(self, debug_level=0):
+        """Ensures the result folders.
 
-        _makedirs(self.gen_img_path, exist_ok=True)
-        self.logln(f"Ensured folder: {self.gen_img_path}")
+        Args:
+            debug_level: an optional debug level
+        """
+        super().ensure_folders(debug_level)
 
-    def log_data(self, context=None):
+        _makedirs(self._gen_imgs_path, exist_ok=True)
+        self.logln(f"Ensured folder: {self._gen_imgs_path}", debug_level)
+
+    def log_data(self, context=None, debug_level=0):
         """Logs the dataset info.
 
         Args:
             context: optional context
+            debug_level: an optional debug level
         """
         c: _TrainContext = self.find_context(context)
 
@@ -77,13 +83,14 @@ class TrainResults(_Results):
             f"Subsets:  Training set size: {c.data.train.size}  Validation set size: {c.data.valid.size}"
         )
 
-        self.logln(info)
+        self.logln(info, debug_level)
 
-    def log_mods(self, context=None):
+    def log_mods(self, context=None, debug_level=0):
         """Logs the modelers info.
 
         Args:
             context: optional context
+            debug_level: an optional debug level
         """
         c: _TrainContext = self.find_context(context)
 
@@ -106,7 +113,7 @@ class TrainResults(_Results):
             str(c.mods.d.model)
         )
 
-        self.logln(d_info)
+        self.logln(d_info, debug_level)
 
         g_config = c.mods.g.config["adam_optimizer"]
         g_lr = g_config["learning_rate"]
@@ -127,42 +134,46 @@ class TrainResults(_Results):
             str(c.mods.g.model)
         )
 
-        self.logln(g_info)
+        self.logln(g_info, debug_level)
 
-    def log_mode(self, context=None):
+    def log_mode(self, context=None, debug_level=0):
         """Logs the training mode info.
 
         Args:
             context: optional context
+            debug_level: an optional debug level
         """
         c: _TrainContext = self.find_context(context)
 
-        self.logln(f"Training mode: {c.mode}")
+        self.logln(f"Training mode: {c.mode}", debug_level)
 
-    def log_labels(self, context=None):
+    def log_labels(self, context=None, debug_level=0):
         """Logs the labels info.
 
         Args:
             context: optional context
+            debug_level: an optional debug level
         """
         c: _TrainContext = self.find_context(context)
 
-        self.logln(f"Labels:  Real: {c.labels.real:g}  Fake: {c.labels.fake:g}")
+        self.logln(f"Labels:  Real: {c.labels.real:g}  Fake: {c.labels.fake:g}", debug_level)
 
-    def log_algo(self, algo_name):
+    def log_algo(self, algo_name, debug_level=0):
         """Logs the training algorithm.
 
         Args:
             algo_name: the name of the algorithm
+            debug_level: an optional debug level
         """
         algo_name = str(algo_name)
-        self.logln(f"Algo: {algo_name}")
+        self.logln(f"Algo: {algo_name}", debug_level)
 
-    def log_fairness(self, context=None):
+    def log_fairness(self, context=None, debug_level=0):
         """Logs the fairness config.
 
         Args:
             context: optional context
+            debug_level: an optional debug level
         """
         c: _TrainContext = self.find_context(context)
 
@@ -195,13 +206,14 @@ class TrainResults(_Results):
             g_cluster_dx_factor, g_cluster_dgz_factor
         )
 
-        self.logln(info)
+        self.logln(info, debug_level)
 
-    def log_pred_factor(self, context=None):
+    def log_pred_factor(self, context=None, debug_level=0):
         """Logs the prediction factor.
 
         Args:
             context: optional context
+            debug_level: an optional debug level
         """
         c: _TrainContext = self.find_context(context)
 
@@ -209,14 +221,15 @@ class TrainResults(_Results):
         g_pred_factor = c.mods.g.optim.pred_factor
 
         info = f"Prediction factor:  Discriminator: {d_pred_factor:g}  Generator: {g_pred_factor:g}"
-        self.logln(info)
+        self.logln(info, debug_level)
 
-    def log_iter(self, prefix, context=None):
+    def log_iter(self, prefix, context=None, debug_level=0):
         """Logs the iter info.
 
         Args:
             prefix: the contents to log before the info
             context: optional context
+            debug_level: an optional debug level
         """
         c: _TrainContext = self.find_context(context)
 
@@ -226,15 +239,16 @@ class TrainResults(_Results):
             c.loops.iteration.count
         )
 
-        self.logln(info)
+        self.logln(info, debug_level)
 
-    def log_epoch(self, prefix, epoch_type, context=None):
+    def log_epoch(self, prefix, epoch_type, context=None, debug_level=0):
         """Logs the epoch info.
 
         Args:
             prefix: the contents to log before the info
             epoch_type: epoch type (d/g/(empty string))
             context: optional context
+            debug_level: an optional debug level
         """
         c: _TrainContext = self.find_context(context)
 
@@ -244,7 +258,7 @@ class TrainResults(_Results):
             c.loops.iteration.count, epoch_type, c.loops.epoch.count
         )
 
-        self.logln(info)
+        self.logln(info, debug_level)
 
     def _find_train_needs_log(self, context=None):
         """Finds whether the current training batch needs to be logged.
@@ -274,13 +288,14 @@ class TrainResults(_Results):
         result = result or c.loops.valid.index == c.data.valid.batch_count - 1
         return result
 
-    def log_batch(self, epoch_type, batch_type, context=None):
+    def log_batch(self, epoch_type, batch_type, context=None, debug_level=0):
         """Logs the batch info for the iter level algo.
 
         Args:
             epoch_type: epoch type [d|g]
             batch_type: batch type [tr|tf|vr|vf|t|v]
             context: optional context
+            debug_level: an optional debug level
         """
         epoch_type = str(epoch_type)
         batch_type = str(batch_type)
@@ -336,9 +351,9 @@ class TrainResults(_Results):
 
         info += "\n"
         info += "---"
-        self.logln(info)
+        self.logln(info, debug_level)
 
-    def log_batch_v2(self, batch_type, context=None):
+    def log_batch_v2(self, batch_type, context=None, debug_level=0):
         """Logs the batch info.
 
         Version 2.
@@ -348,6 +363,7 @@ class TrainResults(_Results):
         Args:
             batch_type: batch type [t|vdr|vdf|vg]
             context: optional context
+            debug_level: an optional debug level
         """
         batch_type = str(batch_type)
 
@@ -406,9 +422,9 @@ class TrainResults(_Results):
 
         info += "\n"
         info += "---"
-        self.logln(info)
+        self.logln(info, debug_level)
 
-    def log_batch_v3(self, batch_type, context=None):
+    def log_batch_v3(self, batch_type, context=None, debug_level=0):
         """Logs the batch info.
 
         Version 3.
@@ -417,6 +433,7 @@ class TrainResults(_Results):
         Args:
             batch_type: batch type [t/v]
             context: optional context
+            debug_level: an optional debug level
         """
         batch_type = str(batch_type)
 
@@ -483,14 +500,15 @@ class TrainResults(_Results):
         )
 
         info += "---"
-        self.logln(info)
+        self.logln(info, debug_level)
 
-    def log_epoch_loss(self, loss_type, context=None):
+    def log_epoch_loss(self, loss_type, context=None, debug_level=0):
         """Logs the epoch loss info.
 
         Args:
             loss_type: loss type [td|vd|tg|vg]
             context: optional context
+            debug_level: an optional debug level
         """
         loss_type = str(loss_type)
 
@@ -523,14 +541,15 @@ class TrainResults(_Results):
         # end if
 
         info += f" loss: {loss:.6f}"
-        self.logln(info)
+        self.logln(info, debug_level)
 
-    def log_best_losses(self, model_type, context=None):
+    def log_best_losses(self, model_type, context=None, debug_level=0):
         """Logs the best loss info.
 
         Args:
             model_type: model type [d|g]
             context: optional context
+            debug_level: an optional debug level
         """
         model_type = str(model_type)
 
@@ -556,15 +575,16 @@ class TrainResults(_Results):
             info += f"  Previous best loss: {prev_best:.6f}"
         # end if
 
-        self.logln(info)
+        self.logln(info, debug_level)
 
-    def log_model_action(self, action_type, model_type, context=None):
+    def log_model_action(self, action_type, model_type, context=None, debug_level=0):
         """Logs the model action info.
 
         Args:
             action_type: action type [save|es|rb|load]
             model_type: model type [d|g]
             context: optional context
+            debug_level: an optional debug level
         """
         action_type = str(action_type)
         model_type = str(model_type)
@@ -597,13 +617,14 @@ class TrainResults(_Results):
             info += f"Loaded {model_name}"
         # end if
 
-        self.logln(info)
+        self.logln(info, debug_level)
 
-    def save_train_imgs(self, context=None):
+    def save_train_imgs(self, context=None, debug_level=0):
         """Saves the first batch of the training images.
 
         Args:
             context: optional context
+            debug_level: an optional debug level
         """
         c: _TrainContext = self.find_context(context)
 
@@ -617,7 +638,7 @@ class TrainResults(_Results):
         grid = grid.cpu()
         grid = _np_transpose(grid, (1, 2, 0))
 
-        location = _join(self.path, "Training-Images.jpg")
+        location = _join(self._path, "Training-Images.jpg")
         figure = _plt_figure(figsize=(8, 8))
         _plt_axis("off")
         _plt_title("Training Images")
@@ -625,13 +646,14 @@ class TrainResults(_Results):
         _plt_savefig(location, dpi=160)
         _plt_close(figure)
 
-        self.logln("Saved training images")
+        self.logln("Saved training images", debug_level)
 
-    def save_valid_imgs(self, context=None):
+    def save_valid_imgs(self, context=None, debug_level=0):
         """Saves the first batch of the validation images.
 
         Args:
             context: optional context
+            debug_level: an optional debug level
         """
         c: _TrainContext = self.find_context(context)
 
@@ -645,7 +667,7 @@ class TrainResults(_Results):
         grid = grid.cpu()
         grid = _np_transpose(grid, (1, 2, 0))
 
-        location = _join(self.path, "Validation-Images.jpg")
+        location = _join(self._path, "Validation-Images.jpg")
         figure = _plt_figure(figsize=(8, 8))
         _plt_axis("off")
         _plt_title("Validation Images")
@@ -653,13 +675,14 @@ class TrainResults(_Results):
         _plt_savefig(location, dpi=160)
         _plt_close(figure)
 
-        self.logln("Saved validation images")
+        self.logln("Saved validation images", debug_level)
 
-    def save_imgs_before_train(self, context=None):
+    def save_imgs_before_train(self, context=None, debug_level=0):
         """Saves a batch of the generated images grid before any training.
 
         Args:
             context: optional context
+            debug_level: an optional debug level
         """
         c: _TrainContext = self.find_context(context)
 
@@ -676,7 +699,7 @@ class TrainResults(_Results):
             f"{now.microsecond:06}"
         file_name = f"Before-Training-{timestamp}.jpg"
 
-        location = _join(self.gen_img_path, file_name)
+        location = _join(self._gen_imgs_path, file_name)
         figure = _plt_figure(figsize=(8, 8))
         _plt_axis("off")
         _plt_title(f"Generated Images Before Any Training")
@@ -684,13 +707,14 @@ class TrainResults(_Results):
         _plt_savefig(location, dpi=120)
         _plt_close(figure)
 
-        self.logln("Saved images before training")
+        self.logln("Saved images before training", debug_level)
 
-    def save_gen_imgs(self, context=None):
+    def save_gen_imgs(self, context=None, debug_level=0):
         """Saves a batch of the generated images.
 
         Args:
             context: optional context
+            debug_level: an optional debug level
         """
         c: _TrainContext = self.find_context(context)
 
@@ -706,7 +730,7 @@ class TrainResults(_Results):
         timestamp = f"Time-{now.year:04}{now.month:02}{now.day:02}-{now.hour:02}{now.minute:02}{now.second:02}-"\
             f"{now.microsecond:06}"
         file_name = f"Iter-{c.loops.iteration.index + 1}-Epoch-{c.loops.epoch.index + 1}-{timestamp}.jpg"
-        location = _join(self.gen_img_path, file_name)
+        location = _join(self._gen_imgs_path, file_name)
         figure = _plt_figure(figsize=(8, 8))
         _plt_axis("off")
         _plt_title(f"Iter {c.loops.iteration.index + 1} Epoch {c.loops.epoch.index + 1} Generated Images")
@@ -714,13 +738,14 @@ class TrainResults(_Results):
         _plt_savefig(location, dpi=120)
         _plt_close(figure)
 
-        self.logln("Saved generated images")
+        self.logln("Saved generated images", debug_level)
 
-    def save_disc_losses(self, context=None):
+    def save_disc_losses(self, context=None, debug_level=0):
         """Saves the discriminator training/validation losses plot.
 
         Args:
             context: optional context
+            debug_level: an optional debug level
         """
         c: _TrainContext = self.find_context(context)
 
@@ -732,7 +757,7 @@ class TrainResults(_Results):
         rb_x_list = [epoch_count * x[0] + x[1] + 1 + 0.5 for x in c.rbs.d]
         collapse_x_list = [epoch_count * x[0] + x[1] + 1 for x in c.collapses.epochs]
 
-        location = _join(self.path, "Discriminator-Losses.jpg")
+        location = _join(self._path, "Discriminator-Losses.jpg")
         figure = _plt_figure(figsize=(10, 5))
         _plt_title("Discriminator Losses")
 
@@ -763,13 +788,14 @@ class TrainResults(_Results):
         _plt_savefig(location, dpi=160)
         _plt_close(figure)
 
-        self.logln("Saved D losses plot")
+        self.logln("Saved D losses plot", debug_level)
 
-    def save_gen_losses(self, context=None):
+    def save_gen_losses(self, context=None, debug_level=0):
         """Saves the generator training/validation losses plot.
 
         Args:
             context: optional context
+            debug_level: an optional debug level
         """
         c: _TrainContext = self.find_context(context)
 
@@ -781,7 +807,7 @@ class TrainResults(_Results):
         rb_x_list = [epoch_count * x[0] + x[1] + 1 + 0.5 for x in c.rbs.g]
         collapse_x_list = [epoch_count * x[0] + x[1] + 1 for x in c.collapses.epochs]
 
-        location = _join(self.path, "Generator-Losses.jpg")
+        location = _join(self._path, "Generator-Losses.jpg")
         figure = _plt_figure(figsize=(10, 5))
         _plt_title("Generator Losses")
 
@@ -812,13 +838,14 @@ class TrainResults(_Results):
         _plt_savefig(location, dpi=160)
         _plt_close(figure)
 
-        self.logln("Saved G losses plot")
+        self.logln("Saved G losses plot", debug_level)
 
-    def save_tvg_fig(self, context=None):
+    def save_tvg_fig(self, context=None, debug_level=0):
         """Saves the TVG (training-validation-generated) figure.
 
         Args:
             context: optional context
+            debug_level: an optional debug level
         """
         c: _TrainContext = self.find_context(context)
 
@@ -850,7 +877,7 @@ class TrainResults(_Results):
         vgrid = _np_transpose(vgrid, (1, 2, 0))
         ggrid = _np_transpose(ggrid, (1, 2, 0))
 
-        location = _join(self.path, "Training-Validation-Generated.jpg")
+        location = _join(self._path, "Training-Validation-Generated.jpg")
         figure = _plt_figure(figsize=(24, 24))
         sp_figure, axes = _plt_subplots(1, 3)
         sp1, sp2, sp3 = axes[0], axes[1], axes[2]
@@ -868,4 +895,4 @@ class TrainResults(_Results):
         _plt_close(sp_figure)
         _plt_close(figure)
 
-        self.logln("Saved TVG figure")
+        self.logln("Saved TVG figure", debug_level)

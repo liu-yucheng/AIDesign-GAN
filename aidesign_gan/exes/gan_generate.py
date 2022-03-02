@@ -165,7 +165,7 @@ Model path: {model_path}
     _logln(all_logs, start_info)
 
     try:
-        coord = _GenCoord(model_path, all_logs)
+        coord = _GenCoord(model_path, all_logs, debug_level=1)
         coord.prep()
         coord.start()
     except BaseException as base_exception:

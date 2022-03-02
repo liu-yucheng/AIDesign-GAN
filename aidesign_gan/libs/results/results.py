@@ -22,30 +22,29 @@ _Union = typing.Union
 class Results:
     """Results base class."""
 
-    def __init__(self, path, logs):
+    def __init__(self, path, logs, debug_level=0):
         """Inits self with the given args.
 
         Args:
             path: a path as the results root path
             logs: a list of the log file objects to use
+            debug_level: an optional debug level
         """
         path = str(path)
         logs = list(logs)
+        debug_level = int(debug_level)
 
-        self.path = path
-        """Results root path."""
         self.logs = logs
         """Log file objects."""
+        self.debug_level = debug_level
+        """Debug level."""
         self.context: _Union[_Context, None] = None
         """Context.
 
         Used to replace the context parameters of the context-involved results functions.
         """
-
-    def ensure_folders(self):
-        """Ensures the result folders."""
-        _makedirs(self.path, exist_ok=True)
-        self.logln(f"Ensured folder: {self.path}")
+        self._path = path
+        """Results root path."""
 
     def find_context(self, context_arg):
         """Finds the context to use.
@@ -82,32 +81,48 @@ class Results:
 
         return context
 
-    def logstr(self, string=""):
+    def logstr(self, string="", debug_level=0):
         """Logs a string.
 
         Args:
             string: the string to log
         """
-        _logstr(self.logs, string)
+        debug_level = int(debug_level)
 
-    def logln(self, line=""):
+        if debug_level <= self.debug_level:
+            _logstr(self.logs, string)
+
+    def logln(self, line="", debug_level=0):
         """Logs a line.
 
         Args:
             line: the line to log
         """
-        _logln(self.logs, line)
+        debug_level = int(debug_level)
+
+        if debug_level <= self.debug_level:
+            _logln(self.logs, line)
 
     def flushlogs(self):
         """Flushes every log in self.logs."""
         _flushlogs(self.logs)
 
-    def log_config_locs(self, cconfig_loc, mconfig_loc):
+    def ensure_folders(self, debug_level=0):
+        """Ensures the result folders.
+
+        Args:
+            debug_level: an optional debug level
+        """
+        _makedirs(self._path, exist_ok=True)
+        self.logln(f"Results ensured folder: {self._path}", debug_level)
+
+    def log_config_locs(self, cconfig_loc, mconfig_loc, debug_level=0):
         """Logs the coords and modelers config info.
 
         Args:
-            cconfig_loc: coords config location
-            mconfig_loc: modelers config location
+            cconfig_loc: a coords config location
+            mconfig_loc: a modelers config location
+            debug_level: an optional debug level
         """
         cconfig_loc = str(cconfig_loc)
         mconfig_loc = str(mconfig_loc)
@@ -117,27 +132,29 @@ class Results:
             f"Used the modelers config at: {mconfig_loc}"
         )
 
-        self.logln(info)
+        self.logln(info, debug_level)
 
-    def log_rand(self, context=None):
+    def log_rand(self, context=None, debug_level=0):
         """Logs the random info.
 
         Args:
             context: optional context
+            debug_level: an optional debug level
         """
         c: _Context = self.find_context(context)
 
         info = f"Random seed ({c.rand.mode}): {c.rand.seed}"
-        self.logln(info)
+        self.logln(info, debug_level)
 
-    def log_hw(self, context=None):
+    def log_hw(self, context=None, debug_level=0):
         """Logs the torch hardware info.
 
         Args:
             context: optional context
+            debug_level: an optional debug level
         """
 
         c: _Context = self.find_context(context)
 
         info = f"PyTorch device: \"{c.hw.device}\"  GPU count: {c.hw.gpu_count}"
-        self.logln(info)
+        self.logln(info, debug_level)

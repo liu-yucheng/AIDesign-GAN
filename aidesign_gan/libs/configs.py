@@ -210,6 +210,7 @@ class CoordsConfig(Config):
             noise = train["noise_models"]
             cls._verify_bool(noise, "before_each_iter")
             cls._verify_bool(noise, "before_each_epoch")
+            cls._verify_bool(noise, "save_noised_images")
 
         gen = result["generation"]
         cls._verify_int_nonable(gen, "manual_seed")

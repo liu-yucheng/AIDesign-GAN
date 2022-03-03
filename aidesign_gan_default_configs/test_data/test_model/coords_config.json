@@ -20,6 +20,10 @@
         "labels": {
             "real": 1,
             "fake": 0
+        },
+        "noise_models": {
+            "before_each_iter": false,
+            "before_each_epoch": false
         }
     },
     "generation": {

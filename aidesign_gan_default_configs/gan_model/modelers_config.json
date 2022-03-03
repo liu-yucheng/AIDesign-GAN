@@ -24,6 +24,18 @@
                 "bias_std": 0.0002
             }
         },
+        "params_noise": {
+            "conv": {
+                "delta_weight_mean": 0,
+                "delta_weight_std": 0.0002
+            },
+            "batch_norm": {
+                "delta_weight_mean": 0,
+                "delta_weight_std": 0.0002,
+                "delta_bias_mean": 0,
+                "delta_bias_std": 2e-6
+            }
+        },
         "fairness": {
             "dx_factor": 0.5,
             "dgz_factor": 0.5,
@@ -56,6 +68,18 @@
                 "weight_std": 0.02,
                 "bias_mean": 0,
                 "bias_std": 0.0002
+            }
+        },
+        "params_noise": {
+            "conv": {
+                "delta_weight_mean": 0,
+                "delta_weight_std": 0.0002
+            },
+            "batch_norm": {
+                "delta_weight_mean": 0,
+                "delta_weight_std": 0.0002,
+                "delta_bias_mean": 0,
+                "delta_bias_std": 2e-6
             }
         },
         "fairness": {

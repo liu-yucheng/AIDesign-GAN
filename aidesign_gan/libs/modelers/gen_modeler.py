@@ -13,8 +13,7 @@ from aidesign_gan.libs import structs
 from aidesign_gan.libs.modelers import _helpers
 from aidesign_gan.libs.modelers import modeler
 
-_find_model_sizes = _helpers.find_model_sizes
-_find_params_init_func = _helpers.find_params_init_func
+_find_fairness_factors = _helpers.find_fairness_factors
 _GenStruct = structs.GenStruct
 _join = ospath.join
 _logit = torch.logit
@@ -23,7 +22,6 @@ _Module = nn.Module
 _no_grad = torch.no_grad
 _paral_model = _helpers.paral_model
 _prep_batch_and_labels = _helpers.prep_batch_and_labels
-_setup_pred_adam = _helpers.setup_pred_adam
 _tanh = torch.tanh
 _Tensor = torch.Tensor
 _torch_randn = torch.randn
@@ -52,35 +50,13 @@ class GenModeler(_Modeler):
         # Setup self.model
         struct_loc = _join(self.model_path, self.config["struct_name"])
         struct_def = _GenStruct.load(struct_loc)
+
         exec(struct_def)
 
         self.model = self.model.to(self.device)
         self.model = _paral_model(self.model, self.device, self.gpu_count)
 
-        # Setup model parameters
-        params_init_key = "params_init"
-
-        if params_init_key in self.config:
-            params_init_func = _find_params_init_func(self.config[params_init_key])
-        else:
-            params_init_func = _find_params_init_func()
-        # end if
-
-        self.model.apply(params_init_func)
-
-        # Setup self.optim
-        if train:
-            self.optim = _setup_pred_adam(self.model, self.config["adam_optimizer"])
-
-        self.model.train(train)
-
-        # Setup self.*_size attributes
-        size, training_size = _find_model_sizes(self.model)
-        self.size = size
-        self.training_size = training_size
-
-        # Setup self.has_* attributes
-        self.has_fairness = "fairness" in self.config
+        self._init_after_model_setup(train)
 
     def gen_noises(self, count):
         """Generates a random set of input noises for the model.
@@ -335,16 +311,12 @@ class GenModeler(_Modeler):
 
         if self.has_fairness:
             config = self.config["fairness"]
-            dx_factor = config["dx_factor"]
-            dgz_factor = config["dgz_factor"]
-            cluster_dx_factor = config["cluster_dx_factor"]
-            cluster_dgz_factor = config["cluster_dgz_factor"]
+            fairness_factors = _find_fairness_factors(config)
         else:  # elif not self.has_fairness
-            dx_factor = 0.5
-            dgz_factor = 0.5
-            cluster_dx_factor = float(0)
-            cluster_dgz_factor = float(0)
+            fairness_factors = _find_fairness_factors()
         # end if
+
+        dx_factor, dgz_factor, cluster_dx_factor, cluster_dgz_factor = fairness_factors
 
         lg: _Tensor = \
             dx_factor * lgr + \
@@ -539,16 +511,12 @@ class GenModeler(_Modeler):
 
         if self.has_fairness:
             config = self.config["fairness"]
-            dx_factor = config["dx_factor"]
-            dgz_factor = config["dgz_factor"]
-            cluster_dx_factor = config["cluster_dx_factor"]
-            cluster_dgz_factor = config["cluster_dgz_factor"]
+            fairness_factors = _find_fairness_factors(config)
         else:  # elif not self.has_fairness
-            dx_factor = 0.5
-            dgz_factor = 0.5
-            cluster_dx_factor = float(0)
-            cluster_dgz_factor = float(0)
+            fairness_factors = _find_fairness_factors()
         # end if
+
+        dx_factor, dgz_factor, cluster_dx_factor, cluster_dgz_factor = fairness_factors
 
         lg: _Tensor = \
             dx_factor * lgr + \

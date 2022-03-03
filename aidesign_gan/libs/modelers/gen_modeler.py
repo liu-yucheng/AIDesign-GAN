@@ -82,7 +82,7 @@ class GenModeler(_Modeler):
         # Setup self.has_* attributes
         self.has_fairness = "fairness" in self.config
 
-    def generate_noises(self, count):
+    def gen_noises(self, count):
         """Generates a random set of input noises for the model.
 
         Args:
@@ -235,7 +235,7 @@ class GenModeler(_Modeler):
         loss_val = loss.item()
         return out_mean, loss_val
 
-    def train_fair(self, d_model, real_batch, real_label, fake_noises, fake_label):
+    def train_fair(self, d_model, real_data, real_label, fake_noises, fake_label):
         """Fairly trains the model with the given args.
 
         Set self.model to training mode.
@@ -259,7 +259,7 @@ class GenModeler(_Modeler):
                 Can be on either the CPUs or the GPUs.
                 Preferred to be on the GPUs.
                 This function will not change the device of d_model.
-            real_batch: A real batch.
+            real_data: A batch of real data.
                 Can be on either the CPUs or GPUs.
                 Preferred to be on the CPUs.
             real_label: A real target label wrt. G.
@@ -313,8 +313,8 @@ class GenModeler(_Modeler):
         self.model.train(True)
         d_model.train(True)
 
-        real_batch, real_labels = _prep_batch_and_labels(real_batch, real_label, self.device)
-        dxs2 = d_model(real_batch)
+        real_data, real_labels = _prep_batch_and_labels(real_data, real_label, self.device)
+        dxs2 = d_model(real_data)
         dxs2: _Tensor = dxs2.view(-1)
         dxs2 = dxs2.float()
         lgr: _Tensor = self.loss_func(dxs2, real_labels)
@@ -439,7 +439,7 @@ class GenModeler(_Modeler):
         loss_val = loss.item()
         return out_mean, loss_val
 
-    def valid_fair(self, d_model, real_batch, real_label, fake_noises, fake_label):
+    def valid_fair(self, d_model, real_data, real_label, fake_noises, fake_label):
         """Fairly validates the model with the given args.
 
         Set self.model and d_model to evaluation mode.
@@ -459,7 +459,7 @@ class GenModeler(_Modeler):
                 Can be on either the CPUs or the GPUs.
                 Preferred to be on the GPUs.
                 This function will not change the device of d_model.
-            real_batch: A real batch.
+            real_data: A batch of real data.
                 Can be on either the CPUs or GPUs.
                 Preferred to be on the CPUs.
             real_label: A real target label wrt. G.
@@ -506,10 +506,10 @@ class GenModeler(_Modeler):
         self.model.train(False)
         d_model.train(False)
 
-        real_batch, real_labels = _prep_batch_and_labels(real_batch, real_label, self.device)
+        real_data, real_labels = _prep_batch_and_labels(real_data, real_label, self.device)
 
         with _no_grad():
-            dxs2 = d_model(real_batch)
+            dxs2 = d_model(real_data)
             dxs2: _Tensor = dxs2.detach().view(-1)
 
         dxs2 = dxs2.float()

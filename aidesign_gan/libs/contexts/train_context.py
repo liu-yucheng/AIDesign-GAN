@@ -7,6 +7,7 @@
 
 import numpy
 import random
+import torch
 import typing
 
 from torch import nn
@@ -34,6 +35,7 @@ _nparray = numpy.array
 _shuffle = random.shuffle
 _Subset = data.Subset
 _Resize = transforms.Resize
+_Tensor = torch.Tensor
 _ToTensor = transforms.ToTensor
 _Union = typing.Union
 
@@ -236,7 +238,7 @@ class TrainContext(_Context):
         """Sets up self.data and its attributes with the given args.
 
         Args:
-            path: the data path
+            path: the dataset path
             config: the training coords config subset
 
         Raises:
@@ -491,15 +493,17 @@ class TrainContext(_Context):
         valid = []
 
         for real_batch in self.data.valid.loader:
-            real_batch = real_batch[0]
-            batch_size = real_batch.size()[0]
-            # print(f"[Debug] Batch size: {batch_size}")
-
-            noise_batch = self.mods.g.generate_noises(batch_size)
+            real_data, real_indices = real_batch
+            real_data: _Tensor
+            _ = real_indices
+            # print(f"data.size(): {data.size()}")  # Debug
+            # print(f"real_indices: {real_indices}")  # Debug
+            batch_image_count = real_data.size()[0]
+            noise_batch = self.mods.g.gen_noises(batch_image_count)
             valid.append(noise_batch)
         # end for
 
-        ref_batch = self.mods.g.generate_noises(self.data.batch_size)
+        ref_batch = self.mods.g.gen_noises(self.data.batch_size)
 
         self.noises.valid = valid
         self.noises.ref_batch = ref_batch

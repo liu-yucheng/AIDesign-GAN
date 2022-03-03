@@ -58,7 +58,7 @@ class GenContext(_Context):
         """Images info attr dict."""
         self.grids = GenContext.Grids()
         """Grid mode info attr dict."""
-        self.noise_batches = None
+        self.noises_batches = None
         """Noise batch list."""
         self.batch_prog = GenContext.BatchProg()
         """Generation batch progress info."""
@@ -98,18 +98,18 @@ class GenContext(_Context):
         self.grids.padding = config["padding"]
 
         # Setup self.noise_batches
-        noises_left = self.images.count
-        noise_batches = []
+        noises_count_remain = self.images.count
+        noises_batches = []
 
-        while noises_left > 0:
-            noise_count = min(noises_left, self.images.per_batch)
-            noise_batch = self.g.generate_noises(noise_count)
-            noise_batches.append(noise_batch)
-            noises_left -= noise_count
+        while noises_count_remain > 0:
+            noises_count = min(noises_count_remain, self.images.per_batch)
+            noises_batch = self.g.gen_noises(noises_count)
+            noises_batches.append(noises_batch)
+            noises_count_remain -= noises_count
         # end while
 
-        self.noise_batches = noise_batches
+        self.noises_batches = noises_batches
 
         # Setup self.batch_prog
-        self.batch_prog.count = len(self.noise_batches)
+        self.batch_prog.count = len(self.noises_batches)
         self.batch_prog.index = 0

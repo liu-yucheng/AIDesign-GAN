@@ -6,6 +6,7 @@
 # Last updated by username: liu-yucheng
 
 import numpy
+import torch
 
 from aidesign_gan.libs import contexts
 from aidesign_gan.libs import results
@@ -17,6 +18,7 @@ from aidesign_gan.libs.algos import algo
 _Algo = algo.Algo
 _nparray = numpy.array
 _rand_bool = utils.rand_bool
+_Tensor = torch.Tensor
 _TrainContext = contexts.TrainContext
 _TrainResults = results.TrainResults
 
@@ -34,7 +36,7 @@ class PredAltSGDAlgo(_Algo):
         """Inits self."""
         super().__init__()
 
-    def _train_and_step_d(self, real_batch, fake_batch, context=None, results=None):
+    def _train_and_step_d(self, real_data, fake_data, context=None, results=None):
         """Returns (dx, ldr, dgz, ldf)."""
         c: _TrainContext = self.find_context(context)
         _ = results
@@ -45,11 +47,11 @@ class PredAltSGDAlgo(_Algo):
             c.mods.g.predict()
 
         c.mods.d.clear_grads()
-        dx, ldr = c.mods.d.train(real_batch, c.labels.real)
+        dx, ldr = c.mods.d.train(real_data, c.labels.real)
         c.mods.d.step_optim()
 
         c.mods.d.clear_grads()
-        dgz, ldf = c.mods.d.train(fake_batch, c.labels.fake)
+        dgz, ldf = c.mods.d.train(fake_data, c.labels.fake)
         c.mods.d.step_optim()
 
         if not_1st_batch:
@@ -57,7 +59,7 @@ class PredAltSGDAlgo(_Algo):
 
         return dx, ldr, dgz, ldf
 
-    def _train_and_step_g(self, noises, context=None, results=None):
+    def _train_and_step_g(self, fake_noises, context=None, results=None):
         """Returns (dgz2, lg)."""
         c: _TrainContext = self.find_context(context)
         _ = results
@@ -68,7 +70,7 @@ class PredAltSGDAlgo(_Algo):
             c.mods.d.predict()
 
         c.mods.g.clear_grads()
-        dgz2, lg = c.mods.g.train(c.mods.d.model, noises, c.labels.real)
+        dgz2, lg = c.mods.g.train(c.mods.d.model, fake_noises, c.labels.real)
         c.mods.g.step_optim()
 
         if not_1st_batch:
@@ -89,15 +91,18 @@ class PredAltSGDAlgo(_Algo):
 
         for real_batch in c.data.train.loader:
             # Prepare D training materials
-            d_real_batch = real_batch[0]
-            batch_size = d_real_batch.size()[0]
+            d_real_data, d_real_indices = real_batch
+            d_real_data: _Tensor
+            _ = d_real_indices
+
+            batch_size = d_real_data.size()[0]
             # print(f"[Debug] Batch size: {batch_size}")
 
-            d_noises = c.mods.g.generate_noises(batch_size)
+            d_noises = c.mods.g.gen_noises(batch_size)
             d_fake_batch = c.mods.g.test(d_noises)
 
             # Prepare G training materials
-            g_noises = c.mods.g.generate_noises(batch_size)
+            g_noises = c.mods.g.gen_noises(batch_size)
 
             # Filp a coin to determine whether to reverse the training order
             reverse_order = _rand_bool()
@@ -105,10 +110,10 @@ class PredAltSGDAlgo(_Algo):
             if reverse_order:
                 # Train G, and then train D
                 g_results = self._train_and_step_g(g_noises, context, results)
-                d_results = self._train_and_step_d(d_real_batch, d_fake_batch, context, results)
+                d_results = self._train_and_step_d(d_real_data, d_fake_batch, context, results)
             else:  # elif not reverse order:
                 # Train D, and then train G (original order)
-                d_results = self._train_and_step_d(d_real_batch, d_fake_batch, context, results)
+                d_results = self._train_and_step_d(d_real_data, d_fake_batch, context, results)
                 g_results = self._train_and_step_g(g_noises, context, results)
 
             # Parse the training results
@@ -157,23 +162,28 @@ class PredAltSGDAlgo(_Algo):
         c.loops.valid.index = 0
 
         for real_batch in c.data.valid.loader:
-            real_batch = real_batch[0]
-            dx, ld = c.mods.d.valid(real_batch, c.labels.real)
+            real_data, real_indices = real_batch
+            real_data: _Tensor
+            _ = real_indices
+
+            dx, ld = c.mods.d.valid(real_data, c.labels.real)
             c.latest.dx, c.latest.ld = dx, ld
             ldrs.append(ld)
             r.log_batch_v2("vdr")
             c.loops.valid.index += 1
+        # end for
 
         ldfs = []
         c.loops.valid.index = 0
 
-        for noises in c.noises.valid:
-            fake_batch = c.mods.g.test(noises)
-            dgz, ld = c.mods.d.valid(fake_batch, c.labels.fake)
+        for fake_noises in c.noises.valid:
+            fake_data = c.mods.g.test(fake_noises)
+            dgz, ld = c.mods.d.valid(fake_data, c.labels.fake)
             c.latest.dgz, c.latest.ld = dgz, ld
             ldfs.append(ld)
             r.log_batch_v2("vdf")
             c.loops.valid.index += 1
+        # end for
 
         lds = []
 
@@ -193,8 +203,8 @@ class PredAltSGDAlgo(_Algo):
         lgs = []
         c.loops.valid.index = 0
 
-        for noises in c.noises.valid:
-            dgz2, lg = c.mods.g.valid(c.mods.d.model, noises, c.labels.real)
+        for fake_noises in c.noises.valid:
+            dgz2, lg = c.mods.g.valid(c.mods.d.model, fake_noises, c.labels.real)
             c.latest.dgz2, c.latest.lg = dgz2, lg
             lgs.append(lg)
             r.log_batch_v2("vg")

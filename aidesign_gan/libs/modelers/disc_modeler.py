@@ -82,7 +82,7 @@ class DiscModeler(_Modeler):
         # Setup the self.has_* attributes
         self.has_fairness = "fairness" in self.config
 
-    def train(self, batch, label):
+    def train(self, data, label):
         """Trains the model with a batch of data and a target label.
 
         Set the model to training mode.
@@ -94,7 +94,7 @@ class DiscModeler(_Modeler):
             ensure the functioning of the training algorithm.
 
         Args:
-            batch: A batch of data.
+            data: A batch of data.
                 Can be on either the CPUs or GPUs.
                 Preferred to be on the CPUs.
             label: A target label.
@@ -117,8 +117,8 @@ class DiscModeler(_Modeler):
         model_training = self.model.training
         self.model.train(True)
 
-        batch, labels = _prep_batch_and_labels(batch, label, self.device)
-        output = self.model(batch)
+        data, labels = _prep_batch_and_labels(data, label, self.device)
+        output = self.model(data)
         output: _Tensor = output.view(-1)
         output = output.float()
 
@@ -131,7 +131,7 @@ class DiscModeler(_Modeler):
         loss_val = loss.item()
         return out_mean, loss_val
 
-    def train_and_step(self, batch, label):
+    def train_and_step(self, data, label):
         """Trains and steps the model with a batch of data and a target label.
 
         Set the model to training mode.
@@ -143,7 +143,7 @@ class DiscModeler(_Modeler):
         Return the average output and loss value.
 
         Args:
-            batch: A batch of data.
+            data: A batch of data.
                 Can be on either the CPUs or GPUs.
                 Preferred to be on the CPUs.
             label: A target label.
@@ -169,8 +169,8 @@ class DiscModeler(_Modeler):
         self.model.zero_grad()
         self.optim.zero_grad()
 
-        batch, labels = _prep_batch_and_labels(batch, label, self.device)
-        output = self.model(batch)
+        data, labels = _prep_batch_and_labels(data, label, self.device)
+        output = self.model(data)
         output: _Tensor = output.view(-1)
         output = output.float()
 
@@ -184,7 +184,7 @@ class DiscModeler(_Modeler):
         loss_val = loss.item()
         return out_mean, loss_val
 
-    def train_fair(self, g_model, real_batch, real_label, fake_noises, fake_label):
+    def train_fair(self, g_model, real_data, real_label, fake_noises, fake_label):
         """Fairly trains the model with the given args.
 
         Set self.model to training mode.
@@ -208,7 +208,7 @@ class DiscModeler(_Modeler):
                 Can be on either the CPUs or the GPUs.
                 Preferred to be on the GPUs.
                 This function will not change the device of g_model.
-            real_batch: A real batch.
+            real_data: A batch of real data.
                 Can be on either the CPUs or GPUs.
                 Preferred to be on the CPUs.
             real_label: A real target label wrt. D.
@@ -262,8 +262,8 @@ class DiscModeler(_Modeler):
         self.model.train(True)
         g_model.train(True)
 
-        real_batch, real_labels = _prep_batch_and_labels(real_batch, real_label, self.device)
-        dxs = self.model(real_batch)
+        real_data, real_labels = _prep_batch_and_labels(real_data, real_label, self.device)
+        dxs = self.model(real_data)
         dxs: _Tensor = dxs.view(-1)
         dxs = dxs.float()
         ldr: _Tensor = self.loss_func(dxs, real_labels)
@@ -327,7 +327,7 @@ class DiscModeler(_Modeler):
 
         return result
 
-    def valid(self, batch, label):
+    def valid(self, data, label):
         """Validates the model with a batch of data and a target label.
 
         Set the model to evaluation mode.
@@ -336,7 +336,7 @@ class DiscModeler(_Modeler):
         Return the average output and loss.
 
         Args:
-            batch: A batch of data.
+            data: A batch of data.
                 Can be on either the CPUs or GPUs.
                 Preferred to be on the CPUs.
             label: A target label.
@@ -353,10 +353,10 @@ class DiscModeler(_Modeler):
         model_training = self.model.training
         self.model.train(False)
 
-        batch, labels = _prep_batch_and_labels(batch, label, self.device)
+        data, labels = _prep_batch_and_labels(data, label, self.device)
 
         with _no_grad():
-            output = self.model(batch)
+            output = self.model(data)
             output: _Tensor = output.detach().view(-1)
 
         output = output.float()
@@ -369,7 +369,7 @@ class DiscModeler(_Modeler):
         loss_val = loss.item()
         return out_mean, loss_val
 
-    def valid_fair(self, g_model, real_batch, real_label, fake_noises, fake_label):
+    def valid_fair(self, g_model, real_data, real_label, fake_noises, fake_label):
         """Fairly validates the model with the given args.
 
         Set self.model and g_model to evaluation mode.
@@ -389,7 +389,7 @@ class DiscModeler(_Modeler):
                 Can be on either the CPUs or the GPUs.
                 Preferred to be on the GPUs.
                 This function will not change the device of g_model.
-            real_batch: A real batch.
+            real_data: A batch of real data.
                 Can be on either the CPUs or GPUs.
                 Preferred to be on the CPUs.
             real_label: A real target label wrt. D.
@@ -437,10 +437,10 @@ class DiscModeler(_Modeler):
         self.model.train(False)
         g_model.train(False)
 
-        real_batch, real_labels = _prep_batch_and_labels(real_batch, real_label, self.device)
+        real_data, real_labels = _prep_batch_and_labels(real_data, real_label, self.device)
 
         with _no_grad():
-            dxs = self.model(real_batch)
+            dxs = self.model(real_data)
             dxs: _Tensor = dxs.detach().view(-1)
 
         dxs = dxs.float()
@@ -511,7 +511,7 @@ class DiscModeler(_Modeler):
 
         return result
 
-    def test(self, batch):
+    def test(self, data):
         """Tests/Uses the model with a batch of data.
 
         Set the model to evaluation mode.
@@ -519,7 +519,7 @@ class DiscModeler(_Modeler):
         Return the output.
 
         Args:
-            batch: A batch of data.
+            data: A batch of data.
             Can be on either the CPUs or GPUs.
 
         Returns:
@@ -527,15 +527,15 @@ class DiscModeler(_Modeler):
                 The output of D (NOT the average output).
                 Definitely on the CPUs.
         """
-        batch: _Tensor = batch
+        data: _Tensor = data
 
         model_training = self.model.training
         self.model.train(False)
 
-        batch = batch.to(self.device)
+        data = data.to(self.device)
 
         with _no_grad():
-            output = self.model(batch)
+            output = self.model(data)
             output: _Tensor = output.detach().view(-1)
 
         output = output.float()

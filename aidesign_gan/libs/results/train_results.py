@@ -9,6 +9,7 @@ import datetime
 import math
 import numpy
 import os
+import torch
 from matplotlib import lines
 from matplotlib import pyplot
 from os import path as ospath
@@ -38,6 +39,7 @@ _plt_title = pyplot.title
 _plt_xlabel = pyplot.xlabel
 _plt_xticks = pyplot.xticks
 _plt_ylabel = pyplot.ylabel
+_Tensor = torch.Tensor
 _TrainContext = contexts.TrainContext
 _Results = results.Results
 
@@ -629,12 +631,17 @@ class TrainResults(_Results):
         c: _TrainContext = self.find_context(context)
 
         batch = next(iter(c.data.train.loader))
-        batch = batch[0].cpu()
-        batch = batch[:c.data.batch_size]
+        data, indices = batch
+        data: _Tensor
+        _ = indices
+
+        data = data.cpu()
+        data = data[:c.data.batch_size]
 
         grid = _make_grid(
-            batch, nrow=_ceil(c.data.batch_size ** 0.5), padding=2, normalize=True, value_range=(-0.75, 0.75)
+            data, nrow=_ceil(c.data.batch_size ** 0.5), padding=2, normalize=True, value_range=(-0.75, 0.75)
         )
+
         grid = grid.cpu()
         grid = _np_transpose(grid, (1, 2, 0))
 
@@ -663,12 +670,17 @@ class TrainResults(_Results):
         c: _TrainContext = self.find_context(context)
 
         batch = next(iter(c.data.valid.loader))
-        batch = batch[0].cpu()
-        batch = batch[:c.data.batch_size]
+        data, indices = batch
+        data: _Tensor
+        _ = indices
+
+        data = data.cpu()
+        data = data[:c.data.batch_size]
 
         grid = _make_grid(
-            batch, nrow=_ceil(c.data.batch_size ** 0.5), padding=2, normalize=True, value_range=(-0.75, 0.75)
+            data, nrow=_ceil(c.data.batch_size ** 0.5), padding=2, normalize=True, value_range=(-0.75, 0.75)
         )
+
         grid = grid.cpu()
         grid = _np_transpose(grid, (1, 2, 0))
 
@@ -695,17 +707,20 @@ class TrainResults(_Results):
         """
         c: _TrainContext = self.find_context(context)
 
-        batch = c.mods.g.test(c.noises.ref_batch)
+        data = c.mods.g.test(c.noises.ref_batch)
 
         grid = _make_grid(
-            batch, nrow=_ceil(c.data.batch_size ** 0.5), padding=2, normalize=True, value_range=(-0.75, 0.75)
+            data, nrow=_ceil(c.data.batch_size ** 0.5), padding=2, normalize=True, value_range=(-0.75, 0.75)
         )
+
         grid = grid.cpu()
         grid = _np_transpose(grid, (1, 2, 0))
 
         now = _now()
+
         timestamp = f"Time-{now.year:04}{now.month:02}{now.day:02}-{now.hour:02}{now.minute:02}{now.second:02}-"\
             f"{now.microsecond:06}"
+
         file_name = f"Before-Training-{timestamp}.jpg"
 
         location = _join(self._gen_images_path, file_name)
@@ -731,17 +746,20 @@ class TrainResults(_Results):
         """
         c: _TrainContext = self.find_context(context)
 
-        batch = c.mods.g.test(c.noises.ref_batch)
+        data = c.mods.g.test(c.noises.ref_batch)
 
         grid = _make_grid(
-            batch, nrow=_ceil(c.data.batch_size ** 0.5), padding=2, normalize=True, value_range=(-0.75, 0.75)
+            data, nrow=_ceil(c.data.batch_size ** 0.5), padding=2, normalize=True, value_range=(-0.75, 0.75)
         )
+
         grid = grid.cpu()
         grid = _np_transpose(grid, (1, 2, 0))
 
         now = _now()
+
         timestamp = f"Time-{now.year:04}{now.month:02}{now.day:02}-{now.hour:02}{now.minute:02}{now.second:02}-"\
             f"{now.microsecond:06}"
+
         file_name = f"Iter-{c.loops.iteration.index + 1}-Epoch-{c.loops.epoch.index + 1}-{timestamp}.jpg"
         location = _join(self._gen_images_path, file_name)
         figure = _plt_figure(figsize=(8, 8))
@@ -780,10 +798,13 @@ class TrainResults(_Results):
 
         _plt_plot(epoch_list, c.losses.train.d, alpha=0.8, color="b", label="Training")
         _plt_plot(epoch_list, c.losses.valid.d, alpha=0.8, color="r", label="Validation")
+
         for x in iter_x_list:
             _plt_axvline(x, alpha=0.6, color="gray")
+
         for x in rb_x_list:
             _plt_axvline(x, alpha=0.6, color="purple")
+
         for x in collapse_x_list:
             _plt_axvline(x, alpha=0.6, color="orange")
 
@@ -834,10 +855,13 @@ class TrainResults(_Results):
 
         _plt_plot(epoch_list, c.losses.train.g, alpha=0.8, color="b", label="Training")
         _plt_plot(epoch_list, c.losses.valid.g, alpha=0.8, color="r", label="Validation")
+
         for x in iter_x_list:
             _plt_axvline(x, alpha=0.6, color="gray")
+
         for x in rb_x_list:
             _plt_axvline(x, alpha=0.6, color="purple")
+
         for x in collapse_x_list:
             _plt_axvline(x, alpha=0.6, color="orange")
 
@@ -875,23 +899,27 @@ class TrainResults(_Results):
         c: _TrainContext = self.find_context(context)
 
         tbatch = next(iter(c.data.train.loader))
-        tbatch = tbatch[0].cpu()
-        tbatch = tbatch[:c.data.batch_size]
+        tdata, _ = tbatch
+        tdata = tdata.cpu()
+        tdata = tdata[:c.data.batch_size]
 
         vbatch = next(iter(c.data.valid.loader))
-        vbatch = vbatch[0].cpu()
-        vbatch = vbatch[:c.data.batch_size]
+        vdata, _ = vbatch
+        vdata = vdata.cpu()
+        vdata = vdata[:c.data.batch_size]
 
-        gbatch = c.mods.g.test(c.noises.ref_batch)
+        gdata = c.mods.g.test(c.noises.ref_batch)
 
         tgrid = _make_grid(
-            tbatch, nrow=_ceil(c.data.batch_size ** 0.5), padding=2, normalize=True, value_range=(-0.75, 0.75)
+            tdata, nrow=_ceil(c.data.batch_size ** 0.5), padding=2, normalize=True, value_range=(-0.75, 0.75)
         )
+
         vgrid = _make_grid(
-            vbatch, nrow=_ceil(c.data.batch_size ** 0.5), padding=2, normalize=True, value_range=(-0.75, 0.75)
+            vdata, nrow=_ceil(c.data.batch_size ** 0.5), padding=2, normalize=True, value_range=(-0.75, 0.75)
         )
+
         ggrid = _make_grid(
-            gbatch, nrow=_ceil(c.data.batch_size ** 0.5), padding=2, normalize=True, value_range=(-0.75, 0.75)
+            gdata, nrow=_ceil(c.data.batch_size ** 0.5), padding=2, normalize=True, value_range=(-0.75, 0.75)
         )
 
         tgrid = tgrid.cpu()

@@ -29,6 +29,7 @@ _torch_device = torch.device
 _torch_full = torch.full
 _torch_load = torch.load
 _torch_save = torch.save
+_torch_zeros_like = torch.zeros_like
 _Union = typing.Union
 
 
@@ -256,6 +257,63 @@ def find_params_init_func(config=None):
     return result_func
 
 
+def find_params_noise_func(config=None):
+    """Finds the parameters noise function with the given args.
+
+    Args:
+        config: a params_noise config or None
+
+    Returns:
+        result_func: the resulting parameters noise function
+    """
+    cdw_mean = float(0)
+    cdw_std = 0.0002
+
+    bndw_mean = float(0)
+    bndw_std = 0.0002
+    bndb_mean = float(0)
+    bndb_std = 2e-6
+
+    if config is not None:
+        config = dict(config)
+
+        cdw_mean = float(config["conv"]["delta_weight_mean"])
+        cdw_std = float(config["conv"]["delta_weight_std"])
+
+        bndw_mean = float(config["batch_norm"]["delta_weight_mean"])
+        bndw_std = float(config["batch_norm"]["delta_weight_std"])
+        bndb_mean = float(config["batch_norm"]["delta_bias_mean"])
+        bndb_std = float(config["batch_norm"]["delta_bias_std"])
+    # end if
+
+    def result_func(model):
+        """Noises model parameters.
+
+        Args:
+            model: the model
+        """
+        model: _Union[_Module, _Conv, _BatchNorm] = model
+
+        class_name = str(model.__class__.__name__)
+
+        if class_name.find("Conv") != -1:
+            dws = _torch_zeros_like(model.weight.data)
+            _normal_inplace(dws, cdw_mean, cdw_std)
+            model.weight.data.add_(dws)
+        elif class_name.find("BatchNorm") != -1:
+            dws = _torch_zeros_like(model.weight.data)
+            _normal_inplace(dws, bndw_mean, bndw_std)
+            model.weight.data.add_(dws)
+
+            dbs = _torch_zeros_like(model.bias.data)
+            _normal_inplace(dbs, bndb_mean, bndb_std)
+            model.bias.data.add_(dbs)
+        # end if
+    # end def
+
+    return result_func
+
+
 def prep_batch_and_labels(batch, label, device):
     """Prepares batch and labels with the given args.
 
@@ -274,8 +332,36 @@ def prep_batch_and_labels(batch, label, device):
     device: _torch_device = device
 
     batch = batch.to(device)
-    label_size = (batch.size(0),)
+    label_size = (batch.size()[0],)
     labels = _torch_full(label_size, label, dtype=torch.float, device=device)
 
     result = batch, labels
     return result
+
+
+def find_fairness_factors(config=None):
+    """Finds the fairness factors with the given args.
+
+    Args:
+        config: a fairness config or None.
+
+    Returns:
+        results: a tuple that contains the following items
+        dx_factor, : D(X) factor
+        dgz_factor, : D(G(Z)) factor
+        cluster_dx_factor: cluster D(X) factor
+        cluster_dgz_factor: cluster D(G(Z)) factor
+    """
+    if config is not None:
+        dx_factor = float(config["dx_factor"])
+        dgz_factor = float(config["dgz_factor"])
+        cluster_dx_factor = float(config["cluster_dx_factor"])
+        cluster_dgz_factor = float(config["cluster_dgz_factor"])
+    else:
+        dx_factor = 0.5
+        dgz_factor = 0.5
+        cluster_dx_factor = float(0)
+        cluster_dgz_factor = float(0)
+    # end if
+
+    return dx_factor, dgz_factor, cluster_dx_factor, cluster_dgz_factor

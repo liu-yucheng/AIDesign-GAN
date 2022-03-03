@@ -206,6 +206,11 @@ class CoordsConfig(Config):
         cls._verify_float_clamp(labels, "real", 0, 1)
         cls._verify_float_clamp(labels, "fake", 0, 1)
 
+        if "noise_models" in train:
+            noise = train["noise_models"]
+            cls._verify_bool(noise, "before_each_iter")
+            cls._verify_bool(noise, "before_each_epoch")
+
         gen = result["generation"]
         cls._verify_int_nonable(gen, "manual_seed")
         cls._verify_int_ge_0(gen, "gpu_count")
@@ -257,6 +262,19 @@ class ModelersConfig(Config):
             cls._verify_float_ge_0(bn, "weight_std")
             cls._verify_float(bn, "bias_mean")
             cls._verify_float_ge_0(bn, "bias_std")
+
+        if "params_noise" in from_dict:
+            noise = from_dict["params_noise"]
+
+            conv = noise["conv"]
+            cls._verify_float(conv, "delta_weight_mean")
+            cls._verify_float_ge_0(conv, "delta_weight_std")
+
+            bn = noise["batch_norm"]
+            cls._verify_float(bn, "delta_weight_mean")
+            cls._verify_float_ge_0(bn, "delta_weight_std")
+            cls._verify_float(bn, "delta_bias_mean")
+            cls._verify_float_ge_0(bn, "delta_bias_std")
 
         if "fairness" in from_dict:
             fair = from_dict["fairness"]

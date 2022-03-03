@@ -738,7 +738,7 @@ class TrainResults(_Results):
         self.logln("Saved images before training", debug_level)
 
     def save_gen_images(self, context=None, debug_level=0):
-        """Saves a batch of the generated images.
+        """Saves a batch of the generated images after training.
 
         Args:
             context: optional context
@@ -760,11 +760,13 @@ class TrainResults(_Results):
         timestamp = f"Time-{now.year:04}{now.month:02}{now.day:02}-{now.hour:02}{now.minute:02}{now.second:02}-"\
             f"{now.microsecond:06}"
 
-        file_name = f"Iter-{c.loops.iteration.index + 1}-Epoch-{c.loops.epoch.index + 1}-{timestamp}.jpg"
+        disp_iter = c.loops.iteration.index + 1
+        disp_epoch = c.loops.epoch.index + 1
+        file_name = f"Iter-{disp_iter}-Epoch-{disp_epoch}-Trained-{timestamp}.jpg"
         location = _join(self._gen_images_path, file_name)
         figure = _plt_figure(figsize=(8, 8))
         _plt_axis("off")
-        _plt_title(f"Iter {c.loops.iteration.index + 1} Epoch {c.loops.epoch.index + 1} Generated Images")
+        _plt_title(f"Iter {disp_iter} Epoch {disp_epoch} Generated Images After Training")
         _plt_imshow(grid)
         needs_log = self.find_needs_log(debug_level)
 
@@ -774,6 +776,46 @@ class TrainResults(_Results):
         _plt_close(figure)
 
         self.logln("Saved generated images", debug_level)
+
+    def save_gen_images_after_noise(self, context=None, debug_level=0):
+        """Saves a batch of the generated images after noising the models.
+
+        Args:
+            context: optional context
+            debug_level: an optional debug level
+        """
+        c: _TrainContext = self.find_context(context)
+
+        data = c.mods.g.test(c.noises.ref_batch)
+
+        grid = _make_grid(
+            data, nrow=_ceil(c.data.batch_size ** 0.5), padding=2, normalize=True, value_range=(-0.75, 0.75)
+        )
+
+        grid = grid.cpu()
+        grid = _np_transpose(grid, (1, 2, 0))
+
+        now = _now()
+
+        timestamp = f"Time-{now.year:04}{now.month:02}{now.day:02}-{now.hour:02}{now.minute:02}{now.second:02}-"\
+            f"{now.microsecond:06}"
+
+        disp_iter = c.loops.iteration.index + 1
+        disp_epoch = c.loops.epoch.index + 1
+        file_name = f"Iter-{disp_iter}-Epoch-{disp_epoch}-Noised-{timestamp}.jpg"
+        location = _join(self._gen_images_path, file_name)
+        figure = _plt_figure(figsize=(8, 8))
+        _plt_axis("off")
+        _plt_title(f"Iter {disp_iter} Epoch {disp_epoch} Generated Images After Noising")
+        _plt_imshow(grid)
+        needs_log = self.find_needs_log(debug_level)
+
+        if needs_log:
+            _plt_savefig(location, dpi=120)
+
+        _plt_close(figure)
+
+        self.logln("Saved generated images after noise", debug_level)
 
     def save_disc_losses(self, context=None, debug_level=0):
         """Saves the discriminator training/validation losses plot.

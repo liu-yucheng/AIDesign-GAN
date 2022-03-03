@@ -14,6 +14,10 @@ from aidesign_gan.libs import optims as libs_optims
 from aidesign_gan.libs.modelers import _helpers
 
 _Adam = optim.Adam
+_Callable = typing.Callable
+_find_model_sizes = _helpers.find_model_sizes
+_find_params_init_func = _helpers.find_params_init_func
+_find_params_noise_func = _helpers.find_params_noise_func
 _join = ospath.join
 _load_model = _helpers.load_model
 _load_optim = _helpers.load_optim
@@ -21,6 +25,7 @@ _Module = nn.Module
 _PredAdam = libs_optims.PredAdam
 _save_model = _helpers.save_model
 _save_optim = _helpers.save_optim
+_setup_pred_adam = _helpers.setup_pred_adam
 _Union = typing.Union
 
 
@@ -74,6 +79,51 @@ class Modeler:
             When eps is 1e-5: 0.231
         """
 
+        self._noise_func: _Union[_Callable, None] = None
+        """Model noise function."""
+
+    def _init_after_model_setup(self, train=True):
+        """Inits self with the given args after self.model is setup.
+
+        Args:
+            train: Training mode switch.
+                Controls whether to setup self.optim
+        """
+        # Setup model parameters
+        params_init_key = "params_init"
+
+        if params_init_key in self.config:
+            params_init_func = _find_params_init_func(self.config[params_init_key])
+        else:
+            params_init_func = _find_params_init_func()
+        # end if
+
+        self.model.apply(params_init_func)
+
+        # Setup self.optim
+        if train:
+            self.optim = _setup_pred_adam(self.model, self.config["adam_optimizer"])
+            self.model.train(True)
+
+        self.model.train(train)
+
+        # Setup self._noise_func
+        params_noise_key = "params_noise"
+
+        if params_noise_key in self.config:
+            self._noise_func = _find_params_noise_func(self.config[params_noise_key])
+        else:
+            self._noise_func = _find_params_noise_func()
+        # end if
+
+        # Setup the self.*_size attributes
+        size, training_size = _find_model_sizes(self.model)
+        self.size = size
+        self.training_size = training_size
+
+        # Setup the self.has_* attributes
+        self.has_fairness = "fairness" in self.config
+
     def load(self):
         """Loads the model and optimizer states."""
         state_location = _join(self.model_path, self.config["state_name"])
@@ -116,3 +166,14 @@ class Modeler:
     def restore(self):
         """Restores self.model to the before prediction state by calling the restore function of self.optim."""
         self.optim.restore()
+
+    def apply_noise(self):
+        """Applies the noise function self._noise_func to self.model.
+
+        Raises:
+            ValueError: if self._noise_func is None
+        """
+        if self._noise_func is None:
+            raise ValueError("self._noise_func cannot be None")
+
+        self.model.apply(self._noise_func)

@@ -104,6 +104,14 @@ class TrainContext(_Context):
             g = None
             """Generator rollback / earlystop count."""
 
+        class NoiseModels(_DotDict):
+            """Model noising control info."""
+
+            before_each_iter = None
+            """Noise the model before each iteration."""
+            before_each_epoch = None
+            """Noise the model before each epoch."""
+
         iteration = IterationEpochBatch()
         """Iteration control info."""
         epoch = IterationEpochBatch()
@@ -116,6 +124,8 @@ class TrainContext(_Context):
         """Rollback control info."""
         es = RollbackEarlystop()
         """Earlystop control info."""
+        noise_models = NoiseModels()
+        """Model noising control info."""
 
     class Latest(_DotDict):
         """Latest batch result info."""
@@ -416,8 +426,16 @@ class TrainContext(_Context):
 
         iteration_count = config["iteration_count"]
         epoch_count = config["epochs_per_iteration"]
-        max_rb = config["max_rollbacks"]
-        max_es = config["max_early_stops"]
+        max_rbs = config["max_rollbacks"]
+        max_ess = config["max_early_stops"]
+
+        if "noise_models" in config:
+            noise_iter = config["noise_models"]["before_each_iter"]
+            noise_epoch = config["noise_models"]["before_each_epoch"]
+        else:
+            noise_iter = False
+            noise_epoch = False
+        # end if
 
         self.loops.iteration.count = iteration_count
         self.loops.iteration.index = 0
@@ -427,12 +445,14 @@ class TrainContext(_Context):
         self.loops.train.index = 0
         self.loops.valid.count = self.data.valid.batch_count
         self.loops.valid.index = 0
-        self.loops.rb.max = max_rb
+        self.loops.rb.max = max_rbs
         self.loops.rb.d = 0
         self.loops.rb.g = 0
-        self.loops.es.max = max_es
+        self.loops.es.max = max_ess
         self.loops.es.d = 0
         self.loops.es.g = 0
+        self.loops.noise_models.before_each_iter = noise_iter
+        self.loops.noise_models.before_each_epoch = noise_epoch
 
     def setup_stats(self):
         """Sets up the statistics.

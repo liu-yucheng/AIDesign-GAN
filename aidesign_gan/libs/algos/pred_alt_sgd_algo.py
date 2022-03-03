@@ -268,7 +268,7 @@ class PredAltSGDAlgo(_Algo):
             self._save_best_g(context, results)
             r.save_disc_losses()
             r.save_gen_losses()
-            r.save_gen_imgs()
+            r.save_gen_images()
             r.save_tvg_fig()
             r.logln("--")
             r.flushlogs()
@@ -295,9 +295,9 @@ class PredAltSGDAlgo(_Algo):
         r.logln(info)
         r.log_pred_factor()
         r.logln("-")
-        r.save_train_imgs()
-        r.save_valid_imgs()
-        r.save_imgs_before_train()
+        r.save_train_images()
+        r.save_valid_images()
+        r.save_images_before_train()
 
         c.loops.iteration.index = 0
 

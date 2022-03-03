@@ -55,7 +55,7 @@ class TrainResults(_Results):
         """
         super().__init__(path, logs, debug_level)
 
-        self._gen_imgs_path = _join(self._path, "Generated-Images")
+        self._gen_images_path = _join(self._path, "Generated-Images")
         """Generated images path."""
 
     def ensure_folders(self, debug_level=0):
@@ -66,8 +66,8 @@ class TrainResults(_Results):
         """
         super().ensure_folders(debug_level)
 
-        _makedirs(self._gen_imgs_path, exist_ok=True)
-        self.logln(f"Ensured folder: {self._gen_imgs_path}", debug_level)
+        _makedirs(self._gen_images_path, exist_ok=True)
+        self.logln(f"Ensured folder: {self._gen_images_path}", debug_level)
 
     def log_data(self, context=None, debug_level=0):
         """Logs the dataset info.
@@ -619,7 +619,7 @@ class TrainResults(_Results):
 
         self.logln(info, debug_level)
 
-    def save_train_imgs(self, context=None, debug_level=0):
+    def save_train_images(self, context=None, debug_level=0):
         """Saves the first batch of the training images.
 
         Args:
@@ -643,12 +643,17 @@ class TrainResults(_Results):
         _plt_axis("off")
         _plt_title("Training Images")
         _plt_imshow(grid)
-        _plt_savefig(location, dpi=160)
+
+        needs_log = self.find_needs_log(debug_level)
+
+        if needs_log:
+            _plt_savefig(location, dpi=160)
+
         _plt_close(figure)
 
         self.logln("Saved training images", debug_level)
 
-    def save_valid_imgs(self, context=None, debug_level=0):
+    def save_valid_images(self, context=None, debug_level=0):
         """Saves the first batch of the validation images.
 
         Args:
@@ -672,12 +677,16 @@ class TrainResults(_Results):
         _plt_axis("off")
         _plt_title("Validation Images")
         _plt_imshow(grid)
-        _plt_savefig(location, dpi=160)
+        needs_log = self.find_needs_log(debug_level)
+
+        if needs_log:
+            _plt_savefig(location, dpi=160)
+
         _plt_close(figure)
 
         self.logln("Saved validation images", debug_level)
 
-    def save_imgs_before_train(self, context=None, debug_level=0):
+    def save_images_before_train(self, context=None, debug_level=0):
         """Saves a batch of the generated images grid before any training.
 
         Args:
@@ -699,17 +708,21 @@ class TrainResults(_Results):
             f"{now.microsecond:06}"
         file_name = f"Before-Training-{timestamp}.jpg"
 
-        location = _join(self._gen_imgs_path, file_name)
+        location = _join(self._gen_images_path, file_name)
         figure = _plt_figure(figsize=(8, 8))
         _plt_axis("off")
         _plt_title(f"Generated Images Before Any Training")
         _plt_imshow(grid)
-        _plt_savefig(location, dpi=120)
+        needs_log = self.find_needs_log(debug_level)
+
+        if needs_log:
+            _plt_savefig(location, dpi=120)
+
         _plt_close(figure)
 
         self.logln("Saved images before training", debug_level)
 
-    def save_gen_imgs(self, context=None, debug_level=0):
+    def save_gen_images(self, context=None, debug_level=0):
         """Saves a batch of the generated images.
 
         Args:
@@ -730,12 +743,16 @@ class TrainResults(_Results):
         timestamp = f"Time-{now.year:04}{now.month:02}{now.day:02}-{now.hour:02}{now.minute:02}{now.second:02}-"\
             f"{now.microsecond:06}"
         file_name = f"Iter-{c.loops.iteration.index + 1}-Epoch-{c.loops.epoch.index + 1}-{timestamp}.jpg"
-        location = _join(self._gen_imgs_path, file_name)
+        location = _join(self._gen_images_path, file_name)
         figure = _plt_figure(figsize=(8, 8))
         _plt_axis("off")
         _plt_title(f"Iter {c.loops.iteration.index + 1} Epoch {c.loops.epoch.index + 1} Generated Images")
         _plt_imshow(grid)
-        _plt_savefig(location, dpi=120)
+        needs_log = self.find_needs_log(debug_level)
+
+        if needs_log:
+            _plt_savefig(location, dpi=120)
+
         _plt_close(figure)
 
         self.logln("Saved generated images", debug_level)
@@ -785,7 +802,11 @@ class TrainResults(_Results):
         labels.append("Training Collapse")
         _plt_legend(handles=handles, labels=labels, bbox_to_anchor=(1.125, 0.5), loc="center", fontsize="small")
 
-        _plt_savefig(location, dpi=160)
+        needs_log = self.find_needs_log(debug_level)
+
+        if needs_log:
+            _plt_savefig(location, dpi=160)
+
         _plt_close(figure)
 
         self.logln("Saved D losses plot", debug_level)
@@ -835,7 +856,11 @@ class TrainResults(_Results):
         labels.append("Training Collapse")
         _plt_legend(handles=handles, labels=labels, bbox_to_anchor=(1.125, 0.5), loc="center", fontsize="small")
 
-        _plt_savefig(location, dpi=160)
+        needs_log = self.find_needs_log(debug_level)
+
+        if needs_log:
+            _plt_savefig(location, dpi=160)
+
         _plt_close(figure)
 
         self.logln("Saved G losses plot", debug_level)
@@ -891,7 +916,11 @@ class TrainResults(_Results):
         sp3.set_title("Generated Images")
         sp3.imshow(ggrid)
         sp_figure.tight_layout()
-        _plt_savefig(location, dpi=240)
+        needs_log = self.find_needs_log(debug_level)
+
+        if needs_log:
+            _plt_savefig(location, dpi=240)
+
         _plt_close(sp_figure)
         _plt_close(figure)
 

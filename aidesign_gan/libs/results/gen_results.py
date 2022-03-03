@@ -72,7 +72,7 @@ class GenResults(_Results):
 
         self.logln(f"Generated image batch {c.batch_prog.index + 1} / {c.batch_prog.count}", debug_level)
 
-    def save_generated_images(self, context=None, debug_level=0):
+    def save_gen_images(self, context=None, debug_level=0):
         """Saves the generated images.
 
         Args:
@@ -100,7 +100,11 @@ class GenResults(_Results):
             name += f"-{timestamp}"
             name += ".jpg"
             location = _join(self._path, name)
-            _save_image(image, location, "JPEG")
+            needs_log = self.find_needs_log(debug_level)
+
+            if needs_log:
+                _save_image(image, location, "JPEG")
+        # end for
 
         count = len(c.images.to_save)
 

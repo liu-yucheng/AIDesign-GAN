@@ -7,6 +7,7 @@
 
 import os
 import typing
+from unittest import result
 
 from aidesign_gan.libs import contexts
 from aidesign_gan.libs import utils
@@ -81,6 +82,24 @@ class Results:
 
         return context
 
+    def find_needs_log(self, debug_level):
+        """Finds whether the given debug_level needs to trigger a log.
+
+        Args:
+            debug_level: a debug level
+
+        Returns:
+            result: whether the given debug_level needs to trigger a log
+        """
+        debug_level = int(debug_level)
+
+        if debug_level <= self.debug_level:
+            result = True
+        else:
+            result = False
+
+        return result
+
     def logstr(self, string="", debug_level=0):
         """Logs a string.
 
@@ -89,7 +108,9 @@ class Results:
         """
         debug_level = int(debug_level)
 
-        if debug_level <= self.debug_level:
+        needs_log = self.find_needs_log(debug_level)
+
+        if needs_log:
             _logstr(self.logs, string)
 
     def logln(self, line="", debug_level=0):
@@ -100,7 +121,9 @@ class Results:
         """
         debug_level = int(debug_level)
 
-        if debug_level <= self.debug_level:
+        needs_log = self.find_needs_log(debug_level)
+
+        if needs_log:
             _logln(self.logs, line)
 
     def flushlogs(self):

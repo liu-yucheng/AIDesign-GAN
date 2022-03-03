@@ -163,7 +163,7 @@ class GenCoord(_Coord):
         if c.grids.enabled:
             self._convert_images_to_grids()
 
-        r.save_generated_images()
+        r.save_gen_images()
 
         info = str(
             "-\n"

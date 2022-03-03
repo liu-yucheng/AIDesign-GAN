@@ -238,6 +238,9 @@ class TrainContext(_Context):
         Args:
             path: the data path
             config: the training coords config subset
+
+        Raises:
+            ValueError: if there is no enough images to use
         """
         config = config["datasets"]
 
@@ -262,23 +265,59 @@ class TrainContext(_Context):
             ])
         )
 
-        size = len(dataset)
-        subset_ratio = _nparray([train_weight, valid_weight])
-        subset_ratio = subset_ratio / subset_ratio.sum()
+        subset_ratios = _nparray([train_weight, valid_weight])
+        subset_ratios_sum = subset_ratios.sum()
+
+        if subset_ratios_sum == 0:
+            subset_ratios_sum = 1
+
+        subset_ratios = subset_ratios / subset_ratios_sum
+
         prop_to_use = percents_to_use / 100
         prop_to_use = _clamp_float(prop_to_use, 0, 1)
-        size_to_use = int(prop_to_use * size)
-        train_start, train_end = 0, int(subset_ratio[0] * size_to_use)
-        valid_start, valid_end = train_end, size_to_use
-        indices = list(range(size_to_use))
+
+        size = len(dataset)
+        indices = list(range(size))
         _shuffle(indices)
-        train_indices = indices[train_start: train_end]
-        valid_indices = indices[valid_start: valid_end]
+
+        size_to_use = int(prop_to_use * size)
+
+        if size_to_use < 2:
+            size_to_use = 2
+
+        if size_to_use > size:
+            info = str(
+                f"No enough images to use\n"
+                f"  size: {size}\n"
+                f"  size_to_use: {size_to_use}"
+            )
+
+            raise ValueError(info)
+        # end if
+
+        indices_to_use = indices[0: size_to_use]
+        # print(f"- indices_to_use\n{indices_to_use}\n-")  # Debug
+
+        train_end = int(subset_ratios[0] * size_to_use)
+
+        if train_end <= 0:
+            train_end = 1
+
+        if train_end >= size_to_use:
+            train_end = size_to_use - 1
+
+        train_start = 0
+        train_indices = indices_to_use[train_start: train_end]
         train_set = _Subset(dataset, train_indices)
+
+        valid_start, valid_end = train_end, size_to_use
+        valid_indices = indices_to_use[valid_start: valid_end]
         valid_set = _Subset(dataset, valid_indices)
+
         train_loader = _DataLoader(train_set, batch_size=batch_size, shuffle=True, num_workers=worker_count)
         train_size = len(train_set)
         train_batch_count = len(train_loader)
+
         valid_loader = _DataLoader(valid_set, batch_size=batch_size, shuffle=True, num_workers=worker_count)
         valid_size = len(valid_set)
         valid_batch_count = len(valid_loader)
@@ -286,9 +325,11 @@ class TrainContext(_Context):
         self.data.size = size
         self.data.size_to_use = size_to_use
         self.data.batch_size = batch_size
+
         self.data.train.loader = train_loader
         self.data.train.size = train_size
         self.data.train.batch_count = train_batch_count
+
         self.data.valid.loader = valid_loader
         self.data.valid.size = valid_size
         self.data.valid.batch_count = valid_batch_count

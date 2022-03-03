@@ -108,9 +108,11 @@ class TrainContext(_Context):
             """Model noising control info."""
 
             before_each_iter = None
-            """Noise the model before each iteration."""
+            """Whether to noise the model before each iteration."""
             before_each_epoch = None
-            """Noise the model before each epoch."""
+            """Whether to noise the model before each epoch."""
+            save_noised = None
+            """Whether to save the noised images."""
 
         iteration = IterationEpochBatch()
         """Iteration control info."""
@@ -429,12 +431,16 @@ class TrainContext(_Context):
         max_rbs = config["max_rollbacks"]
         max_ess = config["max_early_stops"]
 
-        if "noise_models" in config:
-            noise_iter = config["noise_models"]["before_each_iter"]
-            noise_epoch = config["noise_models"]["before_each_epoch"]
+        noise_models_key = "noise_models"
+
+        if noise_models_key in config:
+            noise_iter = config[noise_models_key]["before_each_iter"]
+            noise_epoch = config[noise_models_key]["before_each_epoch"]
+            save_noised = config[noise_models_key]["save_noised_images"]
         else:
             noise_iter = False
             noise_epoch = False
+            save_noised = False
         # end if
 
         self.loops.iteration.count = iteration_count
@@ -453,6 +459,7 @@ class TrainContext(_Context):
         self.loops.es.g = 0
         self.loops.noise_models.before_each_iter = noise_iter
         self.loops.noise_models.before_each_epoch = noise_epoch
+        self.loops.noise_models.save_noised = save_noised
 
     def setup_stats(self):
         """Sets up the statistics.

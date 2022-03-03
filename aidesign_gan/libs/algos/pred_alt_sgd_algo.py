@@ -263,18 +263,6 @@ class PredAltSGDAlgo(_Algo):
             r.log_model_action("save", "g")
         # end if
 
-    def _noise_before_epoch(self, context=None, results=None):
-        c: _TrainContext = self.find_context(context)
-        r: _TrainResults = self.find_results(results)
-
-        needs_noise = c.loops.noise_models.before_each_epoch
-
-        if needs_noise:
-            c.mods.d.apply_noise()
-            c.mods.g.apply_noise()
-            r.logln("Noised models")
-        # end if
-
     def _run_iter(self, context=None, results=None):
         c: _TrainContext = self.find_context(context)
         r: _TrainResults = self.find_results(results)
@@ -284,8 +272,6 @@ class PredAltSGDAlgo(_Algo):
         while c.loops.epoch.index < c.loops.epoch.count:
             r.log_epoch("Started", "")
             self._noise_before_epoch(context, results)
-            r.save_gen_images_after_noise()
-
             self._train_d_and_g(context, results)
             self._valid_d(context, results)
             self._save_best_d(context, results)
@@ -299,18 +285,6 @@ class PredAltSGDAlgo(_Algo):
             r.flushlogs()
             c.loops.epoch.index += 1
         # end while
-
-    def _noise_before_iter(self, context=None, results=None):
-        c: _TrainContext = self.find_context(context)
-        r: _TrainResults = self.find_results(results)
-
-        needs_noise = c.loops.noise_models.before_each_iter
-
-        if needs_noise:
-            c.mods.d.apply_noise()
-            c.mods.g.apply_noise()
-            r.logln("Noised models")
-        # end if
 
     def start(self, context=None, results=None):
         """Starts the algorithm.
@@ -341,8 +315,6 @@ class PredAltSGDAlgo(_Algo):
         while c.loops.iteration.index < c.loops.iteration.count:
             r.log_iter("Started")
             self._noise_before_iter(context, results)
-            r.save_gen_images_after_noise()
-
             self._run_iter(context, results)
             r.logln("-")
             r.flushlogs()

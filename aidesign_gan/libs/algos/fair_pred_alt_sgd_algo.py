@@ -6,6 +6,7 @@
 # Last updated by username: liu-yucheng
 
 import numpy
+import torch
 
 from aidesign_gan.libs import contexts
 from aidesign_gan.libs import results
@@ -17,6 +18,7 @@ from aidesign_gan.libs.algos import algo
 _Algo = algo.Algo
 _nparray = numpy.array
 _rand_bool = utils.rand_bool
+_Tensor = torch.Tensor
 _TrainContext = contexts.TrainContext
 _TrainResults = results.TrainResults
 
@@ -39,7 +41,7 @@ class FairPredAltSGDAlgo(_Algo):
         """Inits self."""
         super().__init__()
 
-    def _train_and_step_d(self, real_batch, fake_noises, context=None, results=None):
+    def _train_and_step_d(self, real_data, fake_noises, context=None, results=None):
         """Returns (dx, dgz, ldr, ldf, ldcr, ldcf, ld)."""
         c: _TrainContext = self.find_context(context)
         _ = results
@@ -50,7 +52,7 @@ class FairPredAltSGDAlgo(_Algo):
             c.mods.g.predict()
 
         c.mods.d.clear_grads()
-        train_results = c.mods.d.train_fair(c.mods.g.model, real_batch, c.labels.real, fake_noises, c.labels.fake)
+        train_results = c.mods.d.train_fair(c.mods.g.model, real_data, c.labels.real, fake_noises, c.labels.fake)
         c.mods.d.step_optim()
 
         if can_predict:
@@ -58,7 +60,7 @@ class FairPredAltSGDAlgo(_Algo):
 
         return train_results
 
-    def _train_and_step_g(self, real_batch, fake_noises, context=None, results=None):
+    def _train_and_step_g(self, real_data, fake_noises, context=None, results=None):
         """Returns (dx2, dgz2, lgr, lgf, lgcr, lgcf, lg)."""
         c: _TrainContext = self.find_context(context)
         _ = results
@@ -69,7 +71,7 @@ class FairPredAltSGDAlgo(_Algo):
             c.mods.d.predict()
 
         c.mods.g.clear_grads()
-        train_results = c.mods.g.train_fair(c.mods.d.model, real_batch, c.labels.fake, fake_noises, c.labels.real)
+        train_results = c.mods.g.train_fair(c.mods.d.model, real_data, c.labels.fake, fake_noises, c.labels.real)
         c.mods.g.step_optim()
 
         if can_predict:
@@ -90,23 +92,26 @@ class FairPredAltSGDAlgo(_Algo):
 
         for real_batch in c.data.train.loader:
             # Prepare training materials
-            real_batch = real_batch[0]
-            batch_size = real_batch.size()[0]
+            real_data, real_indices = real_batch
+            real_data: _Tensor
+            _ = real_indices
+
+            batch_size = real_data.size()[0]
             # print(f"[Debug] Batch size: {batch_size}")
 
-            fake_noises = c.mods.g.generate_noises(batch_size)
+            fake_noises = c.mods.g.gen_noises(batch_size)
 
             # Filp a coin to determine whether to reverse the training order
             reverse_order = _rand_bool()
 
             if reverse_order:
                 # Train G, and then train D
-                g_results = self._train_and_step_g(real_batch, fake_noises, context, results)
-                d_results = self._train_and_step_d(real_batch, fake_noises, context, results)
+                g_results = self._train_and_step_g(real_data, fake_noises, context, results)
+                d_results = self._train_and_step_d(real_data, fake_noises, context, results)
             else:  # elif not reverse order:
                 # Train D, and then train G (original order)
-                d_results = self._train_and_step_d(real_batch, fake_noises, context, results)
-                g_results = self._train_and_step_g(real_batch, fake_noises, context, results)
+                d_results = self._train_and_step_d(real_data, fake_noises, context, results)
+                g_results = self._train_and_step_g(real_data, fake_noises, context, results)
 
             # Parse the training results
             dx, dgz, ldr, ldf, ldcr, ldcf, ld = d_results
@@ -168,15 +173,14 @@ class FairPredAltSGDAlgo(_Algo):
         c.loops.valid.index = 0
 
         for real_batch in c.data.valid.loader:
-            real_batch = real_batch[0]
+            real_data, real_indices = real_batch
+            real_data: _Tensor
+            _ = real_indices
+
             fake_noises = c.noises.valid[c.loops.valid.index]
 
-            d_valid_results = c.mods.d.valid_fair(
-                c.mods.g.model, real_batch, c.labels.real, fake_noises, c.labels.fake
-            )
-            g_valid_results = c.mods.g.valid_fair(
-                c.mods.d.model, real_batch, c.labels.fake, fake_noises, c.labels.real
-            )
+            d_valid_results = c.mods.d.valid_fair(c.mods.g.model, real_data, c.labels.real, fake_noises, c.labels.fake)
+            g_valid_results = c.mods.g.valid_fair(c.mods.d.model, real_data, c.labels.fake, fake_noises, c.labels.real)
 
             dx, dgz, ldr, ldf, ldcr, ldcf, ld = d_valid_results
             dx2, dgz2, lgr, lgf, lgcr, lgcf, lg = g_valid_results

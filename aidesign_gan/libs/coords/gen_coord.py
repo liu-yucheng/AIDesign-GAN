@@ -150,8 +150,8 @@ class GenCoord(_Coord):
         c.batch_prog.index = 0
 
         while c.batch_prog.index < c.batch_prog.count:
-            noise_batch = c.noise_batches[c.batch_prog.index]
-            image_batch = c.g.test(noise_batch)
+            noises_batch = c.noises_batches[c.batch_prog.index]
+            image_batch = c.g.test(noises_batch)
             c.images.to_save.append(image_batch)
             r.log_batch()
             c.batch_prog.index += 1

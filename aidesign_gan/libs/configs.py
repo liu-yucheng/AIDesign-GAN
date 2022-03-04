@@ -264,8 +264,8 @@ class ModelersConfig(Config):
             cls._verify_float(bn, "bias_mean")
             cls._verify_float_ge_0(bn, "bias_std")
 
-        if "params_noise" in from_dict:
-            noise = from_dict["params_noise"]
+        if "params_noising" in from_dict:
+            noise = from_dict["params_noising"]
 
             conv = noise["conv"]
             cls._verify_float(conv, "delta_weight_mean")

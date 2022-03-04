@@ -24,7 +24,7 @@
                 "bias_std": 0.0002
             }
         },
-        "params_noise": {
+        "params_noising": {
             "conv": {
                 "delta_weight_mean": 0,
                 "delta_weight_std": 0.0002
@@ -70,7 +70,7 @@
                 "bias_std": 0.0002
             }
         },
-        "params_noise": {
+        "params_noising": {
             "conv": {
                 "delta_weight_mean": 0,
                 "delta_weight_std": 0.0002

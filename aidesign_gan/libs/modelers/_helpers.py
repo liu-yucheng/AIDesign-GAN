@@ -257,14 +257,14 @@ def find_params_init_func(config=None):
     return result_func
 
 
-def find_params_noise_func(config=None):
-    """Finds the parameters noise function with the given args.
+def find_params_noising_func(config=None):
+    """Finds the parameters noising function with the given args.
 
     Args:
-        config: a params_noise config or None
+        config: a params_noising config or None
 
     Returns:
-        result_func: the resulting parameters noise function
+        result_func: the resulting parameters noising function
     """
     cdw_mean = float(0)
     cdw_std = 0.0002

@@ -17,7 +17,7 @@ _Adam = optim.Adam
 _Callable = typing.Callable
 _find_model_sizes = _helpers.find_model_sizes
 _find_params_init_func = _helpers.find_params_init_func
-_find_params_noise_func = _helpers.find_params_noise_func
+_find_params_noising_func = _helpers.find_params_noising_func
 _join = ospath.join
 _load_model = _helpers.load_model
 _load_optim = _helpers.load_optim
@@ -108,12 +108,12 @@ class Modeler:
         self.model.train(train)
 
         # Setup self._noise_func
-        params_noise_key = "params_noise"
+        params_noising_key = "params_noising"
 
-        if params_noise_key in self.config:
-            self._noise_func = _find_params_noise_func(self.config[params_noise_key])
+        if params_noising_key in self.config:
+            self._noise_func = _find_params_noising_func(self.config[params_noising_key])
         else:
-            self._noise_func = _find_params_noise_func()
+            self._noise_func = _find_params_noising_func()
         # end if
 
         # Setup the self.*_size attributes

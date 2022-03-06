@@ -775,7 +775,7 @@ class TrainResults(_Results):
 
         _plt_close(figure)
 
-        self.logln("Saved generated images", debug_level)
+        self.logln("Saved generated images after training", debug_level)
 
     def save_gen_images_after_noising(self, context=None, debug_level=0):
         """Saves a batch of the generated images after noising the models.

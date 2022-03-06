@@ -443,6 +443,10 @@ class TrainContext(_Context):
             save_noised = False
         # end if
 
+        # Avoid double noising
+        if noise_iter and noise_epoch:
+            noise_iter = False
+
         self.loops.iteration.count = iteration_count
         self.loops.iteration.index = 0
         self.loops.epoch.count = epoch_count

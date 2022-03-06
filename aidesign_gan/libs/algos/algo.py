@@ -129,7 +129,7 @@ class Algo:
         needs_save = needs_noise and c.loops.noise_models.save_noised
 
         if needs_save:
-            r.save_gen_images_after_noise()
+            r.save_gen_images_after_noising()
 
     def _noise_before_epoch(self, context=None, results=None):
         c: _TrainContext = self.find_context(context)
@@ -145,4 +145,4 @@ class Algo:
         needs_save = needs_noise and c.loops.noise_models.save_noised
 
         if needs_save:
-            r.save_gen_images_after_noise()
+            r.save_gen_images_after_noising()

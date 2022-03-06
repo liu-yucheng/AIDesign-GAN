@@ -775,9 +775,9 @@ class TrainResults(_Results):
 
         _plt_close(figure)
 
-        self.logln("Saved generated images", debug_level)
+        self.logln("Saved generated images after training", debug_level)
 
-    def save_gen_images_after_noise(self, context=None, debug_level=0):
+    def save_gen_images_after_noising(self, context=None, debug_level=0):
         """Saves a batch of the generated images after noising the models.
 
         Args:
@@ -815,7 +815,7 @@ class TrainResults(_Results):
 
         _plt_close(figure)
 
-        self.logln("Saved generated images after noise", debug_level)
+        self.logln("Saved generated images after noising", debug_level)
 
     def save_disc_losses(self, context=None, debug_level=0):
         """Saves the discriminator training/validation losses plot.
@@ -872,7 +872,7 @@ class TrainResults(_Results):
 
         _plt_close(figure)
 
-        self.logln("Saved D losses plot", debug_level)
+        self.logln("Saved discriminator losses plot", debug_level)
 
     def save_gen_losses(self, context=None, debug_level=0):
         """Saves the generator training/validation losses plot.
@@ -929,7 +929,7 @@ class TrainResults(_Results):
 
         _plt_close(figure)
 
-        self.logln("Saved G losses plot", debug_level)
+        self.logln("Saved generator losses plot", debug_level)
 
     def save_tvg_fig(self, context=None, debug_level=0):
         """Saves the TVG (training-validation-generated) figure.
@@ -994,4 +994,4 @@ class TrainResults(_Results):
         _plt_close(sp_figure)
         _plt_close(figure)
 
-        self.logln("Saved TVG figure", debug_level)
+        self.logln("Saved training-validation-generated figure", debug_level)

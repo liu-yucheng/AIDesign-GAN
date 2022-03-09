@@ -212,6 +212,11 @@ class CoordsConfig(Config):
             cls._verify_bool(noise, "before_each_epoch")
             cls._verify_bool(noise, "save_noised_images")
 
+        if "epoch_collapses" in train:
+            collapses = train["epoch_collapses"]
+            cls._verify_float_clamp(collapses, "max_loss", 0, 100)
+            cls._verify_float_clamp(collapses, "percents_of_batches", 0, 100)
+
         gen = result["generation"]
         cls._verify_int_nonable(gen, "manual_seed")
         cls._verify_int_ge_0(gen, "gpu_count")

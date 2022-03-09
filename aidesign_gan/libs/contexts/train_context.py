@@ -107,9 +107,9 @@ class TrainContext(_Context):
         class NoiseModels(_DotDict):
             """Model noising control info."""
 
-            before_each_iter = None
+            before_iter = None
             """Whether to noise the model before each iteration."""
-            before_each_epoch = None
+            before_epoch = None
             """Whether to noise the model before each epoch."""
             save_noised = None
             """Whether to save the noised images."""
@@ -211,8 +211,8 @@ class TrainContext(_Context):
         """Collapses batch count in the current epoch."""
         max_loss = None
         """The maximum loss allowed for the batch to pass the collapse detection."""
-        factor = None
-        """The collapse batch factor."""
+        batch_prop = None
+        """The minimum proportion of nominal batches allowed for the epoch to pass the collapse detection."""
         max_batch_count = None
         """The maximum collapsed batch count allowed for the epoch to pass the collapse detection.
 
@@ -461,14 +461,17 @@ class TrainContext(_Context):
         self.loops.es.max = max_ess
         self.loops.es.d = 0
         self.loops.es.g = 0
-        self.loops.noise_models.before_each_iter = noise_iter
-        self.loops.noise_models.before_each_epoch = noise_epoch
+        self.loops.noise_models.before_iter = noise_iter
+        self.loops.noise_models.before_epoch = noise_epoch
         self.loops.noise_models.save_noised = save_noised
 
-    def setup_stats(self):
+    def setup_stats(self, cconfig):
         """Sets up the statistics.
 
         The statistics include self.latest, self.losses, self.bests, self.rbs, self.collapses, and their attributes.
+
+        Args:
+            cconfig: a coords config
 
         Raises:
             ValueError: if self.data.size is None
@@ -503,11 +506,22 @@ class TrainContext(_Context):
         self.rbs.d = []
         self.rbs.g = []
 
+        collapses_key = "epoch_collapses"
+
+        if collapses_key in cconfig:
+            config = cconfig[collapses_key]
+            max_loss = float(config["max_loss"])
+            percents_of_batches = float(config["percents_of_batches"])
+        else:
+            max_loss = float(99)
+            percents_of_batches = float(67)
+        # end if
+
         self.collapses.epochs = []
         self.collapses.batch_count = 0
-        self.collapses.max_loss = float(99)
-        self.collapses.factor = 0.67
-        self.collapses.max_batch_count = int(self.collapses.factor * self.data.train.batch_count)
+        self.collapses.max_loss = max_loss
+        self.collapses.batch_prop = float(percents_of_batches / 100)
+        self.collapses.max_batch_count = int(self.collapses.batch_prop * self.data.train.batch_count)
 
     def setup_noises(self):
         """Sets up self.noises.

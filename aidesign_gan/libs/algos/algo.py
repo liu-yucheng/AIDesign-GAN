@@ -119,7 +119,7 @@ class Algo:
         c: _TrainContext = self.find_context(context)
         r: _TrainResults = self.find_results(results)
 
-        needs_noise = c.loops.noise_models.before_each_iter
+        needs_noise = c.loops.noise_models.before_iter
 
         if needs_noise:
             c.mods.d.apply_noise()
@@ -135,7 +135,7 @@ class Algo:
         c: _TrainContext = self.find_context(context)
         r: _TrainResults = self.find_results(results)
 
-        needs_noise = c.loops.noise_models.before_each_epoch
+        needs_noise = c.loops.noise_models.before_epoch
 
         if needs_noise:
             c.mods.d.apply_noise()

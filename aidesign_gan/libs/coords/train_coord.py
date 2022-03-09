@@ -73,46 +73,33 @@ class TrainCoord(_Coord):
         self._results.log_config_locs(self._cconfig_loc, self._mconfig_loc)
 
         self._context = _TrainContext()
+        self._context.dataset_path = self._dataset_path
+        self._context.model_path = self._model_path
+        self._context.cconfig = self._cconfig
+        self._context.mconfig = self._mconfig
+
         self._results.context = self._context
 
-        training_key = "training"
-        config = self._cconfig[training_key]
-        self._context.setup_rand(config)
+        self._context.setup_rand()
         self._results.log_rand()
 
-        config = self._cconfig[training_key]
-        self._context.setup_hw(config)
+        self._context.setup_hw()
         self._results.log_hw()
 
-        config = self._cconfig[training_key]
-        self._context.setup_data(self._dataset_path, config)
+        self._context.setup_data()
         self._results.log_data()
 
-        config = self._mconfig
-        self._context.setup_mods(self._model_path, config)
+        self._context.setup_mods()
         self._results.log_mods()
 
-        config = self._cconfig[training_key]
-        self._context.setup_mode(config)
+        self._context.setup_mode()
         self._results.log_mode()
 
-        labels_key = "labels"
-
-        if labels_key in self._cconfig[training_key]:
-            config = self._cconfig[training_key][labels_key]
-            self._context.setup_labels(config=config)
-        else:  # elif "labels" not in self.coords_config[training_key]:
-            self._context.setup_labels()
-        # end if
-
+        self._context.setup_labels()
         self._results.log_labels()
 
-        config = self._cconfig[training_key]
-        self._context.setup_loops(config)
-
-        config = self._cconfig[training_key]
-        self._context.setup_stats(config)
-
+        self._context.setup_loops()
+        self._context.setup_stats()
         self._context.setup_noises()
 
         self._context_ready = True

@@ -22,7 +22,6 @@ from aidesign_gan.libs.contexts import context
 _BCELoss = nn.BCELoss
 _BICUBIC = transforms.InterpolationMode.BICUBIC
 _CenterCrop = transforms.CenterCrop
-_clamp_float = utils.clamp_float
 _Compose = transforms.Compose
 _Context = context.Context
 _DataLoader = data.DataLoader
@@ -223,6 +222,12 @@ class TrainContext(_Context):
         """Inits self."""
         super().__init__()
 
+        self.dataset_path: _Union[str, None] = None
+        """Dataset path.
+
+        Used to replace the optional dataset_path argument in the setup methods.
+        """
+
         self.data = TrainContext.Data()
         """Data info attr dict."""
         self.mods = TrainContext.Mods()
@@ -246,17 +251,96 @@ class TrainContext(_Context):
         self.collapses = TrainContext.Collapses()
         """Training collapses info attr dict."""
 
-    def setup_data(self, path, config):
+    def find_dataset_path(self, dataset_path_arg):
+        """Finds the dataset path to use.
+
+        Ensures that there is at least 1 dataset path to use.
+        NOTE: Path usage priorities: dataset_path_arg > self.dataset_path
+
+        Args:
+            dataset_path_arg: the dataset path argument
+
+        Returns:
+            dataset_path: the dataset path to use
+
+        Raises:
+            ValueError: if both dataset_path_arg and self.dataset_path are None
+        """
+        dataset_path_arg: _Union[str, None] = dataset_path_arg
+
+        if dataset_path_arg is None and self.dataset_path is None:
+            err_info = str(
+                f"At least 1 of the following items must be non-None:\n"
+                f"  dataset_path_arg: {dataset_path_arg}\n"
+                f"  self.dataset_path: {self.dataset_path}"
+            )
+
+            raise ValueError(err_info)
+        # end if
+
+        if dataset_path_arg is not None:
+            dataset_path = dataset_path_arg
+        elif self.dataset_path is not None:
+            dataset_path = self.dataset_path
+        # end if
+
+        return dataset_path
+
+    def setup_rand(self, dataset_path=None, model_path=None, cconfig=None, mconfig=None):
+        """Sets the random seeds with the given args.
+
+        Set up seeds for numpy, random and torch. Set up self.rand and its attributes.
+
+        Args:
+            dataset_path: an optional dataset path
+            model_path: an optional model path
+            cconfig: an optional coords config
+            mconfig: an optional modelers config
+        """
+        _ = dataset_path
+        model_path = self.find_model_path(model_path)
+        cconfig = self.find_cconfig(cconfig)
+        mconfig = self.find_mconfig(mconfig)
+
+        self._setup_rand("training", model_path, cconfig, mconfig)
+
+    def setup_hw(self, dataset_path=None, model_path=None, cconfig=None, mconfig=None):
+        """Sets up the torch hardware with the given args.
+
+        Set up self.hw and its attributes.
+
+        Args:
+            dataset_path: an optional dataset path
+            model_path: an optional model path
+            cconfig: an optional coords config
+            mconfig: an optional modelers config
+        """
+        _ = dataset_path
+        model_path = self.find_model_path(model_path)
+        cconfig = self.find_cconfig(cconfig)
+        mconfig = self.find_mconfig(mconfig)
+
+        self._setup_hw("training", model_path, cconfig, mconfig)
+
+    def setup_data(self, dataset_path=None, model_path=None, cconfig=None, mconfig=None):
         """Sets up self.data and its attributes with the given args.
 
         Args:
-            path: the dataset path
-            config: the training coords config subset
+            dataset_path: an optional dataset path
+            model_path: an optional model path
+            cconfig: an optional coords config
+            mconfig: an optional modelers config
 
         Raises:
             ValueError: if there is no enough images to use
         """
-        config = config["datasets"]
+        dataset_path = self.find_dataset_path(dataset_path)
+        _ = model_path
+        cconfig = self.find_cconfig(cconfig)
+        _ = mconfig
+
+        path = dataset_path
+        config = cconfig["training"]["datasets"]
 
         image_resolution = config["image_resolution"]
         channel_count = config["image_channel_count"]
@@ -286,9 +370,7 @@ class TrainContext(_Context):
             subset_ratios_sum = 1
 
         subset_ratios = subset_ratios / subset_ratios_sum
-
         prop_to_use = percents_to_use / 100
-        prop_to_use = _clamp_float(prop_to_use, 0, 1)
 
         size = len(dataset)
         indices = list(range(size))
@@ -348,11 +430,14 @@ class TrainContext(_Context):
         self.data.valid.size = valid_size
         self.data.valid.batch_count = valid_batch_count
 
-    def setup_mods(self, model_path, config):
+    def setup_mods(self, dataset_path=None, model_path=None, cconfig=None, mconfig=None):
         """Sets up self.mods and its attributes with the given args.
 
         Args:
-            config: the modelers config
+            dataset_path: an optional dataset path
+            model_path: an optional model path
+            cconfig: an optional coords config
+            mconfig: an optional modelers config
 
         Raises:
             ValueError: if self.hw.device is None
@@ -360,30 +445,43 @@ class TrainContext(_Context):
         if self.hw.device is None:
             raise ValueError("self.hw.device cannot be None")
 
-        model_path = str(model_path)
-        d_config = config["discriminator"]
-        g_config = config["generator"]
+        _ = dataset_path
+        model_path = self.find_model_path(model_path)
+        _ = cconfig
+        mconfig = self.find_mconfig(mconfig)
+
+        disc_config = mconfig["discriminator"]
+        gen_config = mconfig["generator"]
         loss_func = _BCELoss()
 
-        d = _DiscModeler(model_path, d_config, self.hw.device, self.hw.gpu_count, loss_func)
-        g = _GenModeler(model_path, g_config, self.hw.device, self.hw.gpu_count, loss_func)
+        disc = _DiscModeler(model_path, disc_config, self.hw.device, self.hw.gpu_count, loss_func)
+        gen = _GenModeler(model_path, gen_config, self.hw.device, self.hw.gpu_count, loss_func)
 
-        self.mods.d = d
-        self.mods.g = g
+        self.mods.d = disc
+        self.mods.g = gen
 
-    def setup_mode(self, config):
+    def setup_mode(self, dataset_path=None, model_path=None, cconfig=None, mconfig=None):
         """Sets up self.mode with the given args.
 
         Args:
-            config: the training coords config subset
+            dataset_path: an optional dataset path
+            model_path: an optional model path
+            cconfig: an optional coords config
+            mconfig: an optional modelers config
 
         Raises:
-            ValueError: if self.mods.d is None; or, if the training mode is unknown (other than "new" and "resume")
+            ValueError: If self.mods.d is None, or;
+                If the training mode is unknown (other than "new" and "resume").
         """
         if self.mods.d is None:
             raise ValueError("self.mods.d cannot be None")
 
-        mode = config["mode"]
+        _ = dataset_path
+        _ = model_path
+        cconfig = self.find_cconfig(cconfig)
+        _ = mconfig
+
+        mode = cconfig["training"]["mode"]
 
         if mode == "new":
             self.mods.d.save()
@@ -397,34 +495,60 @@ class TrainContext(_Context):
 
         self.mode = mode
 
-    def setup_labels(self, config=None):
+    def setup_labels(self, dataset_path=None, model_path=None, cconfig=None, mconfig=None):
         """Sets up the labels.
 
         Args:
-            config: the coords training labels config dict
+            dataset_path: an optional dataset path
+            model_path: an optional model path
+            cconfig: an optional coords config
+            mconfig: an optional modelers config
         """
-        if config is None:
-            self.labels.real = float(1)
-            self.labels.fake = float(0)
-        else:  # elif config is not None:
-            real = _clamp_float(config["real"], 0, 1)
-            fake = _clamp_float(config["fake"], 0, 1)
+        _ = dataset_path
+        _ = model_path
+        cconfig = self.find_cconfig(cconfig)
+        _ = mconfig
 
-            self.labels.real = real
-            self.labels.fake = fake
+        train = cconfig["training"]
+
+        if "labels" in train:
+            config = train["labels"]
+        else:
+            config = None
         # end if
 
-    def setup_loops(self, config):
+        if config is None:
+            real = float(1)
+            fake = float(0)
+        else:  # elif config is not None:
+            real = config["real"]
+            fake = config["fake"]
+        # end if
+
+        self.labels.real = real
+        self.labels.fake = fake
+
+    def setup_loops(self, dataset_path=None, model_path=None, cconfig=None, mconfig=None):
         """Sets up the loop control variables.
 
         Args:
-            config: the training coords config subset
+            dataset_path: an optional dataset path
+            model_path: an optional model path
+            cconfig: an optional coords config
+            mconfig: an optional modelers config
 
         Raises:
             ValueError: if self.data.size is None
         """
         if self.data.size is None:
             raise ValueError("self.data.size cannot be None")
+
+        _ = dataset_path
+        _ = model_path
+        cconfig = self.find_cconfig(cconfig)
+        _ = mconfig
+
+        config = cconfig["training"]
 
         iteration_count = config["iteration_count"]
         epoch_count = config["epochs_per_iteration"]
@@ -465,19 +589,27 @@ class TrainContext(_Context):
         self.loops.noise_models.before_epoch = noise_epoch
         self.loops.noise_models.save_noised = save_noised
 
-    def setup_stats(self, cconfig):
+    def setup_stats(self, dataset_path=None, model_path=None, cconfig=None, mconfig=None):
         """Sets up the statistics.
 
         The statistics include self.latest, self.losses, self.bests, self.rbs, self.collapses, and their attributes.
 
         Args:
-            cconfig: a coords config
+            dataset_path: an optional dataset path
+            model_path: an optional model path
+            cconfig: an optional coords config
+            mconfig: an optional modelers config
 
         Raises:
             ValueError: if self.data.size is None
         """
         if self.data.size is None:
             raise ValueError("self.data.size cannot be None")
+
+        _ = dataset_path
+        _ = model_path
+        cconfig = self.find_cconfig(cconfig)
+        _ = mconfig
 
         self.latest.dx = None
         self.latest.ldr = None
@@ -523,7 +655,7 @@ class TrainContext(_Context):
         self.collapses.batch_prop = float(percents_of_batches / 100)
         self.collapses.max_batch_count = int(self.collapses.batch_prop * self.data.train.batch_count)
 
-    def setup_noises(self):
+    def setup_noises(self, dataset_path=None, model_path=None, cconfig=None, mconfig=None):
         """Sets up self.noises.
 
         Raises:
@@ -534,6 +666,11 @@ class TrainContext(_Context):
 
         if self.mods.d is None:
             raise ValueError("self.mods.d cannot be None")
+
+        _ = dataset_path
+        _ = model_path
+        _ = cconfig
+        _ = mconfig
 
         valid = []
 

@@ -63,9 +63,9 @@ class GenResults(_Results):
         """
         c: _GenContext = self.find_context(context)
 
-        needs_log = c.batch_prog.index == 0
-        needs_log = needs_log or (c.batch_prog.index + 1) % 15 == 0
-        needs_log = needs_log or c.batch_prog.index == c.batch_prog.count - 1
+        needs_log = c.batch_prog.index == 0 or \
+            (c.batch_prog.index + 1) % 15 == 0 or \
+            c.batch_prog.index == c.batch_prog.count - 1
 
         if not needs_log:
             return

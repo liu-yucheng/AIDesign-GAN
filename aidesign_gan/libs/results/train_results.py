@@ -271,9 +271,10 @@ class TrainResults(_Results):
         """
         c: _TrainContext = self.find_context(context)
 
-        result = c.loops.train.index == 0
-        result = result or (c.loops.train.index + 1) % 30 == 0
-        result = result or c.loops.train.index == c.data.train.batch_count - 1
+        result = c.loops.train.index == 0 or \
+            (c.loops.train.index + 1) % 30 == 0 or \
+            c.loops.train.index == c.data.train.batch_count - 1
+
         return result
 
     def _find_valid_needs_log(self, context=None):
@@ -285,9 +286,10 @@ class TrainResults(_Results):
         """
         c: _TrainContext = self.find_context(context)
 
-        result = c.loops.valid.index == 0
-        result = result or (c.loops.valid.index + 1) % 15 == 0
-        result = result or c.loops.valid.index == c.data.valid.batch_count - 1
+        result = c.loops.valid.index == 0 or \
+            (c.loops.valid.index + 1) % 15 == 0 or \
+            c.loops.valid.index == c.data.valid.batch_count - 1
+
         return result
 
     def log_batch(self, epoch_type, batch_type, context=None, debug_level=0):

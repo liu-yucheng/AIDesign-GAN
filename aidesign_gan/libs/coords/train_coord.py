@@ -97,17 +97,21 @@ class TrainCoord(_Coord):
         self._results.log_mode()
 
         labels_key = "labels"
+
         if labels_key in self._cconfig[training_key]:
             config = self._cconfig[training_key][labels_key]
             self._context.setup_labels(config=config)
         else:  # elif "labels" not in self.coords_config[training_key]:
             self._context.setup_labels()
+        # end if
+
         self._results.log_labels()
 
         config = self._cconfig[training_key]
         self._context.setup_loops(config)
 
-        self._context.setup_stats()
+        config = self._cconfig[training_key]
+        self._context.setup_stats(config)
 
         self._context.setup_noises()
 

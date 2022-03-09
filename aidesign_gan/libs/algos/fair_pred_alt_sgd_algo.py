@@ -118,11 +118,10 @@ class FairPredAltSGDAlgo(_Algo):
             dx2, dgz2, lgr, lgf, lgcr, lgcf, lg = g_results
 
             # Detect training collapse
-            collapsed = bool(ldr >= c.collapses.max_loss)
-            collapsed = collapsed or bool(ldf >= c.collapses.max_loss)
-            collapsed = collapsed or bool(lg >= c.collapses.max_loss)
+            batch_collapsed = ld >= c.collapses.max_loss or \
+                lg >= c.collapses.max_loss
 
-            if collapsed:
+            if batch_collapsed:
                 c.collapses.batch_count += 1
 
             # Update the statistics
@@ -153,7 +152,7 @@ class FairPredAltSGDAlgo(_Algo):
 
         if epoch_collapsed:
             c.collapses.epochs.append((c.loops.iteration.index, c.loops.epoch.index))
-            r.logln("Epoch training collapsed")
+            r.logln("Epoch collapsed")
 
         epoch_ld = _nparray(lds).mean()
         epoch_lg = _nparray(lgs).mean()

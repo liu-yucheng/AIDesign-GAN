@@ -25,6 +25,10 @@
             "before_each_iter": false,
             "before_each_epoch": false,
             "save_noised_images": false
+        },
+        "epoch_collapses": {
+            "max_loss": 99,
+            "percents_of_batches": 67
         }
     },
     "generation": {

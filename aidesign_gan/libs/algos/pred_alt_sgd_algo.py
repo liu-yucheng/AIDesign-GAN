@@ -119,17 +119,17 @@ class PredAltSGDAlgo(_Algo):
             # Parse the training results
             dx, ldr, dgz, ldf = d_results
             dgz2, lg = g_results
+            ld = 0.5 * (ldr + ldf)
 
             # Detect training collapse
-            collapsed = bool(ldr >= c.collapses.max_loss)
-            collapsed = collapsed or bool(ldf >= c.collapses.max_loss)
-            collapsed = collapsed or bool(lg >= c.collapses.max_loss)
+            batch_collapsed = ld >= c.collapses.max_loss or \
+                lg >= c.collapses.max_loss
 
-            if collapsed:
+            if batch_collapsed:
                 c.collapses.batch_count += 1
 
             # Update the statistics
-            ld = ldr + ldf
+
             c.latest.dx, c.latest.dgz, c.latest.ld = dx, dgz, ld
             c.latest.dgz2, c.latest.lg = dgz2, lg
             lds.append(ld)
@@ -143,7 +143,7 @@ class PredAltSGDAlgo(_Algo):
 
         if epoch_collapsed:
             c.collapses.epochs.append((c.loops.iteration.index, c.loops.epoch.index))
-            r.logln("Epoch training collapsed")
+            r.logln("Epoch collapsed")
 
         epoch_ld = _nparray(lds).mean()
         epoch_lg = _nparray(lgs).mean()

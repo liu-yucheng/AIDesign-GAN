@@ -63,14 +63,47 @@ class GenContext(_Context):
         self.batch_prog = GenContext.BatchProg()
         """Generation batch progress info."""
 
-    def setup_all(self, model_path, cconfig, mconfig):
-        """Sets up the entire context.
+    def setup_rand(self, model_path=None, cconfig=None, mconfig=None):
+        """Sets the random seeds with the given args.
+
+        Set up seeds for numpy, random and torch. Set up self.rand and its attributes.
+
+        Args:
+            model_path: an optional model path
+            cconfig: an optional coords config
+            mconfig: an optional modelers config
+        """
+        model_path = self.find_model_path(model_path)
+        cconfig = self.find_cconfig(cconfig)
+        mconfig = self.find_mconfig(mconfig)
+
+        self._setup_rand("generation", model_path, cconfig, mconfig)
+
+    def setup_hw(self, model_path=None, cconfig=None, mconfig=None):
+        """Sets up the torch hardware with the given args.
+
+        Set up self.hw and its attributes.
+
+        Args:
+            model_path: an optional model path
+            cconfig: an optional coords config
+            mconfig: an optional modelers config
+        """
+        model_path = self.find_model_path(model_path)
+        cconfig = self.find_cconfig(cconfig)
+        mconfig = self.find_mconfig(mconfig)
+
+        self._setup_hw("generation", model_path, cconfig, mconfig)
+
+    def setup_the_rest(self, model_path=None, cconfig=None, mconfig=None):
+        """Sets up the rest of the context.
 
         Sets up self.g, self.images, self.grids, and self.noises.
 
         Args:
-            cconfig: the coords config
-            mconfig: the modelers config
+            model_path: an optional model path
+            cconfig: an optional coords config
+            mconfig: an optional modelers config
 
         Raises:
             ValueError: if self.hw.device is None
@@ -78,8 +111,11 @@ class GenContext(_Context):
         if self.hw.device is None:
             raise ValueError("self.hw.device cannot be None")
 
+        model_path = self.find_model_path(model_path)
+        cconfig = self.find_cconfig(cconfig)
+        mconfig = self.find_mconfig(mconfig)
+
         # Setup self.g
-        model_path = str(model_path)
         config = mconfig["generator"]
         loss_func = _BCELoss()
         self.g = _GenModeler(model_path, config, self.hw.device, self.hw.gpu_count, loss_func, train=False)
@@ -92,7 +128,7 @@ class GenContext(_Context):
         self.images.to_save = []
 
         # Setup self.grids
-        config = config["grid_mode"]
+        config = cconfig["generation"]["grid_mode"]
         self.grids.enabled = config["enabled"]
         self.grids.size_each = config["images_per_grid"]
         self.grids.padding = config["padding"]

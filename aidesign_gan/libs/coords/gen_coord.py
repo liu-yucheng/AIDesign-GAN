@@ -70,16 +70,19 @@ class GenCoord(_Coord):
         self._results.log_config_locs(self._cconfig_loc, self._mconfig_loc)
 
         self._context = _GenContext()
-        self._results.context = self._context
-        config = self._cconfig["generation"]
+        self._context.model_path = self._model_path
+        self._context.cconfig = self._cconfig
+        self._context.mconfig = self._mconfig
 
-        self._context.setup_rand(config)
+        self._results.context = self._context
+
+        self._context.setup_rand()
         self._results.log_rand()
 
-        self._context.setup_hw(config)
+        self._context.setup_hw()
         self._results.log_hw()
 
-        self._context.setup_all(self._model_path, self._cconfig, self._mconfig)
+        self._context.setup_the_rest()
         self._results.log_g()
 
         self._context_ready = True

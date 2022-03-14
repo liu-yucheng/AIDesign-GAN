@@ -41,10 +41,8 @@ usage = fr"""
 Usage: {brief_usage}
 Help: gan help
 
-"""
+""".strip()
 """Usage."""
-
-usage = usage.strip()
 
 # Nominal info strings
 
@@ -53,10 +51,8 @@ info = fr"""
 AIDesign-GAN (aidesign-gan) {_version}
 {usage}
 
-"""
+""".strip()
 """Primary info to display."""
-
-info = info.strip()
 
 # End of nominal info strings
 # Error info strings
@@ -66,20 +62,16 @@ unknown_cmd_info = fr"""
 "{brief_usage}" gets an unknown command: {{}}
 {usage}
 
-"""
+""".strip()
 """Info to display when getting an unknown command."""
-
-unknown_cmd_info = unknown_cmd_info.strip()
 
 unknown_arg_info = fr"""
 
 "{brief_usage}" gets an unknown argument: {{}}
 {usage}
 
-"""
+""".strip()
 """Info to display when getting an unknown argument."""
-
-unknown_arg_info = unknown_arg_info.strip()
 
 # End of error info strings
 
@@ -139,6 +131,10 @@ def _run_command():
         from aidesign_gan.exes import gan_reset
         gan_reset.argv_copy = argv_copy
         gan_reset.run()
+    elif command == "export":
+        from aidesign_gan.exes import gan_export
+        gan_export.argv_copy = argv_copy
+        gan_export.run()
     else:
         print(unknown_cmd_info.format(command), file=_stderr)
         exit(1)

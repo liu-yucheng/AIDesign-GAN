@@ -8,7 +8,9 @@
 from aidesign_gan.libs.coords import coord
 from aidesign_gan.libs.coords import train_coord
 from aidesign_gan.libs.coords import gen_coord
+from aidesign_gan.libs.coords import export_coord
 
 Coord = coord.Coord
 TrainCoord = train_coord.TrainCoord
 GenCoord = gen_coord.GenCoord
+ExportCoord = export_coord.ExportCoord

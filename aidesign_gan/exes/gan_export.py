@@ -1,4 +1,4 @@
-""""gan generate" command executable.
+""""gan export" command executable.
 
 Child command of "gan."
 Can be launched directly.
@@ -11,6 +11,8 @@ Can be launched directly.
 
 import copy
 import datetime
+import os
+import pathlib
 import sys
 import traceback
 import typing
@@ -25,21 +27,25 @@ from aidesign_gan.libs import utils
 
 _argv = sys.argv
 _deepcopy = copy.deepcopy
+_exists = ospath.exists
+_isabs = ospath.isabs
 _join = ospath.join
 _format_exc = traceback.format_exc
-_GenCoord = coords.GenCoord
-_GenStatus = statuses.GANGenerateStatus
+_ExportCoord = coords.ExportCoord
+_ExportStatus = statuses.GANExportStatus
 _IO = typing.IO
 _logln = utils.logln
 _logstr = utils.logstr
+_makedirs = os.makedirs
 _now = datetime.datetime.now
+_Path = pathlib.Path
 _stderr = sys.stderr
 _stdout = sys.stdout
 _TimedInput = utils.TimedInput
 
 # End of aliases
 
-brief_usage = "gan generate"
+brief_usage = "gan export <path-to-export>"
 """Brief usage."""
 
 usage = fr"""
@@ -59,8 +65,9 @@ info = fr"""
 
 "{brief_usage}":
 {{}}
+Exporting to: {{}}
 -
-Please confirm the above generation session setup
+Please confirm the above exportation session setup
 Do you want to continue? [ Y (Yes) | n (no) ]: < default: Yes, timeout: {timeout} seconds >
 
 """.strip()
@@ -68,7 +75,7 @@ Do you want to continue? [ Y (Yes) | n (no) ]: < default: Yes, timeout: {timeout
 
 will_start_session_info = fr"""
 
-Will start a generation session
+Will start an exportation session
 ---- The following will be logged to: {{}} ----
 
 """.strip()
@@ -77,14 +84,15 @@ Will start a generation session
 completed_session_info = fr"""
 
 ---- The above has been logged to: {{}} ----
-Completed the generation session
+Completed the exportation session
+You can check the export at: {{}}
 
 """.strip()
 """Info to display when the session completes."""
 
 aborted_session_info = fr"""
 
-Aborted the generation session
+Aborted the exportation session
 
 """.strip()
 """Info to display when the user aborts the session."""
@@ -92,14 +100,32 @@ Aborted the generation session
 # End of nominal info strings
 # Error info strings
 
+too_few_args_info = fr"""
+
+"{brief_usage}" gets too few arguments
+Expects 1 arguments; Gets {{}} arguments
+{usage}
+
+""".strip()
+"""Info to display when getting too few arguments."""
+
 too_many_args_info = fr"""
 
 "{brief_usage}" gets too many arguments
-Expects 0 arguments; Gets {{}} arguments
+Expects 1 arguments; Gets {{}} arguments
 {usage}
 
 """.strip()
 """Info to display when getting too many arguments."""
+
+export_path_exists_info = fr"""
+
+"{brief_usage}" finds that export path already exists
+Please check the export at: {{}}
+{usage}
+
+""".strip()
+"""Info to display when the export path already exists."""
 
 none_model_info = fr"""
 
@@ -113,7 +139,8 @@ Please select a model with the "gan model ..." command
 stopped_session_info = fr"""
 
 ---- The above has been logged to: {{}} ----
-Stopped the generation session
+Stopped the exportation session
+Please check the export at: {{}}
 
 """.strip()
 """Info to display when the session stops from an exception."""
@@ -124,12 +151,15 @@ argv_copy = None
 """Consumable copy of sys.argv."""
 model_path = None
 """Model path."""
+export_path = None
+"""Export path."""
 log_loc = None
 """Log location."""
 
 
 def _start_session():
     global model_path
+    global export_path
     global log_loc
 
     start_time = _now()
@@ -139,8 +169,9 @@ def _start_session():
 
     start_info = fr"""
 
-AIDesign-GAN generation session
+AIDesign-GAN exportation session
 Model path: {model_path}
+Export path: {export_path}
 -
 
     """.strip()
@@ -148,7 +179,7 @@ Model path: {model_path}
     _logln(all_logs, start_info)
 
     try:
-        coord = _GenCoord(model_path, all_logs, debug_level=1)
+        coord = _ExportCoord(model_path, export_path, all_logs, debug_level=1)
         coord.prep()
         coord.start()
     except BaseException as base_exception:
@@ -160,7 +191,7 @@ Model path: {model_path}
 
 -
 Execution stopped after: {execution_time} (days, hours: minutes: seconds)
-End of AIDesign-GAN generation session (stopped from an exception)
+End of AIDesign-GAN exportation session (stopped from an exception)
 
         """.strip()
 
@@ -176,7 +207,7 @@ End of AIDesign-GAN generation session (stopped from an exception)
 
 -
 Execution time: {execution_time} (days, hours: minutes: seconds)
-End of AIDesign-GAN generation session
+End of AIDesign-GAN exportation session
 
     """.strip()
 
@@ -211,17 +242,37 @@ def run():
     """Runs the executable as a command."""
     global argv_copy
     global model_path
+    global export_path
     global log_loc
 
     argv_copy_length = len(argv_copy)
 
     assert argv_copy_length >= 0
 
-    if argv_copy_length == 0:
-        gen_status = _GenStatus.load_from_path(defaults.app_data_path)
-        gen_status = _GenStatus.verify(gen_status)
+    if argv_copy_length < 1:
+        print(too_few_args_info.format(argv_copy_length), file=_stderr)
+        exit(1)
+    elif argv_copy_length == 1:
+        assert argv_copy is not None
+        path_to_export = argv_copy.pop(0)
+        path_to_export = str(path_to_export)
 
-        model_path = gen_status["model_path"]
+        if not _isabs(path_to_export):
+            path_to_export = _join(".", path_to_export)
+
+        path_to_export = str(_Path(path_to_export).resolve())
+
+        if _exists(path_to_export):
+            print(export_path_exists_info.format(path_to_export), file=_stderr)
+            exit(1)
+
+        _makedirs(path_to_export, exist_ok=True)
+        export_path = path_to_export
+
+        export_status = _ExportStatus.load_from_path(defaults.app_data_path)
+        export_status = _ExportStatus.verify(export_status)
+
+        model_path = export_status["model_path"]
 
         if model_path is None:
             print(none_model_info, file=_stderr)
@@ -231,12 +282,12 @@ def run():
 
         tab_width1 = 4
         tab_width2 = 8
-        gen_lines = []
-        _append_status_to_lines(gen_status, gen_lines, tab_width1, tab_width2)
-        gen_info = "\n".join(gen_lines)
+        export_lines = []
+        _append_status_to_lines(export_status, export_lines, tab_width1, tab_width2)
+        export_info = "\n".join(export_lines)
 
         timed_input = _TimedInput()
-        print(info.format(gen_info))
+        print(info.format(export_info, export_path))
         answer = timed_input.take(timeout)
 
         if answer is None:
@@ -261,11 +312,11 @@ def run():
                 if isinstance(base_exception, SystemExit):
                     exit_code = base_exception.code
 
-                print(stopped_session_info.format(log_loc), file=_stderr)
+                print(stopped_session_info.format(log_loc, export_path), file=_stderr)
                 exit(exit_code)
             # end try
 
-            print(completed_session_info.format(log_loc))
+            print(completed_session_info.format(log_loc, export_path))
         else:  # elif answer.lower() == "no" or answer.lower() == "n" or any other answer:
             print(aborted_session_info)
         # end if

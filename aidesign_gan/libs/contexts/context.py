@@ -10,8 +10,10 @@ import random
 import torch
 import typing
 
+from aidesign_gan.libs import configs
 from aidesign_gan.libs import utils
 
+_CoordsConfig = configs.CoordsConfig
 _DotDict = utils.DotDict
 _float32 = torch.float32
 _FloatTensor = torch.FloatTensor
@@ -65,10 +67,10 @@ class Context:
         Used to replace the optional mconfig arguments in the setup methods.
         """
 
-        self.rand = Context.Rand()
-        """Random info attr dict."""
-        self.hw = Context.Hw()
-        """Hardware info attr dict."""
+        self.rand = type(self).Rand()
+        """Random."""
+        self.hw = type(self).Hw()
+        """Hardware."""
 
         # Explicitly set torch default dtype to float32 and default tensor type to FloatTensor
         _torch_set_default_dtype(_float32)
@@ -185,7 +187,7 @@ class Context:
         Set up seeds for numpy, random and torch. Set up self.rand and its attributes.
 
         Args:
-            cconfig_key: coords config subdict key [training | generation]
+            cconfig_key: coords config subdict key [training | generation | exportation]
             model_path: an optional model path
             cconfig: an optional coords config
             mconfig: an optional modelers config
@@ -195,7 +197,17 @@ class Context:
         cconfig = self.find_cconfig(cconfig)
         _ = mconfig
 
-        config = cconfig[cconfig_key]
+        use_dc_config = cconfig_key not in cconfig and \
+            cconfig_key != "training" and \
+            cconfig_key != "generation"
+
+        if use_dc_config:
+            dc_config = _CoordsConfig.load_default()
+            config = dc_config[cconfig_key]
+        else:
+            config = cconfig[cconfig_key]
+        # end if
+
         manual_seed = config["manual_seed"]
         seed_max = 2 ** 32 - 1
 
@@ -223,7 +235,7 @@ class Context:
         Set up self.hw and its attributes.
 
         Args:
-            cconfig_key: coords config subdict key [training | generation]
+            cconfig_key: coords config subdict key [training | generation | exportation]
             model_path: an optional model path
             cconfig: an optional coords config
             mconfig: an optional modelers config
@@ -233,7 +245,16 @@ class Context:
         cconfig = self.find_cconfig(cconfig)
         _ = mconfig
 
-        config = cconfig[cconfig_key]
+        use_dc_config = cconfig_key not in cconfig and \
+            cconfig_key != "training" and \
+            cconfig_key != "generation"
+
+        if use_dc_config:
+            dc_config = _CoordsConfig.load_default()
+            config = dc_config[cconfig_key]
+        else:
+            config = cconfig[cconfig_key]
+        # end if
 
         gpu_count = config["gpu_count"]
 

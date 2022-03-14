@@ -1,4 +1,4 @@
-"""Generation context."""
+"""Exportation context."""
 
 # Copyright 2022 Yucheng Liu. GNU GPL3 license.
 # GNU GPL3 license copy: https://www.gnu.org/licenses/gpl-3.0.txt
@@ -7,18 +7,22 @@
 
 from torch import nn
 
+from aidesign_gan.libs import configs
 from aidesign_gan.libs import modelers
 from aidesign_gan.libs import utils
 from aidesign_gan.libs.contexts import context
 
 _BCELoss = nn.BCELoss
 _Context = context.Context
+_CoordsConfig = configs.CoordsConfig
+_DiscConfig = configs.DiscConfig
 _DotDict = utils.DotDict
+_GenConfig = configs.GenConfig
 _GenModeler = modelers.GenModeler
 
 
-class GenContext(_Context):
-    """Generation context."""
+class ExportContext(_Context):
+    """Exportation context."""
 
     class Images(_DotDict):
         """Images."""
@@ -30,13 +34,11 @@ class GenContext(_Context):
         to_save = None
         """Images to save."""
 
-    class Grids(_DotDict):
-        """Grid mode."""
+    class Previews(_DotDict):
+        """Preview grids."""
 
-        enabled = None
-        """Whether grid mode is enabled."""
-        size_each = None
-        """Size of each grid."""
+        image_count = None
+        """Image count."""
         padding = None
         """Grid padding width."""
 
@@ -48,6 +50,16 @@ class GenContext(_Context):
         index = None
         """Current index."""
 
+    class Configs:
+        """Export configs."""
+
+        def __init__(self):
+            """Inits self with the given args."""
+            self.d = None
+            """Discriminator config."""
+            self.g = None
+            """Generator config."""
+
     def __init__(self):
         """Inits self."""
         super().__init__()
@@ -56,12 +68,14 @@ class GenContext(_Context):
         """Generator modeler instance."""
         self.images = type(self).Images()
         """Images."""
-        self.grids = type(self).Grids()
-        """Grid mode."""
+        self.previews = type(self).Previews()
+        """Preview grids."""
         self.noises_batches = None
         """Batches of noises."""
         self.batch_prog = type(self).BatchProg()
         """Generation batch progress."""
+        self.configs = type(self).Configs()
+        """Export configs."""
 
     def setup_rand(self, model_path=None, cconfig=None, mconfig=None):
         """Sets the random seeds with the given args.
@@ -77,7 +91,7 @@ class GenContext(_Context):
         cconfig = self.find_cconfig(cconfig)
         mconfig = self.find_mconfig(mconfig)
 
-        self._setup_rand("generation", model_path, cconfig, mconfig)
+        self._setup_rand("exportation", model_path, cconfig, mconfig)
 
     def setup_hw(self, model_path=None, cconfig=None, mconfig=None):
         """Sets up the torch hardware with the given args.
@@ -93,12 +107,12 @@ class GenContext(_Context):
         cconfig = self.find_cconfig(cconfig)
         mconfig = self.find_mconfig(mconfig)
 
-        self._setup_hw("generation", model_path, cconfig, mconfig)
+        self._setup_hw("exportation", model_path, cconfig, mconfig)
 
     def setup_the_rest(self, model_path=None, cconfig=None, mconfig=None):
         """Sets up the rest of the context.
 
-        Sets up self.g, self.images, self.grids, and self.noises.
+        Sets up self.g, self.images, self.previews, self.noises, and self.configs.
 
         Args:
             model_path: an optional model path
@@ -116,24 +130,31 @@ class GenContext(_Context):
         mconfig = self.find_mconfig(mconfig)
 
         # Setup self.g
-        config = mconfig["generator"]
+        gmod = mconfig["generator"]
         loss_func = _BCELoss()
-        self.g = _GenModeler(model_path, config, self.hw.device, self.hw.gpu_count, loss_func, train=False)
+        self.g = _GenModeler(model_path, gmod, self.hw.device, self.hw.gpu_count, loss_func, train=False)
         self.g.load()
 
-        # Setup self.images
-        config = cconfig["generation"]
-        self.images.count = config["image_count"]
-        self.images.per_batch = config["images_per_batch"]
+        # Setup self.images and self.grids
+
+        if "exportation" in cconfig:
+            export = cconfig["exportation"]
+        else:
+            dc_config = _CoordsConfig.load_default()
+            export = dc_config["exportation"]
+        # end if
+
+        previews = export["preview_grids"]
+
+        self.images.count = previews["images_per_grid"]
+        self.images.per_batch = export["images_per_batch"]
         self.images.to_save = []
 
-        # Setup self.grids
-        config = cconfig["generation"]["grid_mode"]
-        self.grids.enabled = config["enabled"]
-        self.grids.size_each = config["images_per_grid"]
-        self.grids.padding = config["padding"]
+        self.previews.image_count = previews["images_per_grid"]
+        self.previews.padding = previews["padding"]
 
         # Setup self.noise_batches
+
         noises_count_remain = self.images.count
         noises_batches = []
 
@@ -149,3 +170,42 @@ class GenContext(_Context):
         # Setup self.batch_prog
         self.batch_prog.count = len(self.noises_batches)
         self.batch_prog.index = 0
+
+        # Setup self.configs
+
+        dmod = mconfig["discriminator"]
+        gmod = mconfig["generator"]
+
+        dkeys = [
+            "image_resolution",
+            "image_channel_count",
+            "feature_map_size",
+            "struct_name",
+            "state_name"
+        ]
+
+        gkeys = [
+            "noise_resolution",
+            "noise_channel_count",
+            "image_resolution",
+            "image_channel_count",
+            "feature_map_size",
+            "struct_name",
+            "state_name",
+            # "preview_name"  # gmod does not have "preview_name"
+        ]
+
+        dconfig = _DiscConfig.load_default()
+        gconfig = _GenConfig.load_default()
+
+        for key in dkeys:
+            dconfig[key] = dmod[key]
+
+        for key in gkeys:
+            gconfig[key] = gmod[key]
+
+        dconfig = _DiscConfig.verify(dconfig)
+        gconfig = _GenConfig.verify(gconfig)
+
+        self.configs.d = dconfig
+        self.configs.g = gconfig

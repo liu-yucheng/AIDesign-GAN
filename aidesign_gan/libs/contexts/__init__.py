@@ -8,8 +8,10 @@
 from aidesign_gan.libs.contexts import context
 from aidesign_gan.libs.contexts import train_context
 from aidesign_gan.libs.contexts import gen_context
+from aidesign_gan.libs.contexts import export_context
 
 # Shortcuts
 Context = context.Context
 TrainContext = train_context.TrainContext
 GenContext = gen_context.GenContext
+ExportContext = export_context.ExportContext

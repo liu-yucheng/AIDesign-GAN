@@ -27,6 +27,8 @@ default_configs_path = _join(_repo_path, "aidesign_gan_default_configs")
 """Default configs path."""
 default_app_data_path = _join(default_configs_path, "app_data")
 """Default app data path."""
+default_gan_export_path = _join(default_configs_path, "gan_export")
+"""Default GAN export path."""
 default_gan_model_path = _join(default_configs_path, "gan_model")
 """Default GAN model path."""
 default_test_data_path = _join(default_configs_path, "test_data")
@@ -36,6 +38,8 @@ gan_train_status_name = "gan_train_status.json"
 """"gan train" satatus name."""
 gan_generate_status_name = "gan_generate_status.json"
 """"gan generate" status name."""
+gan_export_status_name = "gan_export_status.json"
+""""gan export <path-to-export>" status name."""
 
 format_config_name = "format_config.json"
 """Format config name."""
@@ -56,3 +60,10 @@ gen_state_name = "generator_state.pt"
 """Generator state name."""
 gen_optim_name = "generator_optim.pt"
 """Generator optimizer name."""
+
+disc_config_name = "discriminator_config.json"
+"""Discriminator config name."""
+gen_config_name = "generator_config.json"
+"""Generator config name."""
+gen_preview_name = "generator_preview.jpg"
+"""Generator preview name."""

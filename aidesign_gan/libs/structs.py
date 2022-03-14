@@ -74,7 +74,7 @@ class Struct:
         """Saves a struct from a str to a file.
 
         Args:
-            from_dict: a status dict to save
+            from_dict: a str to save
             to_file: a file location
         """
         from_str = str(from_str)
@@ -82,16 +82,17 @@ class Struct:
         _save_text(from_str, to_file)
 
     @classmethod
-    def save_to_path(cls, from_dict, path):
-        """Saves the struct from a dict to a file named cls.default_name in a path.
+    def save_to_path(cls, from_str, path):
+        """Saves the struct from a str to a file named cls.default_name in a path.
 
         Args:
-            from_dict: a dict to save
+            from_str: a str to save
             path: a path
         """
-        from_dict = dict(from_dict)
+        from_str = str(from_str)
+        path = str(path)
         loc = _join(path, cls.default_name)
-        cls.save(from_dict, loc)
+        cls.save(from_str, loc)
 
 
 class DiscStruct(Struct):

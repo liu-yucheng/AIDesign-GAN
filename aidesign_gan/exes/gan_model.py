@@ -1,4 +1,4 @@
-""""gan model" command executable.
+""""gan model ..." command executable.
 
 Child command of "gan."
 Can be launched directly.
@@ -23,6 +23,7 @@ from aidesign_gan.libs import statuses
 _argv = sys.argv
 _deepcopy = copy.deepcopy
 _exists = ospath.exists
+_ExportStatus = statuses.GANExportStatus
 _GenStatus = statuses.GANGenerateStatus
 _isabs = ospath.isabs
 _isdir = ospath.isdir
@@ -41,21 +42,18 @@ usage = fr"""
 Usage: {brief_usage}
 Help: gan help
 
-"""
+""".strip()
 """Usage."""
-
-usage = usage.strip()
 
 # Nominal info
 info = fr"""
 
 Selected the model at: {{}}
-Applied the selection to "gan train" and "gan generate"
+Applied the selection to the following commands:
+    "gan train", "gan generate", "gan export ..."
 
-"""
+""".strip()
 """Primary info to display."""
-
-info = info.strip()
 
 # End of nominal info strings
 # Error info strings
@@ -66,10 +64,8 @@ too_few_args_info = fr"""
 Expects 1 arguments; Gets {{}} arguments
 {usage}
 
-"""
+""".strip()
 """Info to display when getting too few arguments."""
-
-too_few_args_info = too_few_args_info.strip()
 
 too_many_args_info = fr"""
 
@@ -77,10 +73,8 @@ too_many_args_info = fr"""
 Expects 1 arguments; Gets {{}} arguments
 {usage}
 
-"""
+""".strip()
 """Info to display when getting too many arguments."""
-
-too_many_args_info = too_many_args_info.strip()
 
 model_does_not_exist_info = fr"""
 
@@ -88,10 +82,8 @@ model_does_not_exist_info = fr"""
 Please check if the model is present at: {{}}
 {usage}
 
-"""
+""".strip()
 """Info to display when the selected model does not exist."""
-
-model_does_not_exist_info = model_does_not_exist_info.strip()
 
 model_is_not_dir_info = fr"""
 
@@ -99,10 +91,8 @@ model_is_not_dir_info = fr"""
 Please check if the model appears as a directory at: {{}}
 {usage}
 
-"""
+""".strip()
 """Info to display when the selected model is not a directory."""
-
-model_is_not_dir_info = model_is_not_dir_info.strip()
 
 # End of error info strings
 
@@ -119,6 +109,7 @@ def run():
         print(too_few_args_info.format(argv_copy_length), file=_stderr)
         exit(1)
     elif argv_copy_length == 1:
+        assert argv_copy is not None
         path_to_model = argv_copy.pop(0)
         path_to_model = str(path_to_model)
 
@@ -137,15 +128,19 @@ def run():
 
         train_status = _TrainStatus.load_from_path(defaults.app_data_path)
         gen_status = _GenStatus.load_from_path(defaults.app_data_path)
+        export_status = _ExportStatus.load_from_path(defaults.app_data_path)
 
         train_status["model_path"] = path_to_model
         gen_status["model_path"] = path_to_model
+        export_status["model_path"] = path_to_model
 
         train_status = _TrainStatus.verify(train_status)
         gen_status = _GenStatus.verify(gen_status)
+        export_status = _ExportStatus.verify(export_status)
 
         _TrainStatus.save_to_path(train_status, defaults.app_data_path)
         _GenStatus.save_to_path(gen_status, defaults.app_data_path)
+        _ExportStatus.save_to_path(export_status, defaults.app_data_path)
 
         print(info.format(path_to_model))
         exit(0)

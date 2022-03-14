@@ -1,4 +1,4 @@
-""""gan dataset" command executable.
+""""gan dataset ..." command executable.
 
 Child command of "gan."
 Can be launched directly.
@@ -40,10 +40,8 @@ usage = fr"""
 Usage: {brief_usage}
 Help: gan help
 
-"""
+""".strip()
 """Usage."""
-
-usage = usage.strip()
 
 # Nominal info strings
 
@@ -52,10 +50,8 @@ info = fr"""
 Selected the dataset at: {{}}
 Applied the selection to "gan train"
 
-"""
+""".strip()
 """Primary info to display."""
-
-info = info.strip()
 
 # End of nominal info strings
 # Error info strings
@@ -66,10 +62,8 @@ too_few_args_info = fr"""
 Expects 1 arguments; Gets {{}} arguments
 {usage}
 
-"""
+""".strip()
 """Info to display when getting too few arguments."""
-
-too_few_args_info = too_few_args_info.strip()
 
 too_many_args_info = fr"""
 
@@ -77,10 +71,8 @@ too_many_args_info = fr"""
 Expects 1 arguments; Gets {{}} arguments
 {usage}
 
-"""
+""".strip()
 """Info to display when getting too many arguments."""
-
-too_many_args_info = too_many_args_info.strip()
 
 dataset_does_not_exist_info = fr"""
 
@@ -88,10 +80,8 @@ dataset_does_not_exist_info = fr"""
 Please check if the dataset is present at: {{}}
 {usage}
 
-"""
+""".strip()
 """Info to display when the selected dataset does not exist."""
-
-dataset_does_not_exist_info = dataset_does_not_exist_info.strip()
 
 dataset_is_not_dir_info = fr"""
 
@@ -99,10 +89,8 @@ dataset_is_not_dir_info = fr"""
 Please check if the dataset appears as a directory at: {{}}
 {usage}
 
-"""
+""".strip()
 """Info to display when the selected dataset is not a directory."""
-
-dataset_is_not_dir_info = dataset_is_not_dir_info.strip()
 
 # End of error info strings
 
@@ -119,6 +107,7 @@ def run():
         print(too_few_args_info.format(argv_copy_length), file=_stderr)
         exit(1)
     elif argv_copy_length == 1:
+        assert argv_copy is not None
         path_to_dataset = argv_copy.pop(0)
         path_to_dataset = str(path_to_dataset)
 

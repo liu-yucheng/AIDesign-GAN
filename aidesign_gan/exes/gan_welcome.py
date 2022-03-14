@@ -42,21 +42,20 @@ usage = fr"""
 Usage: {brief_usage}
 Help: gan help
 
-"""
+""".strip()
 """Usage."""
-
-usage = usage.strip()
 
 # Nominal info strings
 
 info = fr"""
 
 (-; Welcome to AIDesign-GAN {_version}! ;-)
+Made by Yucheng Liu with the hope for peace in SZ.
+AIDesign-GAN, AIDesign GAN modeling application.
+Copyright (C) 2022 Yucheng Liu. GNU GPL3 license.
 
-"""
+""".strip()
 """Primary info to display."""
-
-info = info.strip()
 
 # End of nominal info strings
 # Error info strings
@@ -67,10 +66,8 @@ too_many_args_info = fr"""
 Expects 0 arguments; Gets {{}} arguments
 {usage}
 
-"""
+""".strip()
 """Info to display when getting too many arguments."""
-
-too_many_args_info = too_many_args_info.strip()
 
 # End of error info strings
 

@@ -23,6 +23,7 @@ _argv = sys.argv
 _copytree = shutil.copytree
 _deepcopy = copy.deepcopy
 _exists = ospath.exists
+_ExportStatus = statuses.GANExportStatus
 _GenStatus = statuses.GANGenerateStatus
 _stderr = sys.stderr
 _TrainStatus = statuses.GANTrainStatus
@@ -37,10 +38,8 @@ usage = fr"""
 Usage: {brief_usage}
 Help: gan help
 
-"""
+""".strip()
 """Usage."""
-
-usage = usage.strip()
 
 # Nominal info strings
 
@@ -48,10 +47,8 @@ info = fr"""
 
 Completed resetting the app data at: {{}}
 
-"""
+""".strip()
 """Primary info to display."""
-
-info = info.strip()
 
 # End of nominal info strings
 # Error info strings
@@ -62,10 +59,8 @@ too_many_args_info = fr"""
 Expects 0 arguments; Gets {{}} arguments
 {usage}
 
-"""
+""".strip()
 """Info to display when getting too many arguments."""
-
-too_many_args_info = too_many_args_info.strip()
 
 # End of error info strings
 
@@ -86,9 +81,11 @@ def run():
 
         train_status = _TrainStatus.load_default()
         gen_status = _GenStatus.load_default()
+        export_status = _ExportStatus.load_default()
 
         _TrainStatus.save_to_path(train_status, defaults.app_data_path)
         _GenStatus.save_to_path(gen_status, defaults.app_data_path)
+        _ExportStatus.save_to_path(export_status, defaults.app_data_path)
 
         print(info.format(defaults.app_data_path))
         exit(0)

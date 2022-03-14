@@ -41,5 +41,14 @@
             "images_per_grid": 64,
             "padding": 2
         }
+    },
+    "exportation": {
+        "manual_seed": null,
+        "gpu_count": 1,
+        "images_per_batch": 32,
+        "preview_grids": {
+            "images_per_grid": 36,
+            "padding": 2
+        }
     }
 }

@@ -43,10 +43,8 @@ usage = fr"""
 Usage: {brief_usage}
 Help: gan help
 
-"""
+""".strip()
 """Usage."""
-
-usage = usage.strip()
 
 # Nominal info strings
 
@@ -54,10 +52,8 @@ info = fr"""
 
 Created a model at {{}}
 
-"""
+""".strip()
 """Primary info to display."""
-
-info = info.strip()
 
 # End of nominal info strings
 # Error info strings
@@ -68,10 +64,8 @@ too_few_args_info = fr"""
 Expects 1 arguments; Gets {{}} arguments
 {usage}
 
-"""
+""".strip()
 """Info to display when getting too few arguments."""
-
-too_few_args_info = too_few_args_info.strip()
 
 too_many_args_info = fr"""
 
@@ -79,10 +73,8 @@ too_many_args_info = fr"""
 Expects 1 arguments; Gets {{}} arguments
 {usage}
 
-"""
+""".strip()
 """Info to display when getting too many arguments."""
-
-too_many_args_info = too_many_args_info.strip()
 
 model_exists_info = fr"""
 
@@ -90,10 +82,8 @@ model_exists_info = fr"""
 Please check the model at: {{}}
 {usage}
 
-"""
+""".strip()
 """Info to display when the model to create already exists."""
-
-model_exists_info = model_exists_info.strip()
 
 model_is_not_dir_info = fr"""
 
@@ -101,10 +91,8 @@ model_is_not_dir_info = fr"""
 Please check the model at: {{}}
 {usage}
 
-"""
+""".strip()
 """Info to display when the model exists but not as a directory."""
-
-model_is_not_dir_info = model_is_not_dir_info.strip()
 
 # End of error info strings
 
@@ -121,6 +109,7 @@ def run():
         print(too_few_args_info.format(argv_copy_length), file=_stderr)
         exit(1)
     elif argv_copy_length == 1:
+        assert argv_copy is not None
         path_to_model = argv_copy.pop(0)
         path_to_model = str(path_to_model)
 

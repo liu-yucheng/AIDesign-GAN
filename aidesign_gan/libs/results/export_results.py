@@ -1,26 +1,28 @@
-"""Generation results."""
+"""Exportation results."""
 
 # Copyright 2022 Yucheng Liu. GNU GPL3 license.
 # GNU GPL3 license copy: https://www.gnu.org/licenses/gpl-3.0.txt
 # First added by username: liu-yucheng
 # Last updated by username: liu-yucheng
 
-import datetime
 from os import path as ospath
 from torchvision import utils as vutils
 
+from aidesign_gan.libs import configs
 from aidesign_gan.libs import contexts
+from aidesign_gan.libs import defaults
 from aidesign_gan.libs.results import results
 
-_GenContext = contexts.GenContext
+_DiscConfig = configs.DiscConfig
+_ExportContext = contexts.ExportContext
+_GenConfig = configs.GenConfig
 _join = ospath.join
-_now = datetime.datetime.now
 _save_image = vutils.save_image
 _Results = results.Results
 
 
-class GenResults(_Results):
-    """Generation results."""
+class ExportResults(_Results):
+    """Exportation results."""
 
     def __init__(self, path, logs, debug_level=0):
         """Inits self with the given args.
@@ -39,7 +41,7 @@ class GenResults(_Results):
             context: optional context
             debug_level: an optional debug level
         """
-        c: _GenContext = self.find_context(context)
+        c: _ExportContext = self.find_context(context)
 
         info = str(
             "- Generator modeler\n"
@@ -61,7 +63,7 @@ class GenResults(_Results):
             context: optional context
             debug_level: an optional debug level
         """
-        c: _GenContext = self.find_context(context)
+        c: _ExportContext = self.find_context(context)
 
         needs_log = c.batch_prog.index == 0 or \
             (c.batch_prog.index + 1) % 15 == 0 or \
@@ -70,47 +72,47 @@ class GenResults(_Results):
         if not needs_log:
             return
 
-        self.logln(f"Generated image batch {c.batch_prog.index + 1} / {c.batch_prog.count}", debug_level)
+        self.logln(f"Generated preview batch {c.batch_prog.index + 1} / {c.batch_prog.count}", debug_level)
 
-    def save_gen_images(self, context=None, debug_level=0):
-        """Saves the generated images.
+    def save_configs(self, context=None, debug_level=0):
+        """Saves the configs.
 
         Args:
             context: optional context
             debug_level: an optional debug level
         """
-        c: _GenContext = self.find_context(context)
+        c: _ExportContext = self.find_context(context)
 
-        for index, image in enumerate(c.images.to_save):
-            if c.grids.enabled:
-                type_name = "Grid"
-            else:
-                type_name = "Image"
-            # end if
+        dname = defaults.disc_config_name
+        gname = defaults.gen_config_name
 
-            index_name = f"{index + 1}"
-            now = _now()
+        dloc = _join(self._path, dname)
+        gloc = _join(self._path, gname)
 
-            timestamp = str(
-                f"Time-{now.year:04}{now.month:02}{now.day:02}-{now.hour:02}{now.minute:02}{now.second:02}-"
-                f"{now.microsecond:06}"
-            )
+        needs_log = self.find_needs_log(debug_level)
 
-            ext_name = "jpg"
-            name = f"{type_name}-{index_name}-{timestamp}.{ext_name}"
-            loc = _join(self._path, name)
-            needs_log = self.find_needs_log(debug_level)
+        if needs_log:
+            _DiscConfig.save(c.configs.d, dloc)
+            _GenConfig.save(c.configs.g, gloc)
 
-            if needs_log:
-                _save_image(image, loc, "JPEG")
-        # end for
+        self.logln("Saved discriminator and generator configs", debug_level)
 
-        count = len(c.images.to_save)
+    def save_previews(self, context=None, debug_level=0):
+        """Saves the preview grids.
 
-        if c.grids.enabled:
-            info = f"Generated {count} grids, each has {c.grids.size_each} images"
-        else:  # elif not c.grids.enabled:
-            info = f"Generated {count} images"
-        # end if
+        Args:
+            context: optional context
+            debug_level: an optional debug level
+        """
+        c: _ExportContext = self.find_context(context)
 
+        name = "generator_preview.jpg"
+        loc = _join(self._path, name)
+        needs_log = self.find_needs_log(debug_level)
+
+        if needs_log:
+            _save_image(c.images.to_save, loc, "JPEG")
+
+        image_count = c.previews.image_count
+        info = f"Saved the generator preview grid, which contains {image_count} images"
         self.logln(info, debug_level)

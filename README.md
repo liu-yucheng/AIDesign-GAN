@@ -56,15 +56,21 @@ dataset:
 train:
     When:   You start a training session.
     How-to: gan train
-    Notes:  You will be prompted with the command status. You need to confirm to continue. Depending on your training
-            configs, the training session might take minutes, hours, or several days.
+    Notes:
+        You will be prompted with the command status. You need to confirm to continue. Depending on your training
+        configs, the training session might take minutes, hours, or several days.
 generate:
     When:   You start a generation session.
     How-to: gan generate
-    Notes:  You will be prompted with the command status. You need to confirm to continue. Depending on your generation
-            configs, the generation session might take seconds or minutes.
+    Notes:
+        You will be prompted with the command status. You need to confirm to continue. Depending on your generation
+        configs, the generation session might take seconds or minutes.
+export:
+    When:   You want to export a selected model to a path for the use in other software products.
+    How-to: gan export <path-to-export>
+    Notes:  You can use the model export in any software product, including the proprietary ones.
 reset:
-    When:   You want to reset the app data, which contains the command statuses.
+    When:   You want to reset the app data, which includes the command statuses.
     How-to: gan reset
     Notes:  You will lose the current command statuses after the reset.
 welcome:

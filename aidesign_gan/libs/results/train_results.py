@@ -647,8 +647,8 @@ class TrainResults(_Results):
         grid = grid.cpu()
         grid = _np_transpose(grid, (1, 2, 0))
 
-        location = _join(self._path, "Training-Images.jpg")
-        figure = _plt_figure(figsize=(8, 8))
+        loc = _join(self._path, "Training-Images.jpg")
+        fig = _plt_figure(figsize=(8, 8))
         _plt_axis("off")
         _plt_title("Training Images")
         _plt_imshow(grid)
@@ -656,9 +656,9 @@ class TrainResults(_Results):
         needs_log = self.find_needs_log(debug_level)
 
         if needs_log:
-            _plt_savefig(location, dpi=160)
+            _plt_savefig(loc, dpi=160)
 
-        _plt_close(figure)
+        _plt_close(fig)
 
         self.logln("Saved training images", debug_level)
 
@@ -686,17 +686,17 @@ class TrainResults(_Results):
         grid = grid.cpu()
         grid = _np_transpose(grid, (1, 2, 0))
 
-        location = _join(self._path, "Validation-Images.jpg")
-        figure = _plt_figure(figsize=(8, 8))
+        loc = _join(self._path, "Validation-Images.jpg")
+        fig = _plt_figure(figsize=(8, 8))
         _plt_axis("off")
         _plt_title("Validation Images")
         _plt_imshow(grid)
         needs_log = self.find_needs_log(debug_level)
 
         if needs_log:
-            _plt_savefig(location, dpi=160)
+            _plt_savefig(loc, dpi=160)
 
-        _plt_close(figure)
+        _plt_close(fig)
 
         self.logln("Saved validation images", debug_level)
 
@@ -725,17 +725,17 @@ class TrainResults(_Results):
 
         file_name = f"Before-Training-{timestamp}.jpg"
 
-        location = _join(self._gen_images_path, file_name)
-        figure = _plt_figure(figsize=(8, 8))
+        loc = _join(self._gen_images_path, file_name)
+        fig = _plt_figure(figsize=(8, 8))
         _plt_axis("off")
         _plt_title(f"Generated Images Before Any Training")
         _plt_imshow(grid)
         needs_log = self.find_needs_log(debug_level)
 
         if needs_log:
-            _plt_savefig(location, dpi=120)
+            _plt_savefig(loc, dpi=120)
 
-        _plt_close(figure)
+        _plt_close(fig)
 
         self.logln("Saved images before training", debug_level)
 
@@ -765,17 +765,17 @@ class TrainResults(_Results):
         disp_iter = c.loops.iteration.index + 1
         disp_epoch = c.loops.epoch.index + 1
         file_name = f"Iter-{disp_iter}-Epoch-{disp_epoch}-Trained-{timestamp}.jpg"
-        location = _join(self._gen_images_path, file_name)
-        figure = _plt_figure(figsize=(8, 8))
+        loc = _join(self._gen_images_path, file_name)
+        fig = _plt_figure(figsize=(8, 8))
         _plt_axis("off")
         _plt_title(f"Iter {disp_iter} Epoch {disp_epoch} Generated Images After Training")
         _plt_imshow(grid)
         needs_log = self.find_needs_log(debug_level)
 
         if needs_log:
-            _plt_savefig(location, dpi=120)
+            _plt_savefig(loc, dpi=120)
 
-        _plt_close(figure)
+        _plt_close(fig)
 
         self.logln("Saved generated images after training", debug_level)
 
@@ -805,17 +805,17 @@ class TrainResults(_Results):
         disp_iter = c.loops.iteration.index + 1
         disp_epoch = c.loops.epoch.index + 1
         file_name = f"Iter-{disp_iter}-Epoch-{disp_epoch}-Noised-{timestamp}.jpg"
-        location = _join(self._gen_images_path, file_name)
-        figure = _plt_figure(figsize=(8, 8))
+        loc = _join(self._gen_images_path, file_name)
+        fig = _plt_figure(figsize=(8, 8))
         _plt_axis("off")
         _plt_title(f"Iter {disp_iter} Epoch {disp_epoch} Generated Images After Noising")
         _plt_imshow(grid)
         needs_log = self.find_needs_log(debug_level)
 
         if needs_log:
-            _plt_savefig(location, dpi=120)
+            _plt_savefig(loc, dpi=120)
 
-        _plt_close(figure)
+        _plt_close(fig)
 
         self.logln("Saved generated images after noising", debug_level)
 
@@ -836,8 +836,8 @@ class TrainResults(_Results):
         rb_x_list = [epoch_count * x[0] + x[1] + 1 + 0.5 for x in c.rbs.d]
         collapse_x_list = [epoch_count * x[0] + x[1] + 1 for x in c.collapses.epochs]
 
-        location = _join(self._path, "Discriminator-Losses.jpg")
-        figure = _plt_figure(figsize=(10, 5))
+        loc = _join(self._path, "Discriminator-Losses.jpg")
+        fig = _plt_figure(figsize=(10, 5))
         _plt_title("Discriminator Losses")
 
         _plt_plot(epoch_list, c.losses.train.d, alpha=0.8, color="b", label="Training")
@@ -870,9 +870,9 @@ class TrainResults(_Results):
         needs_log = self.find_needs_log(debug_level)
 
         if needs_log:
-            _plt_savefig(location, dpi=160)
+            _plt_savefig(loc, dpi=160)
 
-        _plt_close(figure)
+        _plt_close(fig)
 
         self.logln("Saved discriminator losses plot", debug_level)
 
@@ -893,8 +893,8 @@ class TrainResults(_Results):
         rb_x_list = [epoch_count * x[0] + x[1] + 1 + 0.5 for x in c.rbs.g]
         collapse_x_list = [epoch_count * x[0] + x[1] + 1 for x in c.collapses.epochs]
 
-        location = _join(self._path, "Generator-Losses.jpg")
-        figure = _plt_figure(figsize=(10, 5))
+        loc = _join(self._path, "Generator-Losses.jpg")
+        fig = _plt_figure(figsize=(10, 5))
         _plt_title("Generator Losses")
 
         _plt_plot(epoch_list, c.losses.train.g, alpha=0.8, color="b", label="Training")
@@ -927,9 +927,9 @@ class TrainResults(_Results):
         needs_log = self.find_needs_log(debug_level)
 
         if needs_log:
-            _plt_savefig(location, dpi=160)
+            _plt_savefig(loc, dpi=160)
 
-        _plt_close(figure)
+        _plt_close(fig)
 
         self.logln("Saved generator losses plot", debug_level)
 
@@ -974,9 +974,9 @@ class TrainResults(_Results):
         vgrid = _np_transpose(vgrid, (1, 2, 0))
         ggrid = _np_transpose(ggrid, (1, 2, 0))
 
-        location = _join(self._path, "Training-Validation-Generated.jpg")
-        figure = _plt_figure(figsize=(24, 24))
-        sp_figure, axes = _plt_subplots(1, 3)
+        loc = _join(self._path, "Training-Validation-Generated.jpg")
+        fig = _plt_figure(figsize=(24, 24))
+        sp_fig, axes = _plt_subplots(1, 3)
         sp1, sp2, sp3 = axes[0], axes[1], axes[2]
         sp1.axis("off")
         sp1.set_title("Training Images")
@@ -987,13 +987,13 @@ class TrainResults(_Results):
         sp3.axis("off")
         sp3.set_title("Generated Images")
         sp3.imshow(ggrid)
-        sp_figure.tight_layout()
+        sp_fig.tight_layout()
         needs_log = self.find_needs_log(debug_level)
 
         if needs_log:
-            _plt_savefig(location, dpi=240)
+            _plt_savefig(loc, dpi=240)
 
-        _plt_close(sp_figure)
-        _plt_close(figure)
+        _plt_close(sp_fig)
+        _plt_close(fig)
 
         self.logln("Saved training-validation-generated figure", debug_level)

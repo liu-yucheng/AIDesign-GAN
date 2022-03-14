@@ -43,10 +43,10 @@ class TrainContext(_Context):
     """Training context."""
 
     class Data(_DotDict):
-        """Data info."""
+        """Data."""
 
         class TrainValid(_DotDict):
-            """Training validation subset info."""
+            """Training validation subset."""
 
             loader = None
             """Subset data loader."""
@@ -67,7 +67,7 @@ class TrainContext(_Context):
         """Dataset validation subset info."""
 
     class Mods(_DotDict):
-        """Modelers info."""
+        """Modelers."""
 
         d: _Union[None, _DiscModeler] = None
         """Discriminator modeler instance."""
@@ -75,7 +75,7 @@ class TrainContext(_Context):
         """Generator modeler instance."""
 
     class Labels(_DotDict):
-        """Target labels info."""
+        """Target labels."""
 
         real = None
         """Real label."""
@@ -83,10 +83,10 @@ class TrainContext(_Context):
         """Fake label."""
 
     class Loops(_DotDict):
-        """Loop controls info."""
+        """Loop controls."""
 
         class IterationEpochBatch(_DotDict):
-            """Iteration epoch batch info."""
+            """Iteration epoch batch."""
 
             count = None
             """Count."""
@@ -94,7 +94,7 @@ class TrainContext(_Context):
             """Current index."""
 
         class RollbackEarlystop(_DotDict):
-            """Rollback earlystop info."""
+            """Rollback earlystop."""
 
             max = None
             """Maximum rollback / earlystop count."""
@@ -104,7 +104,7 @@ class TrainContext(_Context):
             """Generator rollback / earlystop count."""
 
         class NoiseModels(_DotDict):
-            """Model noising control info."""
+            """Model noising control."""
 
             before_iter = None
             """Whether to noise the model before each iteration."""
@@ -114,22 +114,22 @@ class TrainContext(_Context):
             """Whether to save the noised images."""
 
         iteration = IterationEpochBatch()
-        """Iteration control info."""
+        """Iteration control."""
         epoch = IterationEpochBatch()
-        """Epoch control info."""
+        """Epoch control."""
         train = IterationEpochBatch()
-        """Training batch control info."""
+        """Training batch control."""
         valid = IterationEpochBatch()
-        """Validation batch control info."""
+        """Validation batch control."""
         rb = RollbackEarlystop()
-        """Rollback control info."""
+        """Rollback control."""
         es = RollbackEarlystop()
-        """Earlystop control info."""
+        """Earlystop control."""
         noise_models = NoiseModels()
-        """Model noising control info."""
+        """Model noising control."""
 
     class Latest(_DotDict):
-        """Latest batch result info."""
+        """Latest batch result."""
 
         dx = None
         """Average D(X) while training D."""
@@ -147,7 +147,7 @@ class TrainContext(_Context):
         """L(D), the loss of D."""
 
         dx2 = None
-        """Average D(X) while training G"""
+        """Average D(X) while training G."""
         lgr = None
         """L(G, X), the loss of G on real."""
         dgz2 = None
@@ -162,10 +162,10 @@ class TrainContext(_Context):
         """L(G), the loss of G."""
 
     class Losses(_DotDict):
-        """Epoch losses info."""
+        """Epoch losses."""
 
         class Subset(_DotDict):
-            """Data subset losses info."""
+            """Data subset losses."""
 
             d = None
             """Discriminator epoch losses."""
@@ -173,12 +173,12 @@ class TrainContext(_Context):
             """Generator epoch losses."""
 
         train = Subset()
-        """Training losses info."""
+        """Training losses."""
         valid = Subset()
-        """Validation losses info."""
+        """Validation losses."""
 
     class Bests(_DotDict):
-        """Best losses info."""
+        """Best losses."""
 
         d = None
         """Discriminator best loss."""
@@ -186,7 +186,7 @@ class TrainContext(_Context):
         """Generator best loss."""
 
     class Rbs(_DotDict):
-        """Rollback epochs info."""
+        """Rollback epochs."""
 
         d = None
         """Discriminator rollback epoch number list."""
@@ -194,7 +194,7 @@ class TrainContext(_Context):
         """Generator rollback epoch number list."""
 
     class Noises(_DotDict):
-        """Fixed noises info."""
+        """Fixed noises."""
 
         valid = None
         """Validation noise batch."""
@@ -202,7 +202,7 @@ class TrainContext(_Context):
         """A reference batch."""
 
     class Collapses(_DotDict):
-        """Training collapses info."""
+        """Training collapses."""
 
         epochs = None
         """Collapses epoch number list."""
@@ -228,28 +228,28 @@ class TrainContext(_Context):
         Used to replace the optional dataset_path argument in the setup methods.
         """
 
-        self.data = TrainContext.Data()
-        """Data info attr dict."""
-        self.mods = TrainContext.Mods()
-        """Modelers info attr dict."""
+        self.data = type(self).Data()
+        """Data."""
+        self.mods = type(self).Mods()
+        """Modelers."""
         self.mode = None
-        """Training mode name."""
-        self.labels = TrainContext.Labels()
-        """Target labels info attr dict."""
-        self.loops = TrainContext.Loops()
-        """Loop controls info attr dict."""
-        self.latest = TrainContext.Latest()
-        """Latest batch result info attr dict."""
-        self.losses = TrainContext.Losses()
-        """Epoch losses info attr dict."""
-        self.bests = TrainContext.Bests()
-        """Best losses info attr dict."""
-        self.rbs = TrainContext.Rbs()
-        """Rollback epochs info attr dict."""
-        self.noises = TrainContext.Noises()
-        """Fixed noises info attr dict."""
-        self.collapses = TrainContext.Collapses()
-        """Training collapses info attr dict."""
+        """Training mode."""
+        self.labels = type(self).Labels()
+        """Target labels."""
+        self.loops = type(self).Loops()
+        """Loop controls."""
+        self.latest = type(self).Latest()
+        """Latest batch."""
+        self.losses = type(self).Losses()
+        """Epoch losses."""
+        self.bests = type(self).Bests()
+        """Best losses."""
+        self.rbs = type(self).Rbs()
+        """Rollback epochs."""
+        self.noises = type(self).Noises()
+        """Reference noises."""
+        self.collapses = type(self).Collapses()
+        """Training collapses."""
 
     def find_dataset_path(self, dataset_path_arg):
         """Finds the dataset path to use.

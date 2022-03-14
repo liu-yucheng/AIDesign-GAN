@@ -10,12 +10,14 @@ Can be launched directly.
 # Last updated by username: liu-yucheng
 
 import copy
+import pydoc
 import sys
 
 # Aliases
 
 _argv = sys.argv
 _deepcopy = copy.deepcopy
+_pager = pydoc.pager
 _stderr = sys.stderr
 
 # End of aliases
@@ -28,10 +30,8 @@ usage = fr"""
 Usage: {brief_usage}
 Help: gan help
 
-"""
+""".strip()
 """Usage."""
-
-usage = usage.strip()
 
 # Nominal info strings
 
@@ -57,25 +57,29 @@ dataset:
 train:
     When:   You start a training session.
     How-to: gan train
-    Notes:  You will be prompted with the command status. You need to confirm to continue. Depending on your training
-            configs, the training session might take minutes, hours, or several days.
+    Notes:
+        You will be prompted with the command status. You need to confirm to continue. Depending on your training
+        configs, the training session might take minutes, hours, or several days.
 generate:
     When:   You start a generation session.
     How-to: gan generate
-    Notes:  You will be prompted with the command status. You need to confirm to continue. Depending on your generation
-            configs, the generation session might take seconds or minutes.
+    Notes:
+        You will be prompted with the command status. You need to confirm to continue. Depending on your generation
+        configs, the generation session might take seconds or minutes.
+export:
+    When:   You want to export a selected model to a path for the use in other software products.
+    How-to: gan export <path-to-export>
+    Notes:  You can use the model export in any software product, including the proprietary ones.
 reset:
-    When:   You want to reset the app data, which contains the command statuses.
+    When:   You want to reset the app data, which includes the command statuses.
     How-to: gan reset
     Notes:  You will lose the current command statuses after the reset.
 welcome:
     When:   You want to display the welcome message.
     How-to: gan welcome
 
-"""
+""".strip()
 """Primary info to display."""
-
-info = info.strip()
 
 # End of nominal info strings
 # Error info strings
@@ -86,10 +90,8 @@ too_many_args_info = fr"""
 Expects 0 arguments; Gets {{}} arguments
 {usage}
 
-"""
+""".strip()
 """Info to display when getting too many arguments."""
-
-too_many_args_info = too_many_args_info.strip()
 
 # End of error info stirngs
 
@@ -105,7 +107,7 @@ def run():
     assert argv_copy_length >= 0
 
     if argv_copy_length == 0:
-        print(info)
+        _pager(info)
         exit(0)
     else:  # elif argv_copy_length > 0:
         print(too_many_args_info.format(argv_copy_length), file=_stderr)

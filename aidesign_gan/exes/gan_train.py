@@ -47,10 +47,8 @@ usage = fr"""
 Usage: {brief_usage}
 Help: gan help
 
-"""
+""".strip()
 """Usage."""
-
-usage = usage.strip()
 
 timeout = float(30)
 """Timeout in seconds."""
@@ -65,39 +63,31 @@ info = fr"""
 Please confirm the above training session setup
 Do you want to continue? [ Y (Yes) | n (no) ]: < default: Yes, timeout: {timeout} seconds >
 
-"""
+""".strip()
 """Primary info to display."""
-
-info = info.strip()
 
 will_start_session_info = fr"""
 
 Will start a training session
 ---- The following will be logged to: {{}} ----
 
-"""
+""".strip()
 """Info to display when the session starts."""
-
-will_start_session_info = will_start_session_info.strip()
 
 completed_session_info = fr"""
 
 ---- The above has been logged to: {{}} ----
 Completed the training session
 
-"""
+""".strip()
 """Info to display when the session completes."""
-
-completed_session_info = completed_session_info.strip()
 
 aborted_session_info = fr"""
 
 Aborted the training session
 
-"""
+""".strip()
 """Info to display when the user aborts the session."""
-
-aborted_session_info = aborted_session_info.strip()
 
 # End of nominal info strings
 # Error info strings
@@ -107,42 +97,34 @@ too_many_args_info = fr"""
 Expects 0 arguments; Gets {{}} arguments
 {usage}
 
-"""
+""".strip()
 """Info to display when getting too many arguments."""
-
-too_many_args_info = too_many_args_info.strip()
 
 none_dataset_info = fr"""
 
 "{brief_usage}" finds that the "dataset_path" selection is None
-Please select a dataset with the "gan dataset <path-to-dataset>" command
+Please select a dataset with the "gan dataset ..." command
 {usage}
 
-"""
+""".strip()
 """Info to display when the dataset selection is None."""
-
-none_dataset_info = none_dataset_info.strip()
 
 none_model_info = fr"""
 
 "{brief_usage}" finds that the "model_path" selection is None
-Please select a model with the "gan model <path-to-model>" command
+Please select a model with the "gan model ..." command
 {usage}
 
-"""
+""".strip()
 """Info to display when the model selection is None."""
-
-none_model_info = none_model_info.strip()
 
 stopped_session_info = fr"""
 
 ---- The above has been logged to: {{}} ----
 Stopped the training session
 
-"""
+""".strip()
 """Info to display when the session stops from an exception."""
-
-stopped_session_info = stopped_session_info.strip()
 
 # End of error info strings
 
@@ -173,9 +155,8 @@ Model path:     {model_path}
 Dataset path:   {dataset_path}
 -
 
-    """
+    """.strip()
 
-    start_info = start_info.strip()
     _logln(all_logs, start_info)
 
     try:
@@ -193,9 +174,8 @@ Dataset path:   {dataset_path}
 Execution stopped after: {execution_time} (days, hours: minutes: seconds)
 End of AIDesign-GAN training session (stopped)
 
-        """
+        """.strip()
 
-        stop_info = stop_info.strip()
         _logln(all_logs, stop_info)
         log_file.close()
         raise base_exception
@@ -210,11 +190,33 @@ End of AIDesign-GAN training session (stopped)
 Execution time: {execution_time} (days, hours: minutes: seconds)
 End of AIDesign-GAN training session
 
-    """
+    """.strip()
 
-    end_info = end_info.strip()
     _logln(all_logs, end_info)
     log_file.close()
+
+
+def _append_status_to_lines(status, lines, tab_width1, tab_width2):
+    status: dict = status
+    lines: list = lines
+    tab_width1 = int(tab_width1)
+    tab_width2 = int(tab_width2)
+
+    tab1 = " " * tab_width1
+
+    for key in status:
+        key = str(key)
+        key_len = len(key)
+
+        val = status[key]
+        val = str(val)
+
+        tab_actual_width2 = tab_width2 - key_len % tab_width2
+        tab2 = " " * tab_actual_width2
+
+        line = f"{tab1}{key}:{tab2}{val}"
+        lines.append(line)
+    # end for
 
 
 def run():
@@ -229,6 +231,8 @@ def run():
 
     if argv_copy_length == 0:
         train_status = _TrainStatus.load_from_path(defaults.app_data_path)
+        train_status = _TrainStatus.verify(train_status)
+
         dataset_path = train_status["dataset_path"]
         model_path = train_status["model_path"]
 
@@ -245,17 +249,8 @@ def run():
 
         tab_width1 = 4
         tab_width2 = 8
-        tab1 = " " * tab_width1
         train_lines = []
-        train_info = ""
-
-        for key in train_status:
-            tab2 = " " * (tab_width2 - len(key) % tab_width2)
-            val = train_status[key]
-            line = f"{tab1}{key}:{tab2}{val}"
-            train_lines.append(line)
-        # end for
-
+        _append_status_to_lines(train_status, train_lines, tab_width1, tab_width2)
         train_info = "\n".join(train_lines)
 
         timed_input = _TimedInput()

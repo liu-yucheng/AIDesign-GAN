@@ -24,6 +24,7 @@ _argv = sys.argv
 _copytree = shutil.copytree
 _deepcopy = copy.deepcopy
 _exists = ospath.exists
+_ExportStatus = statuses.GANExportStatus
 _GenStatus = statuses.GANGenerateStatus
 _stderr = sys.stderr
 _TrainStatus = statuses.GANTrainStatus
@@ -38,10 +39,8 @@ usage = fr"""
 Usage: {brief_usage}
 Help: gan help
 
-"""
+""".strip()
 """Usage."""
-
-usage = usage.strip()
 
 # Nominal info strings
 
@@ -52,11 +51,11 @@ App data is at: {{}}
 {{}}
 "gan generate" status:
 {{}}
+"gan export ..." status:
+{{}}
 
-"""
+""".strip()
 """Primary info to display."""
-
-info = info.strip()
 
 # End of nominal info strings
 # Error info strings
@@ -67,15 +66,36 @@ too_many_args_info = fr"""
 Expects 0 arguments; Gets {{}} arguments
 {usage}
 
-"""
+""".strip()
 """Info to display when getting too many arguments."""
-
-too_many_args_info = too_many_args_info.strip()
 
 # End of error info strings
 
 argv_copy = None
 """Consumable copy of sys.argv."""
+
+
+def _append_status_to_lines(status, lines, tab_width1, tab_width2):
+    status: dict = status
+    lines: list = lines
+    tab_width1 = int(tab_width1)
+    tab_width2 = int(tab_width2)
+
+    tab1 = " " * tab_width1
+
+    for key in status:
+        key = str(key)
+        key_len = len(key)
+
+        val = status[key]
+        val = str(val)
+
+        tab_actual_width2 = tab_width2 - key_len % tab_width2
+        tab2 = " " * tab_actual_width2
+
+        line = f"{tab1}{key}:{tab2}{val}"
+        lines.append(line)
+    # end for
 
 
 def run():
@@ -89,37 +109,27 @@ def run():
         if not _exists(defaults.app_data_path):
             _copytree(defaults.default_app_data_path, defaults.app_data_path, dirs_exist_ok=True)
 
-        app_data_info = defaults.app_data_path
-        train_info = ""
-        gen_info = ""
-
         train_status = _TrainStatus.load_from_path(defaults.app_data_path)
         gen_status = _GenStatus.load_from_path(defaults.app_data_path)
+        export_status = _ExportStatus.load_from_path(defaults.app_data_path)
+
+        train_lines = []
+        gen_lines = []
+        export_lines = []
 
         tab_width1 = 4
         tab_width2 = 8
-        tab1 = " " * tab_width1
-        train_lines = []
-        gen_lines = []
 
-        for key in train_status:
-            tab2 = " " * (tab_width2 - len(key) % tab_width2)
-            val = train_status[key]
-            line = f"{tab1}{key}:{tab2}{val}"
-            train_lines.append(line)
-        # end for
+        _append_status_to_lines(train_status, train_lines, tab_width1, tab_width2)
+        _append_status_to_lines(gen_status, gen_lines, tab_width1, tab_width2)
+        _append_status_to_lines(export_status, export_lines, tab_width1, tab_width2)
 
-        for key in gen_status:
-            tab2 = " " * (tab_width2 - len(key) % tab_width2)
-            val = gen_status[key]
-            line = f"{tab1}{key}:{tab2}{val}"
-            gen_lines.append(line)
-        # end for
-
+        app_data_info = defaults.app_data_path
         train_info = "\n".join(train_lines)
         gen_info = "\n".join(gen_lines)
+        export_info = "\n".join(export_lines)
 
-        print(info.format(app_data_info, train_info, gen_info))
+        print(info.format(app_data_info, train_info, gen_info, export_info))
         exit(0)
     else:  # elif argv_copy_length > 0:
         print(too_many_args_info.format(argv_copy_length), file=_stderr)

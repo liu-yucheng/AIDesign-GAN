@@ -21,15 +21,16 @@ from os import path as ospath
 
 _copytree = shutil.copytree
 _create_subprocess_shell = asyncio.create_subprocess_shell
-_dump = json.dump
 _exists = ospath.exists
 _IO = typing.IO
 _isdir = ospath.isdir
 _isfile = ospath.isfile
 _join = ospath.join
+_jsondump = json.dump
+_jsonload = json.load
 _listdir = os.listdir
-_load = json.load
 _makedirs = os.makedirs
+_NoneType = type(None)
 _Path = pathlib.Path
 _PIPE = asyncio.subprocess.PIPE
 _remove = os.remove
@@ -54,12 +55,18 @@ _app_data_path = _join(_repo_path, ".aidesign_gan_app_data")
 _log_loc = _join(_test_data_path, "log.txt")
 _model_path = _join(_test_data_path, "test_model")
 _dataset_path = _join(_test_data_path, "test_dataset")
+_export_path = _join(_test_data_path, "test_export")
+
 _default_model_path = _join(_default_test_data_path, "test_model")
 _default_dataset_path = _join(_default_test_data_path, "test_dataset")
+
 _train_status_loc = _join(_app_data_path, "gan_train_status.json")
 _generate_status_loc = _join(_app_data_path, "gan_generate_status.json")
+_export_status_loc = _join(_app_data_path, "gan_export_status.json")
+
 _train_status_backup_loc = _join(_test_data_path, "gan_train_status_backup.json")
 _generate_status_backup_loc = _join(_test_data_path, "gan_generate_status_backup.json")
+_export_status_backup_loc = _join(_test_data_path, "gan_export_status.json")
 
 
 def _fix_newline_format(instr):
@@ -96,7 +103,91 @@ def _run_cmd(cmd, instr=""):
     return result
 
 
+def _load_json(from_file):
+    """Loads the data from a JSON file to an object and returns the object.
+
+    Args:
+        from_file: the JSON file location
+
+    Returns:
+        result: the object
+    """
+
+    # Part of LYC-PythonUtils
+    # Copyright 2022 Yucheng Liu. GNU GPL3 license.
+    # GNU GPL3 license copy: https://www.gnu.org/licenses/gpl-3.0.txt
+
+    from_file = str(from_file)
+
+    file = open(from_file, "r")
+    obj = _jsonload(file)
+    file.close()
+
+    if isinstance(obj, dict):
+        result = dict(obj)
+    elif isinstance(obj, list):
+        result = list(obj)
+    elif isinstance(obj, str):
+        result = str(obj)
+    elif isinstance(obj, bool):
+        result = bool(obj)
+    elif isinstance(obj, int):
+        result = int(obj)
+    elif isinstance(obj, float):
+        result = float(obj)
+    elif isinstance(obj, _NoneType):
+        result = None
+    else:
+        result = None
+    # end if
+
+    return result
+
+
+def _save_json(from_obj, to_file):
+    """Saves the data from an object to a JSON file.
+
+    Args:
+        from_obj: the object
+        to_file: the JSON file location
+    """
+
+    # Part of LYC-PythonUtils
+    # Copyright 2022 Yucheng Liu. GNU GPL3 license.
+    # GNU GPL3 license copy: https://www.gnu.org/licenses/gpl-3.0.txt
+
+    if isinstance(from_obj, dict):
+        from_obj = dict(from_obj)
+    elif isinstance(from_obj, list):
+        from_obj = list(from_obj)
+    elif isinstance(from_obj, str):
+        from_obj = str(from_obj)
+    elif isinstance(from_obj, bool):
+        from_obj = bool(from_obj)
+    elif isinstance(from_obj, int):
+        from_obj = int(from_obj)
+    elif isinstance(from_obj, float):
+        from_obj = float(from_obj)
+    elif isinstance(from_obj, _NoneType):
+        from_obj = None
+    else:
+        from_obj = None
+    # end if
+
+    to_file = str(to_file)
+
+    file = open(to_file, "w+")
+    _jsondump(from_obj, file, indent=4)
+    file.close()
+
+
 class _FuncThread(_Thread):
+    """Functional thread."""
+
+    # Part of LYC-PythonUtils
+    # Copyright 2022 Yucheng Liu. GNU GPL3 license.
+    # GNU GPL3 license copy: https://www.gnu.org/licenses/gpl-3.0.txt
+
     def __init__(self, group=None, target=None, name=None, args=(), kwargs={}, *, daemon=None):
         """Inits self with the given args.
 
@@ -223,24 +314,55 @@ class _TestCmd(_TestCase):
         self._log_cmdout_end(cmd, stream_name)
 
     def _backup_app_data(self):
-        status = _load_json(_train_status_loc)
-        _save_json(status, _train_status_backup_loc)
+        orig_locs = [
+            _train_status_loc,
+            _generate_status_loc,
+            _export_status_loc
+        ]
 
-        status = _load_json(_generate_status_loc)
-        _save_json(status, _generate_status_backup_loc)
+        backup_locs = [
+            _train_status_backup_loc,
+            _generate_status_backup_loc,
+            _export_status_backup_loc
+        ]
+
+        orig_len = len(orig_locs)
+        backup_len = len(backup_locs)
+        assert orig_len == backup_len
+
+        for idx in range(orig_len):
+            orig_loc = orig_locs[idx]
+            backup_loc = backup_locs[idx]
+            status = _load_json(orig_loc)
+            _save_json(status, backup_loc)
+        # end for
 
     def _restore_app_data(self):
-        status = _load_json(_train_status_backup_loc)
-        _save_json(status, _train_status_loc)
+        backup_locs = [
+            _train_status_backup_loc,
+            _generate_status_backup_loc,
+            _export_status_backup_loc
+        ]
 
-        if _exists(_train_status_backup_loc):
-            _remove(_train_status_backup_loc)
+        orig_locs = [
+            _train_status_loc,
+            _generate_status_loc,
+            _export_status_loc
+        ]
 
-        status = _load_json(_generate_status_backup_loc)
-        _save_json(status, _generate_status_loc)
+        backup_len = len(backup_locs)
+        orig_len = len(orig_locs)
+        assert backup_len == orig_len
 
-        if _exists(_generate_status_backup_loc):
-            _remove(_generate_status_backup_loc)
+        for idx in range(backup_len):
+            backup_loc = backup_locs[idx]
+            orig_loc = orig_locs[idx]
+            status = _load_json(backup_loc)
+            _save_json(status, orig_loc)
+
+            if _exists(backup_loc):
+                _remove(backup_loc)
+        # end for
 
 
 class _TestSimpleCmd(_TestCmd):
@@ -262,26 +384,6 @@ class _TestSimpleCmd(_TestCmd):
 
         fail_msg = "Running \"{}\" results in an unexpected exit code: {}".format(cmd, exit_code)
         self.assertTrue(exit_code == 0, fail_msg)
-
-
-def _load_json(from_loc):
-    from_loc = str(from_loc)
-
-    file = open(from_loc, "r")
-    result = _load(file)
-    file.close()
-
-    result = dict(result)
-    return result
-
-
-def _save_json(from_dict, to_loc):
-    from_dict = dict(from_dict)
-    to_loc = str(to_loc)
-
-    file = open(to_loc, "w+")
-    _dump(from_dict, file, indent=4)
-    file.close()
 
 # - End of private attributes
 # - Public attributes
@@ -460,25 +562,21 @@ class TestGANModel(_TestCmd):
         fail_msg = "Running \"{}\" results in an unexpected exit code: {}".format(cmd, exit_code)
         self.assertTrue(exit_code == 0, fail_msg)
 
-        status = _load_json(_train_status_loc)
-        key = "model_path"
-        value = status[key]
-        value = str(value)
-        path_correct = value == _model_path
-        fail_msg = "Config {} key {} has value {} but not the expected {}".format(
-            _train_status_loc, key, value, _model_path
-        )
-        self.assertTrue(path_correct, fail_msg)
+        status_locs = [
+            _train_status_loc,
+            _generate_status_loc,
+            _export_status_loc
+        ]
 
-        status = _load_json(_generate_status_loc)
-        key = "model_path"
-        value = status[key]
-        value = str(value)
-        path_correct = value == _model_path
-        fail_msg = "Config {} key {} has value {} but not the expected {}".format(
-            _generate_status_loc, key, value, _model_path
-        )
-        self.assertTrue(path_correct, fail_msg)
+        for loc in status_locs:
+            status = _load_json(loc)
+            key = "model_path"
+            val = status[key]
+            val = str(val)
+            path_correct = val == _model_path
+            fail_msg = f"Config {loc} key {key} has value {val} but not the expected {_model_path}"
+            self.assertTrue(path_correct, fail_msg)
+        # end for
 
         self._log_method_end(method_name)
 
@@ -546,10 +644,10 @@ class TestGANTrain(_TestCmd):
         _copytree(_default_dataset_path, _dataset_path)
         _copytree(_default_model_path, _model_path)
 
-        _train_status = _load_json(_train_status_loc)
-        _train_status["dataset_path"] = _dataset_path
-        _train_status["model_path"] = _model_path
-        _save_json(_train_status, _train_status_loc)
+        train_status = _load_json(_train_status_loc)
+        train_status["dataset_path"] = _dataset_path
+        train_status["model_path"] = _model_path
+        _save_json(train_status, _train_status_loc)
 
     def tearDown(self):
         """Tears down after the tests."""
@@ -734,6 +832,112 @@ class TestGANGenerate(_TestCmd):
             self.assertTrue(exists, fail_msg)
 
             loc = _join(_model_path, fname)
+            isfile = _isfile(loc)
+            fail_msg = "{} is not a file; {}".format(loc, format_incorrect_info)
+            self.assertTrue(isfile, fail_msg)
+
+        self._log_method_end(method_name)
+
+
+class TestGANExport(_TestCmd):
+    """Tests for the "gan export ..." command.
+
+    NOTE: Relies on the correctly working "gan train" command.
+    NOTE: If "gan train" works incorrectly, the testing result is undefined.
+    """
+
+    def setUp(self):
+        """Sets up before the tests."""
+        super().setUp()
+        self._backup_app_data()
+
+        _rmtree(_dataset_path, ignore_errors=True)
+        _rmtree(_model_path, ignore_errors=True)
+        _rmtree(_export_path, ignore_errors=True)
+
+        _copytree(_default_dataset_path, _dataset_path)
+        _copytree(_default_model_path, _model_path)
+
+        train_status = _load_json(_train_status_loc)
+        train_status["dataset_path"] = _dataset_path
+        train_status["model_path"] = _model_path
+        _save_json(train_status, _train_status_loc)
+
+        export_status = _load_json(_export_status_loc)
+        export_status["model_path"] = _model_path
+        _save_json(export_status, _export_status_loc)
+
+    def tearDown(self):
+        """Tears down after the tests."""
+        super().tearDown()
+        self._restore_app_data()
+
+        _rmtree(_dataset_path, ignore_errors=True)
+        _rmtree(_model_path, ignore_errors=True)
+        _rmtree(_export_path, ignore_errors=True)
+
+    def test_norm(self):
+        """Tests the normal use case."""
+        method_name = self.test_norm.__name__
+        self._log_method_start(method_name)
+
+        # Run "gan train" first
+
+        cmd = "gan train"
+        instr = "\n"
+        thread = _FuncThread(target=_run_cmd, args=[cmd, instr])
+        thread.start()
+        exit_code, out, err = thread.join(_timeout)
+        timed_out = thread.is_alive()
+
+        self._log_cmdout(cmd, "stdout", out)
+        self._log_cmdout(cmd, "stderr", err)
+
+        # Run "gan export ..." after running "gan train"
+
+        cmd = f"gan export {_export_path}"
+        instr = "\n"
+        thread = _FuncThread(target=_run_cmd, args=[cmd, instr])
+        thread.start()
+        exit_code, out, err = thread.join(_timeout)
+        timed_out = thread.is_alive()
+
+        self._log_cmdout(cmd, "stdout", out)
+        self._log_cmdout(cmd, "stderr", err)
+
+        # Test "gan export ..." results"
+
+        fail_msg = "Running \"{}\" results in a timeout".format(cmd)
+        self.assertTrue(timed_out is False, fail_msg)
+
+        fail_msg = "Running \"{}\" results in an unexpected exit code: {}".format(cmd, exit_code)
+        self.assertTrue(exit_code == 0, fail_msg)
+
+        format_incorrect_info = "Export format incorrect"
+
+        isdir = _isdir(_export_path)
+        fail_msg = "{} is not a directory; {}".format(_export_path, format_incorrect_info)
+        self.assertTrue(isdir, fail_msg)
+
+        fnames = [
+            "discriminator_config.json",
+            "discriminator_state.pt",
+            "discriminator_struct.py",
+            "format_config.json",
+            "generator_config.json",
+            "generator_preview.jpg",
+            "generator_state.pt",
+            "generator_struct.py",
+        ]
+
+        contents = _listdir(_export_path)
+
+        for fname in fnames:
+            exists = fname in contents
+            fail_msg = "{} is not in {}; {}".format(fname, _export_path, format_incorrect_info)
+            self.assertTrue(exists, fail_msg)
+
+            loc = _join(_export_path, fname)
             isfile = _isfile(loc)
             fail_msg = "{} is not a file; {}".format(loc, format_incorrect_info)
             self.assertTrue(isfile, fail_msg)

@@ -86,7 +86,8 @@ class Config:
             from_dict: a dict to save
             path: a path
         """
-        from_dict = dict(from_dict)
+        from_dict: dict = from_dict
+        path = str(path)
         loc = _join(path, cls.default_name)
         cls.save(from_dict, loc)
 
@@ -99,7 +100,7 @@ class Config:
 
         Returns:
             result: the verified dict"""
-        from_dict = dict(from_dict)
+        from_dict: dict = from_dict
         result = from_dict
         return result
 
@@ -181,9 +182,9 @@ class CoordsConfig(Config):
 
     @classmethod
     def verify(cls, from_dict):
-        result = super().verify(from_dict)
+        from_dict = super().verify(from_dict)
 
-        train = result["training"]
+        train = from_dict["training"]
         cls._verify_str(train, "mode")
         cls._verify_str(train, "algorithm")
         cls._verify_int_nonable(train, "manual_seed")
@@ -217,7 +218,7 @@ class CoordsConfig(Config):
             cls._verify_float_clamp(collapses, "max_loss", 0, 100)
             cls._verify_float_clamp(collapses, "percents_of_batches", 0, 100)
 
-        gen = result["generation"]
+        gen = from_dict["generation"]
         cls._verify_int_nonable(gen, "manual_seed")
         cls._verify_int_ge_0(gen, "gpu_count")
         cls._verify_int_ge_0(gen, "image_count")
@@ -228,6 +229,18 @@ class CoordsConfig(Config):
         cls._verify_int_ge_1(grid, "images_per_grid")
         cls._verify_int_ge_0(grid, "padding")
 
+        if "exportation" in from_dict:
+            export = from_dict["exportation"]
+            cls._verify_int_nonable(export, "manual_seed")
+            cls._verify_int_ge_0(export, "gpu_count")
+            cls._verify_int_ge_1(export, "images_per_batch")
+
+            preview = export["preview_grids"]
+            cls._verify_int_ge_1(preview, "images_per_grid")
+            cls._verify_int_ge_0(preview, "padding")
+        # end if
+
+        result = from_dict
         return result
 
 
@@ -240,7 +253,7 @@ class ModelersConfig(Config):
     """Default name."""
 
     @classmethod
-    def _verify_modeler(cls, from_dict):
+    def _verify_modeler_commons(cls, from_dict):
         cls._verify_int_ge_1(from_dict, "image_resolution")
         cls._verify_int_ge_1(from_dict, "image_channel_count")
         cls._verify_int_ge_1(from_dict, "feature_map_size")
@@ -291,14 +304,64 @@ class ModelersConfig(Config):
 
     @classmethod
     def verify(cls, from_dict):
-        result = super().verify(from_dict)
+        from_dict = super().verify(from_dict)
 
-        disc = result["discriminator"]
-        cls._verify_modeler(disc)
+        disc = from_dict["discriminator"]
+        cls._verify_modeler_commons(disc)
 
-        gen = result["generator"]
-        cls._verify_modeler(gen)
+        gen = from_dict["generator"]
+        cls._verify_int_ge_1(gen, "noise_resolution")
+        cls._verify_int_ge_1(gen, "noise_channel_count")
+        cls._verify_modeler_commons(gen)
 
+        result = from_dict
+        return result
+
+
+class DiscConfig(Config):
+    """Discriminator config."""
+
+    default_loc = _join(defaults.default_gan_export_path, defaults.disc_config_name)
+    """Default location."""
+    default_name = defaults.disc_config_name
+    """Default name."""
+
+    @classmethod
+    def verify(cls, from_dict):
+        from_dict = super().verify(from_dict)
+
+        cls._verify_int_ge_1(from_dict, "image_resolution")
+        cls._verify_int_ge_1(from_dict, "image_channel_count")
+        cls._verify_int_ge_1(from_dict, "feature_map_size")
+        cls._verify_str(from_dict, "struct_name")
+        cls._verify_str(from_dict, "state_name")
+
+        result = from_dict
+        return result
+
+
+class GenConfig(Config):
+    """Generator config."""
+
+    default_loc = _join(defaults.default_gan_export_path, defaults.gen_config_name)
+    """Default location."""
+    default_name = defaults.gen_config_name
+    """Default name."""
+
+    @classmethod
+    def verify(cls, from_dict):
+        from_dict = super().verify(from_dict)
+
+        cls._verify_int_ge_1(from_dict, "noise_resolution")
+        cls._verify_int_ge_1(from_dict, "noise_channel_count")
+        cls._verify_int_ge_1(from_dict, "image_resolution")
+        cls._verify_int_ge_1(from_dict, "image_channel_count")
+        cls._verify_int_ge_1(from_dict, "feature_map_size")
+        cls._verify_str(from_dict, "struct_name")
+        cls._verify_str(from_dict, "state_name")
+        cls._verify_str(from_dict, "preview_name")
+
+        result = from_dict
         return result
 
 
@@ -337,9 +400,10 @@ class FormatConfig(Config):
 
     @classmethod
     def verify(cls, from_dict):
-        result = super().verify(from_dict)
+        from_dict = super().verify(from_dict)
 
-        cls._verify_str(result, "aidesign_gan_version")
-        cls._verify_str(result, "aidesign_gan_repo_tag")
+        cls._verify_str(from_dict, "aidesign_gan_version")
+        cls._verify_str(from_dict, "aidesign_gan_repo_tag")
 
+        result = from_dict
         return result

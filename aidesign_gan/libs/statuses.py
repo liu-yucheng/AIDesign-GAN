@@ -83,7 +83,8 @@ class Status:
             from_dict: a dict to save
             path: a path
         """
-        from_dict = dict(from_dict)
+        from_dict: dict = from_dict
+        path = str(path)
         loc = _join(path, cls.default_name)
         cls.save(from_dict, loc)
 
@@ -96,9 +97,18 @@ class Status:
 
         Returns:
             result: the verified dict"""
-        from_dict = dict(from_dict)
+        from_dict: dict = from_dict
         result = from_dict
         return result
+
+    @classmethod
+    def _verify_str_nonable(cls, from_dict, key):
+        val = from_dict[key]
+
+        if val is not None:
+            val = str(val)
+
+        from_dict[key] = val
 
 
 class GANTrainStatus(Status):
@@ -111,17 +121,12 @@ class GANTrainStatus(Status):
 
     @classmethod
     def verify(cls, from_dict):
-        result = super().verify(from_dict)
-        dataset_path = result["dataset_path"]
+        from_dict = super().verify(from_dict)
 
-        if dataset_path is not None:
-            result["dataset_path"] = str(dataset_path)
+        cls._verify_str_nonable(from_dict, "dataset_path")
+        cls._verify_str_nonable(from_dict, "model_path")
 
-        model_path = result["model_path"]
-
-        if model_path is not None:
-            result["model_path"] = str(model_path)
-
+        result = from_dict
         return result
 
 
@@ -135,10 +140,27 @@ class GANGenerateStatus(Status):
 
     @classmethod
     def verify(cls, from_dict):
-        result = super().verify(from_dict)
-        model_path = result["model_path"]
+        from_dict = super().verify(from_dict)
 
-        if model_path is not None:
-            result["model_path"] = str(model_path)
+        cls._verify_str_nonable(from_dict, "model_path")
 
+        result = from_dict
+        return result
+
+
+class GANExportStatus(Status):
+    """Status of the "gan export <path-to-export>" command."""
+
+    default_loc = _join(defaults.default_app_data_path, defaults.gan_export_status_name)
+    """Default location."""
+    default_name = defaults.gan_export_status_name
+    """Default name."""
+
+    @classmethod
+    def verify(cls, from_dict):
+        from_dict = super().verify(from_dict)
+
+        cls._verify_str_nonable(from_dict, "model_path")
+
+        result = from_dict
         return result

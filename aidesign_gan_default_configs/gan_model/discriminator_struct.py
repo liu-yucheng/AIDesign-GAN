@@ -1,5 +1,3 @@
-# Blackbox testing purpose
-
 # D (Discriminator)
 # CNN (Convolutional Neural Network)
 # Resize convolution
@@ -26,15 +24,25 @@ _Sigmoid = nn.Sigmoid
 self.model = nn.Sequential(
     # Layer group 1. input group
     _Conv2d(ic, fm, 5, 1, 2, bias=False),
-    _Upsample(int(ir // 4), mode="bicubic", align_corners=False),
+    _Upsample(int(ir // 2), mode="bicubic", align_corners=False),
     _LeakyReLU(0.2, True),
     # 2.
     _Conv2d(fm, int(3 * fm), 3, 1, 1, bias=False),
-    _Upsample(4, mode="bilinear", align_corners=False),
+    _Upsample(int(ir // 4), mode="bilinear", align_corners=False),
     _BatchNorm2d(int(3 * fm)),
     _LeakyReLU(0.2, True),
-    # 3. output group
-    _Conv2d(int(3 * fm), 1, 3, 1, 1, bias=False),
+    # 3.
+    _Conv2d(int(3 * fm), int(5 * fm), 3, 1, 1, bias=False),
+    _Upsample(int(ir // 8), mode="bilinear", align_corners=False),
+    _BatchNorm2d(int(5 * fm)),
+    _LeakyReLU(0.2, True),
+    # 4.
+    _Conv2d(int(5 * fm), int(7 * fm), 3, 1, 1, bias=False),
+    _Upsample(4, mode="bilinear", align_corners=False),
+    _BatchNorm2d(int(7 * fm)),
+    _LeakyReLU(0.2, True),
+    # 5. output group
+    _Conv2d(int(7 * fm), 1, 3, 1, 1, bias=False),
     _Upsample(1, mode="bicubic", align_corners=False),
     _Sigmoid()
 )

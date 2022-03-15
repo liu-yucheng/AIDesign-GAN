@@ -108,8 +108,7 @@ def run():
         exit(1)
     elif argv_copy_length == 1:
         assert argv_copy is not None
-        path_to_dataset = argv_copy.pop(0)
-        path_to_dataset = str(path_to_dataset)
+        path_to_dataset = str(argv_copy.pop(0))
 
         if not _isabs(path_to_dataset):
             path_to_dataset = _join(".", path_to_dataset)

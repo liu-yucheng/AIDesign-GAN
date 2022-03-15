@@ -41,7 +41,7 @@ class GenContext(_Context):
         """Grid padding width."""
 
     class BatchProg(_DotDict):
-        """Generation batch progress."""
+        """Batch progress."""
 
         count = None
         """Count."""
@@ -61,7 +61,7 @@ class GenContext(_Context):
         self.noises_batches = None
         """Batches of noises."""
         self.batch_prog = type(self).BatchProg()
-        """Generation batch progress."""
+        """Batch progress."""
 
     def setup_rand(self, model_path=None, cconfig=None, mconfig=None):
         """Sets the random seeds with the given args.

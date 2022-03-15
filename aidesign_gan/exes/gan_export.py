@@ -148,7 +148,7 @@ Please check the export at: {{}}
 # End of error info strings
 # Session info strings
 
-_session_header_info = fr"""
+session_header_info = fr"""
 
 AIDesign-GAN exportation session
 Model path: {{}}
@@ -158,7 +158,7 @@ Export path: {{}}
 """.strip()
 """Session header info."""
 
-_session_stop_trailer_info = fr"""
+session_stop_trailer_info = fr"""
 
 -
 Execution stopped after: {{}} (days, hours: minutes: seconds)
@@ -167,7 +167,7 @@ End of AIDesign-GAN exportation session (stopped from an exception)
 """.strip()
 """Session trailer info after execution stops."""
 
-_session_comp_trailer_info = fr"""
+session_comp_trailer_info = fr"""
 
 -
 Execution time: {{}} (days, hours: minutes: seconds)
@@ -197,24 +197,25 @@ def _start_session():
     log_file: _IO = open(log_loc, "a+")
     all_logs = [_stdout, log_file]
     err_logs = [_stderr, log_file]
-    _logln(all_logs, _session_header_info.format(model_path, export_path))
+    _logln(all_logs, session_header_info.format(model_path, export_path))
 
     try:
-        coord = _ExportCoord(model_path, export_path, all_logs, debug_level=1)
+        debug_level = 1  # NOTE: Check before each release
+        coord = _ExportCoord(model_path, export_path, all_logs, debug_level)
         coord.prep()
         coord.start()
     except BaseException as base_exception:
         _logstr(err_logs, _format_exc())
         end_time = _now()
         exe_time = end_time - start_time
-        _logln(all_logs, _session_stop_trailer_info.format(exe_time))
+        _logln(all_logs, session_stop_trailer_info.format(exe_time))
         log_file.close()
         raise base_exception
     # end try
 
     end_time = _now()
     exe_time = end_time - start_time
-    _logln(all_logs, _session_comp_trailer_info.format(exe_time))
+    _logln(all_logs, session_comp_trailer_info.format(exe_time))
     log_file.close()
 
 

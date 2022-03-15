@@ -18,7 +18,6 @@ from os import path as ospath
 
 from aidesign_gan.libs import configs
 from aidesign_gan.libs import defaults
-from aidesign_gan.libs import structs
 
 # Aliases
 
@@ -110,8 +109,7 @@ def run():
         exit(1)
     elif argv_copy_length == 1:
         assert argv_copy is not None
-        path_to_model = argv_copy.pop(0)
-        path_to_model = str(path_to_model)
+        path_to_model = str(argv_copy.pop(0))
 
         if not _isabs(path_to_model):
             path_to_model = _join(".", path_to_model)

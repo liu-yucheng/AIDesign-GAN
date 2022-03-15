@@ -43,7 +43,7 @@ class ExportContext(_Context):
         """Grid padding width."""
 
     class BatchProg(_DotDict):
-        """Generation batch progress."""
+        """Batch progress."""
 
         count = None
         """Count."""
@@ -73,7 +73,7 @@ class ExportContext(_Context):
         self.noises_batches = None
         """Batches of noises."""
         self.batch_prog = type(self).BatchProg()
-        """Generation batch progress."""
+        """Batch progress."""
         self.configs = type(self).Configs()
         """Export configs."""
 

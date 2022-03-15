@@ -146,6 +146,37 @@ Please check the export at: {{}}
 """Info to display when the session stops from an exception."""
 
 # End of error info strings
+# Session info strings
+
+_session_header_info = fr"""
+
+AIDesign-GAN exportation session
+Model path: {{}}
+Export path: {{}}
+-
+
+""".strip()
+"""Session header info."""
+
+_session_stop_trailer_info = fr"""
+
+-
+Execution stopped after: {{}} (days, hours: minutes: seconds)
+End of AIDesign-GAN exportation session (stopped from an exception)
+
+""".strip()
+"""Session trailer info after execution stops."""
+
+_session_comp_trailer_info = fr"""
+
+-
+Execution time: {{}} (days, hours: minutes: seconds)
+End of AIDesign-GAN exportation session
+
+""".strip()
+"""Session trailer info after execution completes."""
+
+# End of session info strings
 
 argv_copy = None
 """Consumable copy of sys.argv."""
@@ -166,17 +197,7 @@ def _start_session():
     log_file: _IO = open(log_loc, "a+")
     all_logs = [_stdout, log_file]
     err_logs = [_stderr, log_file]
-
-    start_info = fr"""
-
-AIDesign-GAN exportation session
-Model path: {model_path}
-Export path: {export_path}
--
-
-    """.strip()
-
-    _logln(all_logs, start_info)
+    _logln(all_logs, _session_header_info.format(model_path, export_path))
 
     try:
         coord = _ExportCoord(model_path, export_path, all_logs, debug_level=1)
@@ -185,33 +206,15 @@ Export path: {export_path}
     except BaseException as base_exception:
         _logstr(err_logs, _format_exc())
         end_time = _now()
-        execution_time = end_time - start_time
-
-        stop_info = fr"""
-
--
-Execution stopped after: {execution_time} (days, hours: minutes: seconds)
-End of AIDesign-GAN exportation session (stopped from an exception)
-
-        """.strip()
-
-        _logln(all_logs, stop_info)
+        exe_time = end_time - start_time
+        _logln(all_logs, _session_stop_trailer_info.format(exe_time))
         log_file.close()
         raise base_exception
     # end try
 
     end_time = _now()
-    execution_time = end_time - start_time
-
-    end_info = fr"""
-
--
-Execution time: {execution_time} (days, hours: minutes: seconds)
-End of AIDesign-GAN exportation session
-
-    """.strip()
-
-    _logln(all_logs, end_info)
+    exe_time = end_time - start_time
+    _logln(all_logs, _session_comp_trailer_info.format(exe_time))
     log_file.close()
 
 
@@ -254,8 +257,7 @@ def run():
         exit(1)
     elif argv_copy_length == 1:
         assert argv_copy is not None
-        path_to_export = argv_copy.pop(0)
-        path_to_export = str(path_to_export)
+        path_to_export = str(argv_copy.pop(0))
 
         if not _isabs(path_to_export):
             path_to_export = _join(".", path_to_export)

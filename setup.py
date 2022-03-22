@@ -38,7 +38,7 @@ def _ensure_app_data():
 def main():
     _setup(
         name="aidesign-gan",
-        version="1.2.4",
+        version="1.2.5",
         description="AIDesign GAN Modeling Application",
         author="Yucheng Liu (From The AIDesign Team)",
         packages=_find_packages(),

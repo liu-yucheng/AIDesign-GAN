@@ -84,7 +84,7 @@ See `<this-repo>/requirements.txt`.
 
 # Testing
 
-You can run the tests by running `python <this-repo>/test_all.py`.
+You can test this application by running `python <this-repo>/test_all.py`.
 
 # References
 

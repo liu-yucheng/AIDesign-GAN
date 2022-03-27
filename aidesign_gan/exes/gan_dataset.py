@@ -23,6 +23,7 @@ from aidesign_gan.libs import statuses
 _argv = sys.argv
 _deepcopy = copy.deepcopy
 _exists = ospath.exists
+_exit = sys.exit
 _isabs = ospath.isabs
 _isdir = ospath.isdir
 _join = ospath.join
@@ -105,7 +106,7 @@ def run():
 
     if argv_copy_length < 1:
         print(too_few_args_info.format(argv_copy_length), file=_stderr)
-        exit(1)
+        _exit(1)
     elif argv_copy_length == 1:
         assert argv_copy is not None
         path_to_dataset = str(argv_copy.pop(0))
@@ -117,11 +118,11 @@ def run():
 
         if not _exists(path_to_dataset):
             print(dataset_does_not_exist_info.format(path_to_dataset), file=_stderr)
-            exit(1)
+            _exit(1)
 
         if not _isdir(path_to_dataset):
             print(dataset_is_not_dir_info.format(path_to_dataset), file=_stderr)
-            exit(1)
+            _exit(1)
 
         status = _TrainStatus.load_from_path(defaults.app_data_path)
         status["dataset_path"] = path_to_dataset
@@ -129,10 +130,10 @@ def run():
         _TrainStatus.save_to_path(status, defaults.app_data_path)
 
         print(info.format(path_to_dataset))
-        exit(0)
+        _exit(0)
     else:  # elif argv_copy_length > 1:
         print(too_many_args_info.format(argv_copy_length), file=_stderr)
-        exit(1)
+        _exit(1)
     # end if
 
 

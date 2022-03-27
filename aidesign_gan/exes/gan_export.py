@@ -30,6 +30,7 @@ _deepcopy = copy.deepcopy
 _exists = ospath.exists
 _isabs = ospath.isabs
 _join = ospath.join
+_exit = sys.exit
 _format_exc = traceback.format_exc
 _ExportCoord = coords.ExportCoord
 _ExportStatus = statuses.GANExportStatus
@@ -255,7 +256,7 @@ def run():
 
     if argv_copy_length < 1:
         print(too_few_args_info.format(argv_copy_length), file=_stderr)
-        exit(1)
+        _exit(1)
     elif argv_copy_length == 1:
         assert argv_copy is not None
         path_to_export = str(argv_copy.pop(0))
@@ -267,7 +268,7 @@ def run():
 
         if _exists(path_to_export):
             print(export_path_exists_info.format(path_to_export), file=_stderr)
-            exit(1)
+            _exit(1)
 
         _makedirs(path_to_export, exist_ok=True)
         export_path = path_to_export
@@ -279,7 +280,7 @@ def run():
 
         if model_path is None:
             print(none_model_info, file=_stderr)
-            exit(1)
+            _exit(1)
 
         model_path = str(model_path)
 
@@ -310,13 +311,13 @@ def run():
             try:
                 _start_session()
             except BaseException as base_exception:
-                exit_code = 1
-
                 if isinstance(base_exception, SystemExit):
                     exit_code = base_exception.code
+                else:
+                    exit_code = 1
 
                 print(stopped_session_info.format(log_loc, export_path), file=_stderr)
-                exit(exit_code)
+                _exit(exit_code)
             # end try
 
             print(completed_session_info.format(log_loc, export_path))
@@ -324,10 +325,10 @@ def run():
             print(aborted_session_info)
         # end if
 
-        exit(0)
+        _exit(0)
     else:  # elif argv_copy_length > 0:
         print(too_many_args_info.format(argv_copy_length), file=_stderr)
-        exit(1)
+        _exit(1)
     # end if
 
 

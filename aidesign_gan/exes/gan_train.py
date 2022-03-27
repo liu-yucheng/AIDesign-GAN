@@ -25,6 +25,7 @@ from aidesign_gan.libs import utils
 
 _argv = sys.argv
 _deepcopy = copy.deepcopy
+_exit = sys.exit
 _format_exc = traceback.format_exc
 _IO = typing.IO
 _join = ospath.join
@@ -242,11 +243,11 @@ def run():
 
         if dataset_path is None:
             print(none_dataset_info, file=_stderr)
-            exit(1)
+            _exit(1)
 
         if model_path is None:
             print(none_model_info, file=_stderr)
-            exit(1)
+            _exit(1)
 
         dataset_path = str(dataset_path)
         model_path = str(model_path)
@@ -278,13 +279,13 @@ def run():
             try:
                 _start_session()
             except BaseException as base_exception:
-                exit_code = 1
-
                 if isinstance(base_exception, SystemExit):
                     exit_code = base_exception.code
+                else:
+                    exit_code = 1
 
                 print(stopped_session_info.format(log_loc), file=_stderr)
-                exit(exit_code)
+                _exit(exit_code)
             # end try
 
             print(completed_session_info.format(log_loc))
@@ -292,10 +293,10 @@ def run():
             print(aborted_session_info)
         # end if
 
-        exit(0)
+        _exit(0)
     else:  # elif argv_copy_length > 0:
         print(too_many_args_info.format(argv_copy_length), file=_stderr)
-        exit(1)
+        _exit(1)
     # end if
 
 

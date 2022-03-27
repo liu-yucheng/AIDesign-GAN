@@ -17,6 +17,7 @@ import sys
 
 _argv = sys.argv
 _deepcopy = copy.deepcopy
+_exit = sys.exit
 _require = pkg_resources.require
 _stderr = sys.stderr
 
@@ -84,10 +85,10 @@ def run():
 
     if argv_copy_length == 0:
         print(info)
-        exit(0)
+        _exit(0)
     else:  # elif argv_copy_length > 0:
         print(too_many_args_info.format(argv_copy_length), file=_stderr)
-        exit(1)
+        _exit(1)
     # end if
 
 

@@ -23,6 +23,7 @@ from aidesign_gan.libs import statuses
 _argv = sys.argv
 _deepcopy = copy.deepcopy
 _exists = ospath.exists
+_exit = sys.exit
 _ExportStatus = statuses.GANExportStatus
 _GenStatus = statuses.GANGenerateStatus
 _isabs = ospath.isabs
@@ -107,7 +108,7 @@ def run():
 
     if argv_copy_length < 1:
         print(too_few_args_info.format(argv_copy_length), file=_stderr)
-        exit(1)
+        _exit(1)
     elif argv_copy_length == 1:
         assert argv_copy is not None
         path_to_model = str(argv_copy.pop(0))
@@ -119,11 +120,11 @@ def run():
 
         if not _exists(path_to_model):
             print(model_does_not_exist_info.format(path_to_model), file=_stderr)
-            exit(1)
+            _exit(1)
 
         if not _isdir(path_to_model):
             print(model_is_not_dir_info.format(path_to_model), file=_stderr)
-            exit(1)
+            _exit(1)
 
         train_status = _TrainStatus.load_from_path(defaults.app_data_path)
         gen_status = _GenStatus.load_from_path(defaults.app_data_path)
@@ -142,10 +143,10 @@ def run():
         _ExportStatus.save_to_path(export_status, defaults.app_data_path)
 
         print(info.format(path_to_model))
-        exit(0)
+        _exit(0)
     else:  # elif argv_copy_length > 1:
         print(too_many_args_info.format(argv_copy_length), file=_stderr)
-        exit(1)
+        _exit(1)
     # end if
 
 

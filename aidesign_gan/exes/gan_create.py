@@ -25,6 +25,7 @@ _argv = sys.argv
 _copytree = shutil.copytree
 _deepcopy = copy.deepcopy
 _exists = ospath.exists
+_exit = sys.exit
 _FormatConfig = configs.FormatConfig
 _join = ospath.join
 _isabs = ospath.isabs
@@ -106,7 +107,7 @@ def run():
 
     if argv_copy_length < 1:
         print(too_few_args_info.format(argv_copy_length), file=_stderr)
-        exit(1)
+        _exit(1)
     elif argv_copy_length == 1:
         assert argv_copy is not None
         path_to_model = str(argv_copy.pop(0))
@@ -120,12 +121,12 @@ def run():
         if model_exists and model_is_dir:
             path_to_model = str(_Path(path_to_model).resolve())
             print(model_exists_info.format(path_to_model), file=_stderr)
-            exit(1)
+            _exit(1)
 
         if model_exists and (not model_is_dir):
             path_to_model = str(_Path(path_to_model).resolve())
             print(model_is_not_dir_info.format(path_to_model), file=_stderr)
-            exit(1)
+            _exit(1)
 
         _copytree(defaults.default_gan_model_path, path_to_model, dirs_exist_ok=True)
         path_to_model = str(_Path(path_to_model).resolve())
@@ -135,10 +136,10 @@ def run():
         _FormatConfig.save_to_path(format_config, path_to_model)
 
         print(info.format(path_to_model))
-        exit(0)
+        _exit(0)
     else:  # elif argv_copy_length > 1:
         print(too_many_args_info.format(argv_copy_length), file=_stderr)
-        exit(1)
+        _exit(1)
     # end if
 
 

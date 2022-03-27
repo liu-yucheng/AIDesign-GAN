@@ -25,6 +25,8 @@ Texts.
 
 Coordinators configuration.
 
+Configuration items. Type `dict[str, typing.Union[dict, list, str, bool, int, float, None]]`.
+
 Configuration item descriptions are listed below.
 
 - `training`. Training coordinator configuration. Type `dict`.
@@ -75,17 +77,89 @@ Configuration item descriptions are listed below.
 
 Discriminator structure.
 
+Python code fragment. Uses information from the loaded modeler configuration at `self.config` to setup the targeted model structure at `self.model`.
+
+`self.config`. Loaded modeler configuration. Type `dict`.
+
+`self.model`. Targeted model structure to setup. type `torch.nn.Module`.
+
+**Warning:** Code in this file can possibly make `gan train` execute malicious code from this file itself and somewhere else. Please be careful.
+
 ## `format_config.json`
 
 Format configuration.
+
+Automatically configured. Not supposed to be edited manually. Serves as a model folder format reference.
+
+Configuration items. Type `dict[str, typing.Union[dict, list, str, bool, int, float, None]]`.
+
+Configuration item descriptions are listed below.
+
+- `aidesign_gan_version`. Type `str`.
+- `aisesign_gan_repo_tag`. Type `str`.
 
 ## `generator_struct.py `
 
 Generator structure.
 
+Python code fragment. Uses information from the loaded modeler configuration at `self.config` to setup the targeted model structure at `self.model`.
+
+`self.config`. Loaded modeler configuration. Type `dict`.
+
+`self.model`. Targeted model structure to setup. type `torch.nn.Module`.
+
+**Warning:** Code in this file can possibly make `gan train`, `gan generate`, and `gan export ...` execute malicious code from this file itself and somewhere else. Please be careful.
+
 ## `modelers_config.json`
 
 Modelers configuration.
+
+Configuration items. Type `dict[str, typing.Union[dict, list, str, bool, int, float, None]]`.
+
+Configuration item descriptions are listed below.
+
+- `discriminator`. Discriminator modeler only configurations. Type `dict`.
+  - `image_resolution`. Input image resolution in pixels. Type `int`. Range [1, ).
+  - `image_channel_count`. Input image channel count. Type `int`. Range [1, ).
+  - `feature_map_size`. Layer 0 output feature map count. Type `int`. Range [1, ).
+- `generator`. Generator modeler only configurations. Type `dict`.
+  - `noise_resolution`. Input noise resolution in pixels. Type `int`. Range [1, ).
+  - `noise_channel_count`. Input noise channel count. Type `int`. Range [1, ).
+  - `image_resolution`. Output image resolution in pixels. Type `int`. Range [1, ).
+  - `image_channel_count`. Output image channel count. Type `int`. Range [1, ).
+  - `feature_map_size`. Layer -1 input feature map count. Type `int`. Range [1, ).
+- `discriminator` or `generator`. Discriminator and generator modelers common configurations. Type `dict`.
+  - `struct_name`. Structure name. Type `str`.
+  - `state_name`. State name. Type `str`.
+  - `optim_name`. Optimizer state name. Type `str`.
+  - `adam_optimizer`. Adam optimizer configuration. Type `dict`.
+    - `learning_rate`. Type `float`. Range [0, ).
+    - `beta1`. Momentum beta-1. Type `float`. Range [0, 1].
+    - `beta2`. Momentum beta-2. Type `float`. Range [0, 1].
+    - `pred_factor`. Prediction factor. Type `float`.
+  - `params_init`. Parameters initialization configuration. Type `dict`.
+    - `conv`. Convolution layers configuration. Type `dict`.
+      - `weight_mean`. Type `float`.
+      - `weight_std`. Weight standard deviation. Type `float`. Range [0, ).
+    - `batch_norm`. Batch normalization layers configuration. Type `dict`.
+      - `weight_mean`. Type `float`.
+      - `weight_std`. Weight standard deviation. Type `float`. Range [0, ).
+      - `bias_mean`. Type `float`.
+      - `bias_std`. Bias standard deviation. Type `float`. Range [0, ).
+  - `params_noising`. Parameters noising configuration. Type `dict`.
+    - `conv`. Convolution layers configuration. Type `dict`.
+      - `delta_weight_mean`. Weight incrementation mean. Type `float`.
+      - `delta_weight_std`. Weight incrementation standard deviation. Type `float`. Range [0, ).
+    - `batch_norm`. Batch normalization layers configuration. Type `dict`.
+      - `delta_weight_mean`. Weight incrementation mean. Type `float`.
+      - `delta_weight_std`. Weight incrementation standard deviation. Type `float`. Range [0, ).
+      - `delta_bias_mean`. Bias incrementation mean. Type `float`.
+      - `delta_bias_std`. Bias incrementation standard deviation. Type `float`. Range [0, ).
+  - `fairness`. Fair loss factor configuration. Type `dict`.
+    - `dx_factor`. D(X) factor. Type `float`.
+    - `dgz_factor`. D(G(Z)) factor. Type `float`.
+    - `cluster_dx_factor`. D(X, Cluster) factor. Type `float`.
+    - `cluster_dgz_factor`. D(G(Z), Cluster) factor. Type `float`.
 
 # Result Subfolders And Files
 

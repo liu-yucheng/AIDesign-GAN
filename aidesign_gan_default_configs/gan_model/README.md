@@ -121,16 +121,16 @@ Configuration item descriptions are listed below.
 - `discriminator`. Discriminator modeler only configurations. Type `dict`.
   - `image_resolution`. Input image resolution in pixels. Type `int`. Range [1, ).
   - `image_channel_count`. Input image channel count. Type `int`. Range [1, ).
-  - `feature_map_size`. Layer 0 output feature map count. Type `int`. Range [1, ).
+  - `feature_map_size`. Layer 0 (first layer) output feature map count. Type `int`. Range [1, ).
 - `generator`. Generator modeler only configurations. Type `dict`.
   - `noise_resolution`. Input noise resolution in pixels. Type `int`. Range [1, ).
   - `noise_channel_count`. Input noise channel count. Type `int`. Range [1, ).
   - `image_resolution`. Output image resolution in pixels. Type `int`. Range [1, ).
   - `image_channel_count`. Output image channel count. Type `int`. Range [1, ).
-  - `feature_map_size`. Layer -1 input feature map count. Type `int`. Range [1, ).
+  - `feature_map_size`. Layer -1 (last layer) input feature map count. Type `int`. Range [1, ).
 - `discriminator` or `generator`. Discriminator and generator modelers common configurations. Type `dict`.
   - `struct_name`. Structure name. Type `str`.
-  - `state_name`. State name. Type `str`.
+  - `state_name`. Model state name. Type `str`.
   - `optim_name`. Optimizer state name. Type `str`.
   - `adam_optimizer`. Adam optimizer configuration. Type `dict`.
     - `learning_rate`. Type `float`. Range [0, ).

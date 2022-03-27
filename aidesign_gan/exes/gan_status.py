@@ -24,6 +24,7 @@ _argv = sys.argv
 _copytree = shutil.copytree
 _deepcopy = copy.deepcopy
 _exists = ospath.exists
+_exit = sys.exit
 _ExportStatus = statuses.GANExportStatus
 _GenStatus = statuses.GANGenerateStatus
 _stderr = sys.stderr
@@ -130,10 +131,10 @@ def run():
         export_info = "\n".join(export_lines)
 
         print(info.format(app_data_info, train_info, gen_info, export_info))
-        exit(0)
+        _exit(0)
     else:  # elif argv_copy_length > 0:
         print(too_many_args_info.format(argv_copy_length), file=_stderr)
-        exit(1)
+        _exit(1)
     # end if
 
 

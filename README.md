@@ -129,15 +129,17 @@ Yadav, et al., 2018. *Stabilizing Adversarial Nets With Prediction Methods.* htt
 This application is distributed under the **GNU GPL3 license**.
 
 A subsequent work of this application is a work that satisfies **any one** of the following:
- - Is a variant of any form of this application.
- - Contains a part, some parts, or all parts of this application.
- - Integrates a part, some parts, or all parts of this application.
+
+- Is a variant of any form of this application.
+- Contains a part, some parts, or all parts of this application.
+- Integrates a part, some parts, or all parts of this application.
 
 All subsequent works of this application **must also be distributed under the GNU GPL3 license, and must also open their source codes to the public**.
 
 An output of this application is a file that satisfies **all** of the following:
- - Is directly produced by running one or more commands provided by this application.
- - Is directly produced by conducting one or more operations on the GUI of this application.
+
+- Is directly produced by running one or more commands provided by this application.
+- Is directly produced by conducting one or more operations on the GUI of this application.
 
 The outputs of this application do not have to be distributed under the GNU GPL3 license.
 
@@ -196,7 +198,7 @@ You should have and keep a copy of the above license. If not, please get it
 ### Long Version
 
 ```text
-AIDesign-GAN, a GAN modeling application.
+AIDesign-GAN, AIDesign GAN modeling application.
 Copyright (C) 2022 Yucheng Liu. GNU GPL3 license (GNU General Public License
   Version 3).
 
@@ -213,6 +215,6 @@ This program is distributed in the hope that it will be useful, but WITHOUT
 You should have received a copy of the GNU General Public License along with
   this program. If not, see:
   1. The LICENSE file in this repository.
-  2. https://www.gnu.org/licenses/.
+  2. https://www.gnu.org/licenses/#GPL.
   3. https://www.gnu.org/licenses/gpl-3.0.txt.
 ```

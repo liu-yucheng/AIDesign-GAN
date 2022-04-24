@@ -106,6 +106,13 @@ Follows [PEP8](https://peps.python.org/pep-0008/) with the exceptions shown in t
 }
 ```
 
+# Other `README` Files
+
+Other `README.*` files in this repository are listed below.
+
+- [GAN model `README`](aidesign_gan_default_configs/gan_model/README.md)
+- [GAN export `README`](aidesign_gan_default_configs/gan_export/README.md)
+
 # References
 
 **Note:** The referenced works are listed below in alphabetical order. You can find the reference details in the docstring of the modules that are relevant to the referenced works.

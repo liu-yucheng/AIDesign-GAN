@@ -115,19 +115,23 @@ Other `README.*` files in this repository are listed below.
 
 # References
 
-**Note:** The referenced works are listed below in alphabetical order. You can find the reference details in the docstring of the modules that are relevant to the referenced works.
+**Note:** References are in the IEEE style. The IEEE style guide is available at https://ieeeauthorcenter.ieee.org/wp-content/uploads/IEEE-Reference-Guide.pdf.
 
-Arjovsky, et al., 2017. *Wasserstein Generative Adversarial Networks.* https://arxiv.org/abs/1701.07875
+**Note:** Reference details are in the docstrings of the source code files.
 
-Odena, et al., 2016. *Deconvolution and Checkerboard Artifacts.* https://distill.pub/2016/deconv-checkerboard/
+**[1]** I. J. Goodfellow et al. (Jun. 2014). Generative Adversarial Networks. arXiv [Online]. Available: https://arxiv.org/abs/1406.2661
 
-*PyTorch Adam optimizer source code.* https://pytorch.org/docs/stable/_modules/torch/optim/adam.html#Adam
+**[2]** A. Yadav, S. Shah, Z. Xu, D. Jacobs, and T. Goldstein. (Feb. 2018). Stabilizing Adversarial Nets With Prediction Methods. arXiv [Online]. Available: https://arxiv.org/abs/1705.07364
 
-*PyTorch DCGAN tutorial.* https://pytorch.org/tutorials/beginner/dcgan_faces_tutorial.html
+**[3]** M. Arjovsky, S. Chintala, and L. Bottou. (Dec. 2017). Wasserstein GAN. arXiv [Online]. Available: https://arxiv.org/abs/1701.07875
 
-Radford, et al., 2016. *Unsupervised Representation Learning With Deep Convolutional Generative Adversarial Networks.* https://arxiv.org/pdf/1511.06434.pdf
+**[4]** "PyTorch DCGAN tutorial." PyTorch official website. https://pytorch.org/tutorials/beginner/dcgan_faces_tutorial.html (accessed Apr. 28, 2022).
 
-Yadav, et al., 2018. *Stabilizing Adversarial Nets With Prediction Methods.* https://openreview.net/pdf?id=Skj8Kag0Z
+**[5]** "PyTorch Adam optimizer source code." PyTorch official website. https://pytorch.org/docs/stable/_modules/torch/optim/adam.html#Adam (accessed Apr. 28, 2022)
+
+**[6]** A. Odena, V. Dumoulin, and C. Olah. (Oct. 2016). Deconvolution and Checkerboard Artifacts. Distill [Online]. Available: https://distill.pub/2016/deconv-checkerboard/
+
+**[7]** A. Radford, L. Metz, and S. Chintala. (Jan. 2016). Unsupervised Representation Learning with Deep Convolutional Generative Adversarial Networks. arXiv [Online]. Available: https://arxiv.org/abs/1511.06434
 
 # Miscellaneous
 ## Developer's Notes :memo: And Warnings :warning:

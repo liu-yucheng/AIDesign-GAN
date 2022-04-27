@@ -1,4 +1,10 @@
-"""Discriminator modeler."""
+"""Discriminator modeler.
+
+Contains elements based on [1], [2], and [3].
+Contains elements added by liu-yucheng.
+
+NOTE: The [*] reference list is in AIDesign-GAN's main README.
+"""
 
 # Copyright 2022 Yucheng Liu. GNU GPL3 license.
 # GNU GPL3 license copy: https://www.gnu.org/licenses/gpl-3.0.txt
@@ -212,11 +218,11 @@ class DiscModeler(_Modeler):
                 Definitely on the CPUs.
             ldcr, : Loss(D, Cluster, X).
                 = 50 + 50 * tanh(wmm_factor * -1 * Mean( logit(dxs) )).
-                tanh'ed Wasserstein 1 metric mean based on the WGAN paper.
+                tanh'ed Wasserstein 1 metric mean based on README reference [3].
                 Definitely on the CPUs.
             ldcf, : Loss(D, Cluster, G(Z)).
                 = 50 + 50 * tanh(wmm_factor * Mean( logit(dgzs) )).
-                tanh'ed Wasserstein 1 metric mean based on the WGAN paper.
+                tanh'ed Wasserstein 1 metric mean based on README reference [3].
                 Definitely on the CPUs.
             ld: Loss(D).
                 = dx_factor * ldr + dgz_factor * ldf + cluster_dx_factor * ldcr + cluster_dgz_factor * ldcf.
@@ -389,11 +395,11 @@ class DiscModeler(_Modeler):
                 Definitely on the CPUs.
             ldcr, : Loss(D, Cluster, X).
                 = 50 + 50 * tanh(wmm_factor * -1 * Mean( logit(dxs) )).
-                tanh'ed Wasserstein 1 metric mean based on the WGAN paper.
+                tanh'ed Wasserstein 1 metric mean based on README reference [3].
                 Definitely on the CPUs.
             ldcf, : Loss(D, Cluster, G(Z)).
                 = 50 + 50 * tanh(wmm_factor * Mean( logit(dgzs) )).
-                tanh'ed Wasserstein 1 metric mean based on the WGAN paper.
+                tanh'ed Wasserstein 1 metric mean based on README reference [3].
                 Definitely on the CPUs.
             ld: Loss(D).
                 = dx_factor * ldr + dgz_factor * ldf + cluster_dx_factor * ldcr + cluster_dgz_factor * ldcf.

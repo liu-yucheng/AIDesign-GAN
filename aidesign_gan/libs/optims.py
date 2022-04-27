@@ -1,8 +1,8 @@
 """Optimizers.
 
-==== References ====
-PyTorch Adam source code. https://pytorch.org/docs/stable/_modules/torch/optim/adam.html#Adam
-Yadav, et al., 2018. Stabilizing Adversarial Nets With Prediction Methods. https://openreview.net/pdf?id=Skj8Kag0Z
+Based on the "prediction" concept in [2] and the code in [5].
+
+NOTE: The [*] reference list is in AIDesign-GAN's main README.
 """
 
 # Copyright 2022 Yucheng Liu. GNU GPL3 license.

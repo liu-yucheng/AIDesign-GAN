@@ -1,4 +1,10 @@
-"""Generator modeler."""
+"""Generator modeler.
+
+Contains elements based on [1], [2], and [3].
+Contains elements added by liu-yucheng.
+
+NOTE: The [*] reference list is in AIDesign-GAN's main README.
+"""
 
 # Copyright 2022 Yucheng Liu. GNU GPL3 license.
 # GNU GPL3 license copy: https://www.gnu.org/licenses/gpl-3.0.txt
@@ -264,11 +270,11 @@ class GenModeler(_Modeler):
                 Definitely on the CPUs.
             lgcr, : Loss(G, Cluster, X).
                 = 50 + 50 * tanh(wmm_factor * Mean( logit(dxs2) )).
-                tanh'ed Wasserstein 1 metric mean based on the WGAN paper.
+                tanh'ed Wasserstein 1 metric mean based on README reference [3].
                 Definitely on the CPUs.
             lgcf, : Loss(G, Cluster, G(Z)).
                 = 50 + 50 * tanh(wmm_factor * -1 * Mean( logit(dgzs2) )).
-                tanh'ed Wasserstein 1 metric mean based on the WGAN paper.
+                tanh'ed Wasserstein 1 metric mean based on README reference [3].
                 Definitely on the CPUs.
             lg: Loss(G).
                 = dx_factor * lgr + dgz_factor * lgf + cluster_dx_factor * lgcr + cluster_dgz_factor * lgcf.
@@ -459,11 +465,11 @@ class GenModeler(_Modeler):
                 Definitely on the CPUs.
             lgcr, : Loss(G, Cluster, X).
                 = 50 + 50 * tanh(wmm_factor * Mean( logit(dxs2) )).
-                tanh'ed Wasserstein 1 metric mean based on the WGAN paper.
+                tanh'ed Wasserstein 1 metric mean based on README reference [3].
                 Definitely on the CPUs.
             lgcf, : Loss(G, Cluster, G(Z)).
                 = 50 + 50 * tanh(wmm_factor * -1 * Mean( logit(dgzs2) )).
-                tanh'ed Wasserstein 1 metric mean based on the WGAN paper.
+                tanh'ed Wasserstein 1 metric mean based on README reference [3].
                 Definitely on the CPUs.
             lg: Loss(G).
                 = dx_factor * lgr + dgz_factor * lgf + cluster_dx_factor * lgcr + cluster_dgz_factor * lgcf

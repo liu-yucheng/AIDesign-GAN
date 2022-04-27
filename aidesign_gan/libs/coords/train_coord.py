@@ -1,9 +1,15 @@
-"""Training coordinator."""
+"""Training coordinator.
+
+Evolved from the code in [4].
+
+NOTE: The [*] reference list is in AIDesign-GAN's main README.
+"""
 
 # Copyright 2022 Yucheng Liu. GNU GPL3 license.
 # GNU GPL3 license copy: https://www.gnu.org/licenses/gpl-3.0.txt
 # First added by username: liu-yucheng
 # Last updated by username: liu-yucheng
+
 from os import path as ospath
 
 from aidesign_gan.libs import algos

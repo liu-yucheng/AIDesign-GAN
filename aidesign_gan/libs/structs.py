@@ -1,10 +1,8 @@
 """Structures.
 
-==== References ====
-Odena, et al., 2016. Deconvolution and Checkerboard Artifacts. https://distill.pub/2016/deconv-checkerboard/
-PyTorch DCGAN tutorial. https://pytorch.org/tutorials/beginner/dcgan_faces_tutorial.html
-Radford, et al., 2016. Unsupervised Representation Learning With Deep Convolutional Generative Adversarial Networks.
-    https://arxiv.org/pdf/1511.06434.pdf
+Based on the GAN structures in [6] and [7].
+
+NOTE: The [*] reference list is in AIDesign-GAN's main README.
 """
 
 # Copyright 2022 Yucheng Liu. GNU GPL3 license.

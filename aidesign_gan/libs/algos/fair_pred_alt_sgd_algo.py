@@ -1,4 +1,11 @@
-"""Fair predictive alternative SGD algorithm."""
+"""Fair predictive alternative SGD algorithm.
+
+Based on the GAN training algorithms in [1] and [2].
+Added the cluster terms inspired by the GAN training algorithm in [3].
+New terms and tweakables added by liu-yucheng.
+
+NOTE: The [*] reference list is in AIDesign-GAN's main README.
+"""
 
 # Copyright 2022 Yucheng Liu. GNU GPL3 license.
 # GNU GPL3 license copy: https://www.gnu.org/licenses/gpl-3.0.txt

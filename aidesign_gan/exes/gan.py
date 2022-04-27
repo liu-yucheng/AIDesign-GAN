@@ -1,6 +1,6 @@
 """"gan" command executable.
 
-AIDesign-GAN primary command.
+AIDesign-GAN main command.
 """
 
 # Copyright 2022 Yucheng Liu. GNU GPL3 license.

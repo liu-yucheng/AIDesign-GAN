@@ -464,6 +464,19 @@ class TestGANWelcome(_TestSimpleCmd):
         self._log_method_end(method_name)
 
 
+class TestGANInfo(_TestSimpleCmd):
+    """Tests for the "gan info" command."""
+
+    def test_norm(self):
+        """Tests the normal use case."""
+        method_name = self.test_norm.__name__
+        cmd = "gan info"
+        instr = ""
+        self._log_method_start(method_name)
+        self._test_cmd_norm(cmd, instr)
+        self._log_method_end(method_name)
+
+
 class TestGANCreate(_TestCmd):
     """Tests for the "gan create" command."""
 

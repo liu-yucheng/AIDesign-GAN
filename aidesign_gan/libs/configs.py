@@ -5,16 +5,15 @@
 # First added by username: liu-yucheng
 # Last updated by username: liu-yucheng
 
-import pkg_resources
 from os import path as ospath
 
 from aidesign_gan.libs import defaults
+from aidesign_gan.libs import pack_info
 from aidesign_gan.libs import utils
 
 _clamp_float = utils.clamp_float
 _join = ospath.join
 _load_json = utils.load_json
-_require = pkg_resources.require
 _save_json = utils.save_json
 
 
@@ -372,27 +371,14 @@ class FormatConfig(Config):
     """Default location."""
     default_name = defaults.format_config_name
     """Default name."""
-
-    @classmethod
-    def _find_version(cls):
-        version = "<unknown version>"
-
-        try:
-            packages = _require("aidesign-gan")
-
-            if len(packages) > 0:
-                version = packages[0].version
-        except Exception as _:
-            pass
-        # end try
-
-        return version
+    ver = pack_info.ver
+    """Format version."""
 
     @classmethod
     def load_default(cls):
         result = super().load_default()
 
-        version = cls._find_version()
+        version = cls.ver
         result["aidesign_gan_version"] = version
         result["aidesign_gan_repo_tag"] = "v" + version
 

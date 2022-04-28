@@ -43,6 +43,9 @@ Usage: gan <command> ...
 help:
     When:   You need help info. For example, now.
     How-to: gan help
+info:
+    When:   You need package info.
+    How-to: gan info
 create:
     When:   You create a new model with the defaults.
     How-to: gan create <path-to-model>

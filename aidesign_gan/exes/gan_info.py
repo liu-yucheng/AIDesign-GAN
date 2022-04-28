@@ -1,4 +1,4 @@
-""""gan welcome" command executable.
+""""gan info" command executable.
 
 Child command of "gan."
 Can be launched directly.
@@ -12,6 +12,8 @@ Can be launched directly.
 import copy
 import sys
 
+from aidesign_gan.libs import pack_info
+
 # Aliases
 
 _argv = sys.argv
@@ -21,7 +23,7 @@ _stderr = sys.stderr
 
 # End of aliases
 
-brief_usage = "gan welcome"
+brief_usage = "gan help"
 """Brief usage."""
 
 usage = fr"""
@@ -36,8 +38,12 @@ Help: gan help
 
 info = fr"""
 
-(-; Welcome to AIDesign-GAN! ;-)
-Made by LYC (Yucheng Liu) with the hope for peace in SZ (Shenzhen).
+AIDesign-GAN package info:
+    Package name:   {pack_info.pack_name}
+    Version:        {pack_info.ver}
+    Author:         {pack_info.author}
+    Copyright:      {pack_info.cr}
+    Description:    {pack_info.desc}
 
 """.strip()
 """Primary info to display."""
@@ -54,7 +60,7 @@ Expects 0 arguments; Gets {{}} arguments
 """.strip()
 """Info to display when getting too many arguments."""
 
-# End of error info strings
+# End of error info stirngs
 
 argv_copy = None
 """Consumable copy of sys.argv."""

@@ -9,30 +9,18 @@ AIDesign-GAN main command.
 # Last updated by username: liu-yucheng
 
 import copy
-import pkg_resources
 import sys
+
+from aidesign_gan.libs import pack_info
 
 # Aliases
 
 _argv = sys.argv
 _deepcopy = copy.deepcopy
 _exit = sys.exit
-_require = pkg_resources.require
 _stderr = sys.stderr
 
 # End of aliases
-
-# Initialize _version
-_version = "<unknown version>"
-
-try:
-    _packages = _require("aidesign-gan")
-
-    if len(_packages) > 0:
-        _version = _packages[0].version
-except Exception as _:
-    pass
-# end try
 
 brief_usage = "gan <command> ..."
 """Brief usage."""
@@ -49,7 +37,7 @@ Help: gan help
 
 info = fr"""
 
-AIDesign-GAN (aidesign-gan) {_version}
+AIDesign-GAN (aidesign-gan) {pack_info.ver}
 {usage}
 
 """.strip()
@@ -136,6 +124,10 @@ def _run_command():
         from aidesign_gan.exes import gan_export
         gan_export.argv_copy = argv_copy
         gan_export.run()
+    elif command == "info":
+        from aidesign_gan.exes import gan_info
+        gan_info.argv_copy = argv_copy
+        gan_info.run()
     else:
         print(unknown_cmd_info.format(command), file=_stderr)
         _exit(1)

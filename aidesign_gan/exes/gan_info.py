@@ -23,7 +23,7 @@ _stderr = sys.stderr
 
 # End of aliases
 
-brief_usage = "gan help"
+brief_usage = "gan info"
 """Brief usage."""
 
 usage = fr"""

@@ -103,7 +103,7 @@ class DotDict(dict):
         Returns:
             result: the resulting DotDict
         """
-        # print(f"fromdict____ dic: {dic}")  # Debug
+        # print(f"from_dict____ dict_: {dict_}")  # Debug
         result = DotDict()
 
         for key in dict_:
@@ -154,33 +154,33 @@ class DotDict(dict):
 
         # Set the inherited keys from the custom class level
         if self_type is not DotDict and issubclass(self_type, DotDict):
-            class_dict = self_type.__dict__
+            class_dir = dir(self_type)
 
-            for key in class_dict:
-                key = str(key)
-                # print(f"_dot_dict_init class_dict {key}: {class_dict[key]}")  # Debug
+            for name in class_dir:
+                name = str(name)
+                # print(f"_mand_init class attribute {name}: {getattr(self_type, name)}")  # Debug
 
-                if not self_type.is_exc_key____(key):
-                    val = class_dict[key]
-                    self.set_attr____(key, val)
+                if not self_type.is_exc_key____(name):
+                    val = getattr(self_type, name)
+                    self.set_attr____(name, val)
             # end for
         # end if
 
         # Set keys with the key names from the variable arguments
         for arg in args:
             arg = str(arg)
-            # print(f"_dot_dict_init *args arg: {arg}")  # Debug
+            # print(f"_mand_init *args arg: {arg}")  # Debug
 
-            if not self_type.is_exc_key____(key):
+            if not self_type.is_exc_key____(name):
                 self.set_attr____(arg, None)
         # end for
 
         # Set pairs with the key names and values from the keyword arguments
         for kw in kwargs:
             kw = str(kw)
-            # print(f"_dot_dict_init **kwargs kw: {kw}  arg: {kwargs[kw]}")  # Debug
+            # print(f"_mand_init **kwargs kw: {kw}  arg: {kwargs[kw]}")  # Debug
 
-            if not self_type.is_exc_key____(key):
+            if not self_type.is_exc_key____(name):
                 arg = kwargs[kw]
                 self.set_attr____(kw, arg)
         # end for
@@ -792,14 +792,24 @@ class DotDict(dict):
             result = ".{}"
             return result
 
-        result = ".{"
+        segs = []
 
         for key in self:
-            result += f"{key.__str__()}: {self[key].__str__()}, "
+            val = self[key]
 
-        result = result[:-2]  # Remove the trailing comma and space
-        result += "}"
+            if isinstance(val, DotDict):
+                seg = f"{key.__str__()}: {val.__str__()}, "
+            else:
+                seg = f"{key.__str__()}: {val.__repr__()}, "
+            # end if
 
+            segs.append(seg)
+        # end for
+
+        contents = "".join(segs)
+        contents = contents[:-2]  # Remove the trailing comma and space
+
+        result = f".{{{contents}}}"
         return result
 
     def to_dict____(self):

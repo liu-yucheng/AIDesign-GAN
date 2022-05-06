@@ -29,6 +29,10 @@
         "epoch_collapses": {
             "max_loss": 99,
             "percents_of_batches": 67
+        },
+        "retrials": {
+            "max_count": 3,
+            "delay_seconds": 3
         }
     },
     "generation": {

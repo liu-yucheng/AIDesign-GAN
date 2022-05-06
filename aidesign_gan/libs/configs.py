@@ -217,6 +217,11 @@ class CoordsConfig(Config):
             cls._verify_float_clamp(collapses, "max_loss", 0, 100)
             cls._verify_float_clamp(collapses, "percents_of_batches", 0, 100)
 
+        if "retrials" in train:
+            retrials = train["retrials"]
+            cls._verify_int_ge_0(retrials, "max_count")
+            cls._verify_float_ge_0(retrials, "delay_seconds")
+
         gen = from_dict["generation"]
         cls._verify_int_nonable(gen, "manual_seed")
         cls._verify_int_ge_0(gen, "gpu_count")

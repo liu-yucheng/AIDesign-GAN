@@ -56,6 +56,9 @@ Configuration item descriptions are listed below.
   - `epoch_collapses`. Epoch training collapse detection configurations. Type `dict`.
     - `max_loss`: Maximum loss allowed for a training batch to be marked as not collapsed. If the loss exceeds `max_loss`, the training batch will be marked as collapsed. Type `float`. Range [0, 100].
     - `percents_of_batches`. Maximum percentage of collapsed training batches allowed to mark an epoch as not collapsed. Type `float`. Range [0, 100].
+  - `retrirals`. Epoch training exception retrials configurations. Type `dict`.
+    - `max_count`. Maximum retrial count. Type `int`. Range [0, ].
+    - `delay_seconds`. Delay in seconds, before starting a retrial. Type `float`. Range [0, ].
 - `generation`. Generation coordinator configuration. Type `dict`.
   - `manual_seed`. Manual random seed. Type `typing.Union[None, int]`.
   - `gpu_count`. Type `int`. Range [0, ).

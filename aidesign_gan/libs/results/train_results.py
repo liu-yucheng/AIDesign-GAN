@@ -623,6 +623,25 @@ class TrainResults(_Results):
 
         self.logln(info, debug_level)
 
+    def log_retrial(self, prefix, delayed, context=None, debug_level=0):
+        """Logs the retrial info.
+
+        Args:
+            prefix: a prefix
+            delayed: the time already delayed in seconds
+            context: an optional context
+            debug_level: an optional debug level
+        """
+        c: _TrainContext = self.find_context(context)
+
+        info = "-- {} retrial {} / {}  Delayed {} / {} (secs)".format(
+            prefix,
+            c.loops.retrial.index + 1, c.loops.retrial.max_count,
+            delayed, c.loops.retrial.delay
+        )
+
+        self.logln(info)
+
     def save_train_images(self, context=None, debug_level=0):
         """Saves the first batch of the training images.
 

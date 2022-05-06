@@ -113,6 +113,16 @@ class TrainContext(_Context):
             save_noised = None
             """Whether to save the noised images."""
 
+        class Retrial(_DotDict):
+            """Retrial control."""
+
+            index = None
+            """Index."""
+            max_count = None
+            """Maximum count."""
+            delay = None
+            """Delay in seconds."""
+
         iteration = IterationEpochBatch()
         """Iteration control."""
         epoch = IterationEpochBatch()
@@ -127,6 +137,8 @@ class TrainContext(_Context):
         """Earlystop control."""
         noise_models = NoiseModels()
         """Model noising control."""
+        retrial = Retrial()
+        """Retrial control."""
 
     class Latest(_DotDict):
         """Latest batch result."""
@@ -571,23 +583,43 @@ class TrainContext(_Context):
         if noise_iter and noise_epoch:
             noise_iter = False
 
+        retrials_key = "retrials"
+
+        if retrials_key in config:
+            retrial_max_count = config[retrials_key]["max_count"]
+            retrial_delay = config[retrials_key]["delay_seconds"]
+        else:
+            retrial_max_count = 3
+            retrial_delay = float(3)
+        # end if
+
         self.loops.iteration.count = iteration_count
         self.loops.iteration.index = 0
+
         self.loops.epoch.count = epoch_count
         self.loops.epoch.index = 0
+
         self.loops.train.count = self.data.train.batch_count
         self.loops.train.index = 0
+
         self.loops.valid.count = self.data.valid.batch_count
         self.loops.valid.index = 0
+
         self.loops.rb.max = max_rbs
         self.loops.rb.d = 0
         self.loops.rb.g = 0
+
         self.loops.es.max = max_ess
         self.loops.es.d = 0
         self.loops.es.g = 0
+
         self.loops.noise_models.before_iter = noise_iter
         self.loops.noise_models.before_epoch = noise_epoch
         self.loops.noise_models.save_noised = save_noised
+
+        self.loops.retrial.index = 0
+        self.loops.retrial.max_count = retrial_max_count
+        self.loops.retrial.delay = retrial_delay
 
     def setup_stats(self, dataset_path=None, model_path=None, cconfig=None, mconfig=None):
         """Sets up the statistics.

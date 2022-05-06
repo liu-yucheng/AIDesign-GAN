@@ -5,13 +5,22 @@
 # First added by username: liu-yucheng
 # Last updated by username: liu-yucheng
 
+import gc
+import time
+import traceback
 import typing
+from torch import cuda
 
 from aidesign_gan.libs import contexts
 from aidesign_gan.libs import results
 
 _Context = contexts.Context
+_cuda_is_available = cuda.is_available
+_cuda_empty_cache = cuda.empty_cache
+_format_exc = traceback.format_exc
+_gc_collect = gc.collect
 _Results = results.Results
+_sleep = time.sleep
 _TrainContext = contexts.TrainContext
 _TrainResults = results.TrainResults
 _Union = typing.Union
@@ -146,3 +155,31 @@ class Algo:
 
         if needs_save:
             r.save_gen_images_after_noising()
+
+    def _run_retrial_prep(self, context=None, results=None):
+        c: _TrainContext = self.find_context(context)
+        r: _TrainResults = self.find_results(results)
+
+        info = str(
+            f"--- Retrial exception stack trace\n"
+            f"{_format_exc()}"
+            f"--- End of retrial exception stack trace"
+        )
+
+        r.logln(info)
+
+        r.log_retrial("Preparing for", float(0), context)
+        _sleep(c.loops.retrial.delay)
+
+        r.log_retrial("Preparing for", c.loops.retrial.delay, context)
+        r.logln("Started CPU memory garbage collection")
+        _gc_collect()
+        r.logln("Completed CPU memory garbage collection")
+
+        if _cuda_is_available():
+            r.logln("Started GPU memory garbage collection")
+            _cuda_empty_cache()
+            r.logln("Completed GPU memory garbage collection")
+        # end if
+
+        r.log_retrial("Started", c.loops.retrial.delay, context)

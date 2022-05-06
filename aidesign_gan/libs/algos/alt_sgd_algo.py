@@ -247,27 +247,42 @@ class AltSGDAlgo(_Algo):
             r.log_model_action("save", "g")
         # end if
 
+    def _run_norm_epoch(self, context=None, results=None):
+        _ = context
+        r: _TrainResults = self.find_results(results)
+
+        r.log_epoch("Started", "")
+        self._noise_before_epoch(context, results)
+        self._train_d_and_g(context, results)
+        self._valid_d(context, results)
+        self._save_best_d(context, results)
+        self._valid_g(context, results)
+        self._save_best_g(context, results)
+        r.save_disc_losses()
+        r.save_gen_losses()
+        r.save_gen_images()
+        r.save_tvg_fig()
+        r.logln("--")
+        r.flushlogs()
+
     def _run_iter(self, context=None, results=None):
         c: _TrainContext = self.find_context(context)
-        r: _TrainResults = self.find_results(results)
+        _ = results
 
         c.loops.epoch.index = 0
 
         while c.loops.epoch.index < c.loops.epoch.count:
-            r.log_epoch("Started", "")
-            self._noise_before_epoch(context, results)
-            self._train_d_and_g(context, results)
-            self._valid_d(context, results)
-            self._save_best_d(context, results)
-            self._valid_g(context, results)
-            self._save_best_g(context, results)
-            r.save_disc_losses()
-            r.save_gen_losses()
-            r.save_gen_images()
-            r.save_tvg_fig()
-            r.logln("--")
-            r.flushlogs()
-            c.loops.epoch.index += 1
+            try:
+                self._run_norm_epoch(context, results)
+                c.loops.epoch.index += 1
+            except Exception as exception:
+                if c.loops.retrial.index < c.loops.retrial.max_count:
+                    self._run_retrial_prep(context, results)
+                    c.loops.retrial.index += 1
+                else:
+                    raise exception
+                # end if
+            # end try
         # end while
 
     def start(self, context=None, results=None):

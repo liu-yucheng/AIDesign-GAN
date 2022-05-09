@@ -192,7 +192,7 @@ class TrainResults(_Results):
         g_cluster_dgz_factor = gf_config["cluster_dgz_factor"]
 
         info = str(
-            "- Fairness:\n"
+            "- Fairness\n"
             "-- Discriminator\n"
             "D(X) factor: {:g}  D(G(Z)) factor: {:g}\n"
             "Cluster D(X) factor: {:g}  Cluster D(G(Z)) factor: {:g}\n"
@@ -634,7 +634,7 @@ class TrainResults(_Results):
         """
         c: _TrainContext = self.find_context(context)
 
-        info = "-- {} retrial {} / {}  Delayed {} / {} (secs)".format(
+        info = "-- {} retrial {} / {}  Delayed {} / {} (seconds)".format(
             prefix,
             c.loops.retrial.index + 1, c.loops.retrial.max_count,
             delayed, c.loops.retrial.delay

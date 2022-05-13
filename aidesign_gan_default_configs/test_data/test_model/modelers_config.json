@@ -2,7 +2,7 @@
     "discriminator": {
         "image_resolution": 64,
         "image_channel_count": 3,
-        "feature_map_size": 64,
+        "feature_map_count": 64,
         "struct_name": "discriminator_struct.py",
         "state_name": "discriminator_state.pt",
         "optim_name": "discriminator_optim.pt",
@@ -48,7 +48,7 @@
         "noise_channel_count": 32,
         "image_resolution": 64,
         "image_channel_count": 3,
-        "feature_map_size": 64,
+        "feature_map_count": 64,
         "struct_name": "generator_struct.py",
         "state_name": "generator_state.pt",
         "optim_name": "generator_optim.pt",

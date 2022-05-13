@@ -3,7 +3,7 @@
     "noise_channel_count": 32,
     "image_resolution": 64,
     "image_channel_count": 3,
-    "feature_map_size": 64,
+    "feature_map_count": 64,
     "struct_name": "generator_struct.py",
     "state_name": "generator_state.pt",
     "preview_name": "generator_preview.jpg"

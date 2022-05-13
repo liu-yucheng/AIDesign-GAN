@@ -39,7 +39,7 @@ Configuration item descriptions are listed below.
 
 - `image_resolution`. Input image resolution in pixels. Type `int`. Range [1, ).
 - `image_channel_count`. Input image channel count. Type `int`. Range [1, ).
-- `feature_map_size` Layer 0 (first layer) output feature map count. Type `int`. Range [1, ).
+- `feature_map_count` Layer 0 (first layer) output feature map count. Type `int`. Range [1, ). Compatibility alias `feature_map_size`. Precedence `feature_map_count` > `feature_map_size`.
 - `struct_name`. Structure name. Type `str`.
 - `state_name`. Model state name. Type `str`.
 
@@ -82,7 +82,7 @@ Configuration item descriptions are listed below.
 - `noise_channel_count`. Input noise channel count. Type `int`. Range [1, ).
 - `image_resolution`. Output image resolution in pixels. Type `int`. Range [1, ).
 - `image_channel_count`. Output image channel count. Type `int`. Range [1, ).
-- `feature_map_size`. Layer -1 (last layer) input feature map count. Type `int`. Range [1, ).
+- `feature_map_count`. Layer -1 (last layer) input feature map count. Type `int`. Range [1, ). Compatibility alias `feature_map_size`. Precedence `feature_map_count` > `feature_map_size`.
 - `struct_name`. Structure name. Type `str`.
 - `state_name`. Model state name. Type `str`.
 - `preview_name`. Model preview name. Type `str`.

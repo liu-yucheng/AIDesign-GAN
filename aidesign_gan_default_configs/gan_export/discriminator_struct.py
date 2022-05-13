@@ -9,7 +9,7 @@ from torch import nn
 self = self
 ir = self.config["image_resolution"]
 ic = self.config["image_channel_count"]
-fm = self.config["feature_map_size"]
+fm = self.config["feature_map_count"]
 
 # NOTE:
 # nn.Conv2d positional params: in_channels, out_channels, kernel_size, stride, padding

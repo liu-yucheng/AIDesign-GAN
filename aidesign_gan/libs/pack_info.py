@@ -1,6 +1,6 @@
 """Package information.
 
-Information items initially set to unknown and will update at runtime.
+Information items are initially set to unknown and will update at runtime.
 """
 
 # Copyright 2022 Yucheng Liu. GNU GPL3 license.

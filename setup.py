@@ -38,7 +38,7 @@ def _ensure_app_data():
 def main():
     _setup(
         name="aidesign-gan",
-        version="1.5.0",
+        version="1.5.1",
         author="Yucheng Liu (From The AIDesign Team)",
         license="Copyright (C) 2022 Yucheng Liu. GNU GPL3 license.",
         description="AIDesign GAN modeling application.",

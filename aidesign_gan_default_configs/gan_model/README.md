@@ -99,7 +99,7 @@ Configuration items. Type `dict[str, typing.Union[dict, list, str, bool, int, fl
 Configuration item descriptions are listed below.
 
 - `aidesign_gan_version`. Type `str`.
-- `aisesign_gan_repo_tag`. Type `str`.
+- `aidesign_gan_repo_tag`. Type `str`.
 
 ## `generator_struct.py `
 

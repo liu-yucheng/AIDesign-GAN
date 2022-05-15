@@ -15,7 +15,6 @@ _Path = pathlib.Path
 _TestLoader = unittest.TestLoader
 _TextTestRunner = unittest.TextTestRunner
 
-
 _aidesign_gan_repo_path = str(_Path(__file__).parent)
 _aidesign_gan_path = _join(_aidesign_gan_repo_path, "aidesign_gan")
 _aidesign_gan_tests_path = _join(_aidesign_gan_path, "tests")

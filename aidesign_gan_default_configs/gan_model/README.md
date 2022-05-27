@@ -34,8 +34,8 @@ Configuration item descriptions are listed below.
   - `algorithm`. Training algorithm. Type `str`. Values `"alt_sgd_algo", "pred_alt_sgd_algo", "fair_pred_alt_sgd_algo"`.
   - `manual_seed`. Manual random seed. Type `typing.Union[None, int]`.
   - `gpu_count`. Type `int`. Range [0, ).
-  - `iteration_count`. Iteration count. Each iteration contains multiple epochs. Type `int`. Range [0, ).
-  - `epochs_per_iteration`. Epochs per iteration. Each epoch contains one complete pass of the training and validation datasets to use. Type `int`. Range [0, ).
+  - `iter_count`. Iteration count. Each iteration contains multiple epochs. Type `int`. Range [0, ). Compatibility alias `iteration_count`. Precedence `iter_count` > `iteration_count`.
+  - `epochs_per_iter`. Epochs per iteration. Each epoch contains one complete pass of the training and validation datasets to use. Type `int`. Range [0, ). Compatibility alias `epochs_per_iteration`. Precedence `epochs_per_iter` > `epochs_per_iteration`.
   - `max_rollbacks`. Maximum rollbacks. Type `int`. Range [0, ).
   - `max_early_stops`. Maximum early stops. Type `int`. Range [0, ).
   - `datasets`. Datasets configuration. Type `dict`.

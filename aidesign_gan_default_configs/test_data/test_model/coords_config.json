@@ -4,8 +4,8 @@
         "algorithm": "pred_alt_sgd_algo",
         "manual_seed": null,
         "gpu_count": 1,
-        "iteration_count": 1,
-        "epochs_per_iteration": 1,
+        "iter_count": 1,
+        "epochs_per_iter": 1,
         "max_rollbacks": 1,
         "max_early_stops": 1,
         "datasets": {
@@ -22,9 +22,9 @@
             "fake": 0
         },
         "noise_models": {
-            "before_each_iter": false,
-            "before_each_epoch": false,
-            "save_noised_images": false
+            "before_each_iter": true,
+            "before_each_epoch": true,
+            "save_noised_images": true
         },
         "epoch_collapses": {
             "max_loss": 99,

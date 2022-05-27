@@ -188,8 +188,33 @@ class CoordsConfig(Config):
         cls._verify_str(train, "algorithm")
         cls._verify_int_nonable(train, "manual_seed")
         cls._verify_int_ge_0(train, "gpu_count")
-        cls._verify_int_ge_0(train, "iteration_count")
-        cls._verify_int_ge_0(train, "epochs_per_iteration")
+
+        iter_count_key = "iter_count"
+        iteration_count_key = "iteration_count"
+
+        if iter_count_key in train:
+            cls._verify_int_ge_0(train, iter_count_key)
+            train[iteration_count_key] = train[iter_count_key]
+        elif iteration_count_key in train:
+            cls._verify_int_ge_0(train, iteration_count_key)
+            train[iter_count_key] = train[iteration_count_key]
+        else:
+            raise KeyError(f"train has no key \"{iter_count_key}\" nor \"{iteration_count_key}\"")
+        # end if
+
+        epochs_per_iter_key = "epochs_per_iter"
+        epochs_per_iteration_key = "epochs_per_iteration"
+
+        if epochs_per_iter_key in train:
+            cls._verify_int_ge_0(train, epochs_per_iter_key)
+            train[epochs_per_iteration_key] = train[epochs_per_iter_key]
+        elif epochs_per_iteration_key in train:
+            cls._verify_int_ge_0(train, epochs_per_iteration_key)
+            train[epochs_per_iter_key] = train[epochs_per_iteration_key]
+        else:
+            raise KeyError(f"train has no key \"{epochs_per_iter_key}\" nor \"{epochs_per_iteration_key}\"")
+        # end if
+
         cls._verify_int_ge_0(train, "max_rollbacks")
         cls._verify_int_ge_0(train, "max_early_stops")
 

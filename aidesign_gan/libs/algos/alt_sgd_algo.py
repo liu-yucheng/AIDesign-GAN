@@ -127,7 +127,7 @@ class AltSGDAlgo(_Algo):
         epoch_collapsed = c.collapses.batch_count >= c.collapses.max_batch_count
 
         if epoch_collapsed:
-            c.collapses.epochs.append((c.loops.iteration.index, c.loops.epoch.index))
+            c.collapses.epochs.append((c.loops.iter_.index, c.loops.epoch.index))
             r.logln("Epoch collapsed")
 
         epoch_ld = _nparray(lds).mean()
@@ -213,7 +213,7 @@ class AltSGDAlgo(_Algo):
         epoch_collapsed = False
 
         if len(c.collapses.epochs) > 0:
-            epoch_collapsed = (c.loops.iteration.index, c.loops.epoch.index) == c.collapses.epochs[-1]
+            epoch_collapsed = (c.loops.iter_.index, c.loops.epoch.index) == c.collapses.epochs[-1]
 
         if epoch_collapsed:
             c.mods.d.load()
@@ -237,7 +237,7 @@ class AltSGDAlgo(_Algo):
         epoch_collapsed = False
 
         if len(c.collapses.epochs) > 0:
-            epoch_collapsed = (c.loops.iteration.index, c.loops.epoch.index) == c.collapses.epochs[-1]
+            epoch_collapsed = (c.loops.iter_.index, c.loops.epoch.index) == c.collapses.epochs[-1]
 
         if epoch_collapsed:
             c.mods.g.load()
@@ -307,15 +307,15 @@ class AltSGDAlgo(_Algo):
         r.save_valid_images()
         r.save_images_before_train()
 
-        c.loops.iteration.index = 0
+        c.loops.iter_.index = 0
 
-        while c.loops.iteration.index < c.loops.iteration.count:
+        while c.loops.iter_.index < c.loops.iter_.count:
             r.log_iter("Started")
             self._noise_before_iter(context, results)
             self._run_iter(context, results)
             r.logln("-")
             r.flushlogs()
-            c.loops.iteration.index += 1
+            c.loops.iter_.index += 1
         # end while
 
         info = str(

@@ -4,8 +4,8 @@
         "algorithm": "pred_alt_sgd_algo",
         "manual_seed": null,
         "gpu_count": 1,
-        "iteration_count": 1,
-        "epochs_per_iteration": 1,
+        "iter_count": 1,
+        "epochs_per_iter": 1,
         "max_rollbacks": 1,
         "max_early_stops": 1,
         "datasets": {

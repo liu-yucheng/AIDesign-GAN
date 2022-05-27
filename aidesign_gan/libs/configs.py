@@ -374,7 +374,23 @@ class DiscConfig(Config):
 
         cls._verify_int_ge_1(from_dict, "image_resolution")
         cls._verify_int_ge_1(from_dict, "image_channel_count")
-        cls._verify_int_ge_1(from_dict, "feature_map_size")
+
+        fm_count_key = "feature_map_count"
+        fm_size_key = "feature_map_size"
+
+        if fm_count_key in from_dict:
+            cls._verify_int_ge_1(from_dict, fm_count_key)
+            from_dict[fm_size_key] = from_dict[fm_count_key]
+        elif fm_size_key in from_dict:
+            cls._verify_int_ge_1(from_dict, fm_size_key)
+            from_dict[fm_count_key] = from_dict[fm_size_key]
+        else:
+            raise KeyError(f"from_dict has no key \"{fm_count_key}\" nor \"{fm_size_key}\"")
+        # end if
+
+        if fm_size_key in from_dict:
+            del from_dict[fm_size_key]
+
         cls._verify_str(from_dict, "struct_name")
         cls._verify_str(from_dict, "state_name")
 
@@ -398,7 +414,23 @@ class GenConfig(Config):
         cls._verify_int_ge_1(from_dict, "noise_channel_count")
         cls._verify_int_ge_1(from_dict, "image_resolution")
         cls._verify_int_ge_1(from_dict, "image_channel_count")
-        cls._verify_int_ge_1(from_dict, "feature_map_size")
+
+        fm_count_key = "feature_map_count"
+        fm_size_key = "feature_map_size"
+
+        if fm_count_key in from_dict:
+            cls._verify_int_ge_1(from_dict, fm_count_key)
+            from_dict[fm_size_key] = from_dict[fm_count_key]
+        elif fm_size_key in from_dict:
+            cls._verify_int_ge_1(from_dict, fm_size_key)
+            from_dict[fm_count_key] = from_dict[fm_size_key]
+        else:
+            raise KeyError(f"from_dict has no key \"{fm_count_key}\" nor \"{fm_size_key}\"")
+        # end if
+
+        if fm_size_key in from_dict:
+            del from_dict[fm_size_key]
+
         cls._verify_str(from_dict, "struct_name")
         cls._verify_str(from_dict, "state_name")
         cls._verify_str(from_dict, "preview_name")

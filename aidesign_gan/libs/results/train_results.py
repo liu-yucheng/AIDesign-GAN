@@ -237,8 +237,8 @@ class TrainResults(_Results):
 
         info = "- {} iter {} / {}".format(
             prefix,
-            c.loops.iteration.index + 1,
-            c.loops.iteration.count
+            c.loops.iter_.index + 1,
+            c.loops.iter_.count
         )
 
         self.logln(info, debug_level)
@@ -256,8 +256,8 @@ class TrainResults(_Results):
 
         info = "-- {} epoch {}.{}{} / {}.{}{}".format(
             prefix,
-            c.loops.iteration.index + 1, epoch_type, c.loops.epoch.index + 1,
-            c.loops.iteration.count, epoch_type, c.loops.epoch.count
+            c.loops.iter_.index + 1, epoch_type, c.loops.epoch.index + 1,
+            c.loops.iter_.count, epoch_type, c.loops.epoch.count
         )
 
         self.logln(info, debug_level)
@@ -329,10 +329,10 @@ class TrainResults(_Results):
         # end if
 
         info = "--- Batch {}.{}{}.{}{} / {}.{}{}.{}{}\n".format(
-            c.loops.iteration.index + 1,
+            c.loops.iter_.index + 1,
             epoch_type, c.loops.epoch.index + 1,
             batch_type, batch_index + 1,
-            c.loops.iteration.count,
+            c.loops.iter_.count,
             epoch_type, c.loops.epoch.count,
             batch_type, batch_count
         )
@@ -396,10 +396,10 @@ class TrainResults(_Results):
         # end if
 
         info = "--- Batch {}.{}.{}{} / {}.{}.{}{}\n".format(
-            c.loops.iteration.index + 1,
+            c.loops.iter_.index + 1,
             c.loops.epoch.index + 1,
             batch_type, batch_index + 1,
-            c.loops.iteration.count,
+            c.loops.iter_.count,
             c.loops.epoch.count,
             batch_type, batch_count
         )
@@ -466,10 +466,10 @@ class TrainResults(_Results):
         # end if
 
         info = "--- Batch {}.{}.{}{} / {}.{}.{}{}\n".format(
-            c.loops.iteration.index + 1,
+            c.loops.iter_.index + 1,
             c.loops.epoch.index + 1,
             batch_type, batch_index + 1,
-            c.loops.iteration.count,
+            c.loops.iter_.count,
             c.loops.epoch.count,
             batch_type, batch_count
         )
@@ -781,7 +781,7 @@ class TrainResults(_Results):
         timestamp = f"Time-{now.year:04}{now.month:02}{now.day:02}-{now.hour:02}{now.minute:02}{now.second:02}-"\
             f"{now.microsecond:06}"
 
-        disp_iter = c.loops.iteration.index + 1
+        disp_iter = c.loops.iter_.index + 1
         disp_epoch = c.loops.epoch.index + 1
         file_name = f"Iter-{disp_iter}-Epoch-{disp_epoch}-Trained-{timestamp}.jpg"
         loc = _join(self._gen_images_path, file_name)
@@ -821,7 +821,7 @@ class TrainResults(_Results):
         timestamp = f"Time-{now.year:04}{now.month:02}{now.day:02}-{now.hour:02}{now.minute:02}{now.second:02}-"\
             f"{now.microsecond:06}"
 
-        disp_iter = c.loops.iteration.index + 1
+        disp_iter = c.loops.iter_.index + 1
         disp_epoch = c.loops.epoch.index + 1
         file_name = f"Iter-{disp_iter}-Epoch-{disp_epoch}-Noised-{timestamp}.jpg"
         loc = _join(self._gen_images_path, file_name)
@@ -847,7 +847,7 @@ class TrainResults(_Results):
         """
         c: _TrainContext = self.find_context(context)
 
-        iteration = c.loops.iteration.index
+        iteration = c.loops.iter_.index
         epoch_count, epoch = c.loops.epoch.count, c.loops.epoch.index
 
         epoch_list = list(range(1, epoch_count * iteration + epoch + 2))
@@ -904,7 +904,7 @@ class TrainResults(_Results):
         """
         c: _TrainContext = self.find_context(context)
 
-        iteration = c.loops.iteration.index
+        iteration = c.loops.iter_.index
         epoch_count, epoch = c.loops.epoch.count, c.loops.epoch.index
 
         epoch_list = list(range(1, epoch_count * iteration + epoch + 2))

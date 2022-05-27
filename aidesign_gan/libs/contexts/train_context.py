@@ -85,7 +85,7 @@ class TrainContext(_Context):
     class Loops(_DotDict):
         """Loop controls."""
 
-        class IterationEpochBatch(_DotDict):
+        class IterEpochBatch(_DotDict):
             """Iteration epoch batch."""
 
             count = None
@@ -123,13 +123,13 @@ class TrainContext(_Context):
             delay = None
             """Delay in seconds."""
 
-        iteration = IterationEpochBatch()
+        iter_ = IterEpochBatch()
         """Iteration control."""
-        epoch = IterationEpochBatch()
+        epoch = IterEpochBatch()
         """Epoch control."""
-        train = IterationEpochBatch()
+        train = IterEpochBatch()
         """Training batch control."""
-        valid = IterationEpochBatch()
+        valid = IterEpochBatch()
         """Validation batch control."""
         rb = RollbackEarlystop()
         """Rollback control."""
@@ -562,8 +562,8 @@ class TrainContext(_Context):
 
         config = cconfig["training"]
 
-        iteration_count = config["iteration_count"]
-        epoch_count = config["epochs_per_iteration"]
+        iter_count = config["iter_count"]
+        epoch_count = config["epochs_per_iter"]
         max_rbs = config["max_rollbacks"]
         max_ess = config["max_early_stops"]
 
@@ -593,8 +593,8 @@ class TrainContext(_Context):
             retrial_delay = float(3)
         # end if
 
-        self.loops.iteration.count = iteration_count
-        self.loops.iteration.index = 0
+        self.loops.iter_.count = iter_count
+        self.loops.iter_.index = 0
 
         self.loops.epoch.count = epoch_count
         self.loops.epoch.index = 0

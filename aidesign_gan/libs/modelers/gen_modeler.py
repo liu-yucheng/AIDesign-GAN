@@ -243,18 +243,21 @@ class GenModeler(_Modeler):
         lgf: _Tensor = self.loss_func(dgzs2, fake_labels)
         # -
 
-        dx_diffs2 = dxs2.sub(real_labels)
-        dgz_diffs2 = fake_labels.sub(dgzs2)
+        logit_reals = _logit(real_labels, eps=self.eps)
+        logit_fakes = _logit(fake_labels, eps=self.eps)
 
-        logit_dx_diffs2 = _logit(dx_diffs2, eps=self.eps)
-        logit_dgz_diffs2 = _logit(dgz_diffs2, eps=self.eps)
+        logit_dxs2 = _logit(dxs2, eps=self.eps)
+        logit_dgzs2 = _logit(dgzs2, eps=self.eps)
 
-        logit_dx_diff2 = logit_dx_diffs2.mean()
-        logit_dgz_diff2 = logit_dgz_diffs2.mean()
+        clust_dx_diffs2 = logit_dxs2.sub(logit_reals)
+        clust_dgz_diffs2 = logit_fakes.sub(logit_dgzs2)
+
+        clust_dx_diff2 = clust_dx_diffs2.mean()
+        clust_dgz_diff2 = clust_dgz_diffs2.mean()
 
         # Find the cluster losses on real and fake
-        lgcr = 50 + 50 * _tanh(self.wmm_factor * logit_dx_diff2.mean())
-        lgcf = 50 + 50 * _tanh(self.wmm_factor * logit_dgz_diff2.mean())
+        lgcr = 50 + 50 * _tanh(self.wmm_factor * clust_dx_diff2)
+        lgcf = 50 + 50 * _tanh(self.wmm_factor * clust_dgz_diff2)
         # -
 
         # Find dx_factor, dgz_factor, cluster_dx_factor, cluster_dgz_factor
@@ -340,11 +343,11 @@ class GenModeler(_Modeler):
                 The loss of G on the fake batch.
                 Definitely on the CPUs.
             lgcr_item, : Loss(G, Cluster, X).
-                = 50 + 50 * tanh(wmm_factor * Mean( logit(dxs2 - real_labels) )).
+                = 50 + 50 * tanh(wmm_factor * Mean( logit(dxs2) - logit(real_labels)) )).
                 tanh'ed Wasserstein 1 metric mean based on module note reference [3].
                 Definitely on the CPUs.
             lgcf_item, : Loss(G, Cluster, G(Z)).
-                = 50 + 50 * tanh(wmm_factor * Mean( logit(fake_labels - dgzs2) )).
+                = 50 + 50 * tanh(wmm_factor * Mean( logit(fake_labels) - logit(dgzs2)) )).
                 tanh'ed Wasserstein 1 metric mean based on module note reference [3].
                 Definitely on the CPUs.
             lg_item: Loss(G).
@@ -521,11 +524,11 @@ class GenModeler(_Modeler):
                 The loss of G on the fake batch.
                 Definitely on the CPUs.
             lgcr_item, : Loss(G, Cluster, X).
-                = 50 + 50 * tanh(wmm_factor * Mean( logit(dxs2 - real_labels) )).
+                = 50 + 50 * tanh(wmm_factor * Mean( logit(dxs2) - logit(real_labels)) )).
                 tanh'ed Wasserstein 1 metric mean based on module note reference [3].
                 Definitely on the CPUs.
             lgcf_item, : Loss(G, Cluster, G(Z)).
-                = 50 + 50 * tanh(wmm_factor * Mean( logit(fake_labels - dgzs2) )).
+                = 50 + 50 * tanh(wmm_factor * Mean( logit(fake_labels) - logit(dgzs2)) )).
                 tanh'ed Wasserstein 1 metric mean based on module note reference [3].
                 Definitely on the CPUs.
             lg_item: Loss(G).

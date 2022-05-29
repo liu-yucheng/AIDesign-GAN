@@ -217,9 +217,80 @@ class GenModeler(_Modeler):
         loss_val = loss.item()
         return out_mean, loss_val
 
+    def _find_fair_losses(self, real_labels, fake_labels, dxs2, dgzs2):
+        """Finds the fairness losses.
+
+        For use in the train_fair and valid_fair methods.
+
+        Args:
+            real_labels: a batch of real labels
+            fake_labels: a batch of fake labels
+            dxs2: a batch of D(X) results
+            dgzs2: a batch of D(G(Z)) results
+
+        Returns:
+            results: A tuple that contains the following items.
+            (lgr, lgf, lgcr, lgcf, lg): The results items.
+                Appears as defined in the docstrings of train_fair and valid_fair methods.
+        """
+        real_labels: _Tensor = real_labels
+        fake_labels: _Tensor = fake_labels
+        dxs2: _Tensor = dxs2
+        dgzs2: _Tensor = dgzs2
+
+        # Find the classic losses on real and fake
+        lgr: _Tensor = self.loss_func(dxs2, real_labels)
+        lgf: _Tensor = self.loss_func(dgzs2, fake_labels)
+        # -
+
+        dx_diffs2 = dxs2.sub(real_labels)
+        dgz_diffs2 = fake_labels.sub(dgzs2)
+
+        logit_dx_diffs2 = _logit(dx_diffs2, eps=self.eps)
+        logit_dgz_diffs2 = _logit(dgz_diffs2, eps=self.eps)
+
+        logit_dx_diff2 = logit_dx_diffs2.mean()
+        logit_dgz_diff2 = logit_dgz_diffs2.mean()
+
+        # Find the cluster losses on real and fake
+        lgcr = 50 + 50 * _tanh(self.wmm_factor * logit_dx_diff2.mean())
+        lgcf = 50 + 50 * _tanh(self.wmm_factor * logit_dgz_diff2.mean())
+        # -
+
+        # Find dx_factor, dgz_factor, cluster_dx_factor, cluster_dgz_factor
+
+        if self.has_fairness:
+            config = self.config["fairness"]
+            fair_facs = _find_fairness_factors(config)
+        else:  # elif not self.has_fairness
+            fair_facs = _find_fairness_factors()
+        # end if
+
+        dx_fac, dgz_fac, clust_dx_fac, clust_dgz_fac = fair_facs
+
+        # End
+
+        # Find the weighted sum of losses
+        lg: _Tensor = \
+            dx_fac * lgr + \
+            dgz_fac * lgf + \
+            clust_dx_fac * lgcr + \
+            clust_dgz_fac * lgcf
+
+        lg.clamp_(0, 100)
+
+        results = (
+            lgr, lgf,
+            lgcr, lgcf,
+            lg
+        )
+
+        return results
+
     def train_fair(self, d_model, real_data, real_label, fake_noises, fake_label):
         """Fairly trains the model with the given args.
 
+        For use in the Fair Predictive Alternating SGD algorithm by liu-yucheng.
         Set self.model to training mode.
         Set d_model to training mode.
         For the real batch:
@@ -256,27 +327,27 @@ class GenModeler(_Modeler):
 
         Returns:
             results: A tuple that contains the following items.
-            dx2, : Mean(D(X)).
+            dx_item2, : Mean(D(X)).
                 The mean output of D on the real batch.
                 Definitely on the CPUs.
-            dgz2, : Mean( D(G(Z)) ).
+            dgz_item2, : Mean( D(G(Z)) ).
                 The mean output of D on the fake batch.
                 Definitely on the CPUs.
-            lgr, : Loss(G, X).
+            lgr_item, : Loss(G, X).
                 The loss of G on the real batch.
                 Definitely on the CPUs.
-            lgf, : Loss(G, G(Z)).
+            lgf_item, : Loss(G, G(Z)).
                 The loss of G on the fake batch.
                 Definitely on the CPUs.
-            lgcr, : Loss(G, Cluster, X).
-                = 50 + 50 * tanh(wmm_factor * Mean( logit(dxs2) )).
-                tanh'ed Wasserstein 1 metric mean based on README reference [3].
+            lgcr_item, : Loss(G, Cluster, X).
+                = 50 + 50 * tanh(wmm_factor * Mean( logit(dxs2 - real_labels) )).
+                tanh'ed Wasserstein 1 metric mean based on module note reference [3].
                 Definitely on the CPUs.
-            lgcf, : Loss(G, Cluster, G(Z)).
-                = 50 + 50 * tanh(wmm_factor * -1 * Mean( logit(dgzs2) )).
-                tanh'ed Wasserstein 1 metric mean based on README reference [3].
+            lgcf_item, : Loss(G, Cluster, G(Z)).
+                = 50 + 50 * tanh(wmm_factor * Mean( logit(fake_labels - dgzs2) )).
+                tanh'ed Wasserstein 1 metric mean based on module note reference [3].
                 Definitely on the CPUs.
-            lg: Loss(G).
+            lg_item: Loss(G).
                 = dx_factor * lgr + dgz_factor * lgf + cluster_dx_factor * lgcr + cluster_dgz_factor * lgcf.
                 Clamped to range [0, 100].
                 Definitely on the CPUs.
@@ -295,12 +366,14 @@ class GenModeler(_Modeler):
         self.model.train(True)
         d_model.train(True)
 
+        # Forward pass the real batch
         real_data, real_labels = _prep_batch_and_labels(real_data, real_label, self.device)
         dxs2 = d_model(real_data)
         dxs2: _Tensor = dxs2.view(-1)
         dxs2 = dxs2.float()
-        lgr: _Tensor = self.loss_func(dxs2, real_labels)
+        # -
 
+        # Forward pass the fake batch
         fake_noises = fake_noises.to(self.device)
         fake_batch = self.model(fake_noises)
         fake_batch: _Tensor = fake_batch.float()
@@ -308,30 +381,12 @@ class GenModeler(_Modeler):
         dgzs2 = d_model(fake_batch)
         dgzs2: _Tensor = dgzs2.view(-1)
         dgzs2 = dgzs2.float()
-        lgf: _Tensor = self.loss_func(dgzs2, fake_labels)
+        # -
 
-        logit_dxs2 = _logit(dxs2, eps=self.eps)
-        logit_dgzs2 = _logit(dgzs2, eps=self.eps)
-        lgcr = 50 + 50 * _tanh(self.wmm_factor * logit_dxs2.mean())
-        lgcf = 50 + 50 * _tanh(self.wmm_factor * -1 * logit_dgzs2.mean())
-
-        if self.has_fairness:
-            config = self.config["fairness"]
-            fairness_factors = _find_fairness_factors(config)
-        else:  # elif not self.has_fairness
-            fairness_factors = _find_fairness_factors()
-        # end if
-
-        dx_factor, dgz_factor, cluster_dx_factor, cluster_dgz_factor = fairness_factors
-
-        lg: _Tensor = \
-            dx_factor * lgr + \
-            dgz_factor * lgf + \
-            cluster_dx_factor * lgcr + \
-            cluster_dgz_factor * lgcf
-
-        lg.clamp_(0, 100)
+        # Find and backward propagate the classic and cluster losses
+        lgr, lgf, lgcr, lgcf, lg = self._find_fair_losses(real_labels, fake_labels, dxs2, dgzs2)
         lg.backward()
+        # -
 
         self.model.train(model_training)
         d_model.train(d_model_training)
@@ -339,22 +394,22 @@ class GenModeler(_Modeler):
         dx2 = dxs2.mean()
         dgz2 = dgzs2.mean()
 
-        dx2 = dx2.item()
-        dgz2 = dgz2.item()
-        lgr = lgr.item()
-        lgf = lgf.item()
-        lgcr = lgcr.item()
-        lgcf = lgcf.item()
-        lg = lg.item()
+        dx_item2 = dx2.item()
+        dgz_item2 = dgz2.item()
+        lgr_item = lgr.item()
+        lgf_item = lgf.item()
+        lgcr_item = lgcr.item()
+        lgcf_item = lgcf.item()
+        lg_item = lg.item()
 
-        result = (
-            dx2, dgz2,
-            lgr, lgf,
-            lgcr, lgcf,
-            lg
+        results = (
+            dx_item2, dgz_item2,
+            lgr_item, lgf_item,
+            lgcr_item, lgcf_item,
+            lg_item
         )
 
-        return result
+        return results
 
     def valid(self, d_model, noises, label):
         """Validates the model with the given args.
@@ -420,6 +475,7 @@ class GenModeler(_Modeler):
     def valid_fair(self, d_model, real_data, real_label, fake_noises, fake_label):
         """Fairly validates the model with the given args.
 
+        For use in the Fair Predictive Alternating SGD algorithm by liu-yucheng.
         Set self.model and d_model to evaluation mode.
         For the real batch:
             Forward pass the batch to d_model.
@@ -451,29 +507,30 @@ class GenModeler(_Modeler):
                 Definitely on the CPUs.
 
         Returns:
-            dx2, : Mean(D(X)).
-                The output mean of D on real.
+            results: A tuple that contains the following items.
+            dx_item2, : Mean(D(X)).
+                The mean output of D on the real batch.
                 Definitely on the CPUs.
-            dgz2, : Mean( D(G(Z)) ).
-                The output mean of D on fake.
+            dgz_item2, : Mean( D(G(Z)) ).
+                The mean output of D on the fake batch.
                 Definitely on the CPUs.
-            lgr, : Loss(G, X).
-                The loss of G on real.
+            lgr_item, : Loss(G, X).
+                The loss of G on the real batch.
                 Definitely on the CPUs.
-            lgf, : Loss(G, G(Z)).
-                The loss of G on fake.
+            lgf_item, : Loss(G, G(Z)).
+                The loss of G on the fake batch.
                 Definitely on the CPUs.
-            lgcr, : Loss(G, Cluster, X).
-                = 50 + 50 * tanh(wmm_factor * Mean( logit(dxs2) )).
-                tanh'ed Wasserstein 1 metric mean based on README reference [3].
+            lgcr_item, : Loss(G, Cluster, X).
+                = 50 + 50 * tanh(wmm_factor * Mean( logit(dxs2 - real_labels) )).
+                tanh'ed Wasserstein 1 metric mean based on module note reference [3].
                 Definitely on the CPUs.
-            lgcf, : Loss(G, Cluster, G(Z)).
-                = 50 + 50 * tanh(wmm_factor * -1 * Mean( logit(dgzs2) )).
-                tanh'ed Wasserstein 1 metric mean based on README reference [3].
+            lgcf_item, : Loss(G, Cluster, G(Z)).
+                = 50 + 50 * tanh(wmm_factor * Mean( logit(fake_labels - dgzs2) )).
+                tanh'ed Wasserstein 1 metric mean based on module note reference [3].
                 Definitely on the CPUs.
-            lg: Loss(G).
-                = dx_factor * lgr + dgz_factor * lgf + cluster_dx_factor * lgcr + cluster_dgz_factor * lgcf
-                clamped to range [0, 100].
+            lg_item: Loss(G).
+                = dx_factor * lgr + dgz_factor * lgf + cluster_dx_factor * lgcr + cluster_dgz_factor * lgcf.
+                Clamped to range [0, 100].
                 Definitely on the CPUs.
         """
         d_model: _Module = d_model
@@ -484,6 +541,8 @@ class GenModeler(_Modeler):
         self.model.train(False)
         d_model.train(False)
 
+        # Forward pass the real batch
+
         real_data, real_labels = _prep_batch_and_labels(real_data, real_label, self.device)
 
         with _no_grad():
@@ -491,7 +550,9 @@ class GenModeler(_Modeler):
             dxs2: _Tensor = dxs2.detach().view(-1)
 
         dxs2 = dxs2.float()
-        lgr: _Tensor = self.loss_func(dxs2, real_labels)
+
+        # End
+        # Forward pass the fake batch
 
         fake_noises = fake_noises.to(self.device)
 
@@ -507,30 +568,11 @@ class GenModeler(_Modeler):
             dgzs2: _Tensor = dgzs2.detach().view(-1)
 
         dgzs2 = dgzs2.float()
-        lgf: _Tensor = self.loss_func(dgzs2, fake_labels)
 
-        logit_dxs2 = _logit(dxs2, eps=self.eps)
-        logit_dgzs2 = _logit(dgzs2, eps=self.eps)
+        # End
 
-        lgcr = 50 + 50 * _tanh(self.wmm_factor * logit_dxs2.mean())
-        lgcf = 50 + 50 * _tanh(self.wmm_factor * -1 * logit_dgzs2.mean())
-
-        if self.has_fairness:
-            config = self.config["fairness"]
-            fairness_factors = _find_fairness_factors(config)
-        else:  # elif not self.has_fairness
-            fairness_factors = _find_fairness_factors()
-        # end if
-
-        dx_factor, dgz_factor, cluster_dx_factor, cluster_dgz_factor = fairness_factors
-
-        lg: _Tensor = \
-            dx_factor * lgr + \
-            dgz_factor * lgf + \
-            cluster_dx_factor * lgcr + \
-            cluster_dgz_factor * lgcf
-
-        lg.clamp_(0, 100)
+        # Find the classic and cluster losses
+        lgr, lgf, lgcr, lgcf, lg = self._find_fair_losses(real_labels, fake_labels, dxs2, dgzs2)
 
         self.model.train(model_training)
         d_model.train(d_model_training)
@@ -538,22 +580,22 @@ class GenModeler(_Modeler):
         dx2 = dxs2.mean()
         dgz2 = dgzs2.mean()
 
-        dx2 = dx2.item()
-        dgz2 = dgz2.item()
-        lgr = lgr.item()
-        lgf = lgf.item()
-        lgcr = lgcr.item()
-        lgcf = lgcf.item()
-        lg = lg.item()
+        dx_item2 = dx2.item()
+        dgz_item2 = dgz2.item()
+        lgr_item = lgr.item()
+        lgf_item = lgf.item()
+        lgcr_item = lgcr.item()
+        lgcf_item = lgcf.item()
+        lg_item = lg.item()
 
-        result = (
-            dx2, dgz2,
-            lgr, lgf,
-            lgcr, lgcf,
-            lg
+        results = (
+            dx_item2, dgz_item2,
+            lgr_item, lgf_item,
+            lgcr_item, lgcf_item,
+            lg_item
         )
 
-        return result
+        return results
 
     def test(self, noises):
         """Tests/Uses the model with the given args.

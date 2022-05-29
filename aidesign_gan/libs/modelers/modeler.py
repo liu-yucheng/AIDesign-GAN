@@ -5,6 +5,7 @@
 # First added by username: liu-yucheng
 # Last updated by username: liu-yucheng
 
+import torch
 import typing
 from os import path as ospath
 from torch import nn
@@ -12,6 +13,8 @@ from torch import optim
 
 from aidesign_gan.libs import optims as libs_optims
 from aidesign_gan.libs.modelers import _helpers
+
+# Aliases
 
 _Adam = optim.Adam
 _Callable = typing.Callable
@@ -27,6 +30,8 @@ _save_model = _helpers.save_model
 _save_optim = _helpers.save_optim
 _setup_pred_adam = _helpers.setup_pred_adam
 _Union = typing.Union
+
+# End
 
 
 class Modeler:
@@ -54,7 +59,7 @@ class Modeler:
         self.gpu_count = gpu_count
         """Number of GPUs to use, >= 1 if GPUs are available."""
         self.loss_func = loss_func
-        """Loss function."""
+        """Loss function used to find the classic losses."""
         self.model: _Union[_Module, None] = None
         """Model, a pytorch nn module, definitely runs on GPUs if they are available."""
         self.optim: _Union[_PredAdam, _Adam, None] = None

@@ -161,8 +161,10 @@ Configuration item descriptions are listed below.
   - `fairness`. Fair loss factor configuration. Type `dict`.
     - `dx_factor`. D(X) factor. Type `float`.
     - `dgz_factor`. D(G(Z)) factor. Type `float`.
-    - `cluster_dx_factor`. D(X, Cluster) factor. Type `float`.
-    - `cluster_dgz_factor`. D(G(Z), Cluster) factor. Type `float`.
+    - `cluster_dx_factor`. Cluster D(X) factor. Type `float`.
+    - `cluster_dgz_factor`. Cluster D(G(Z)) factor. Type `float`.
+    - `cluster_dx_overact_slope`. Cluster D(X) overact slope. Type `float`.
+    - `cluster_dgz_overact_slope`. Cluster D(G(Z)) overact slope. Type `float`.
 
 # Result Subfolders And Files
 

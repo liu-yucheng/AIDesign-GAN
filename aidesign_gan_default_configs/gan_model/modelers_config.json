@@ -40,7 +40,9 @@
             "dx_factor": 0.5,
             "dgz_factor": 0.5,
             "cluster_dx_factor": 0,
-            "cluster_dgz_factor": 0
+            "cluster_dgz_factor": 0,
+            "cluster_dx_overact_slope": 1,
+            "cluster_dgz_overact_slope": 1
         }
     },
     "generator": {
@@ -86,7 +88,9 @@
             "dx_factor": 0.5,
             "dgz_factor": 0.5,
             "cluster_dx_factor": 0,
-            "cluster_dgz_factor": 0
+            "cluster_dgz_factor": 0,
+            "cluster_dx_overact_slope": 1,
+            "cluster_dgz_overact_slope": 1
         }
     }
 }

@@ -195,6 +195,25 @@ class DiscModeler(_Modeler):
         ldf: _Tensor = self.loss_func(dgzs, fake_labels)
         # -
 
+        # Find dx_factor, dgz_factor,
+        #   cluster_dx_factor, cluster_dgz_factor,
+        #   cluster_dx_overact_slope, cluster_dgz_overact_slope
+
+        if self.has_fairness:
+            config = self.config["fairness"]
+            fair_facs = _find_fairness_factors(config)
+        else:  # elif not self.has_fairness
+            fair_facs = _find_fairness_factors()
+        # end if
+
+        (
+            dx_fac, dgz_fac,
+            clust_dx_fac, clust_dgz_fac,
+            clust_dx_oa_slope, clust_dgz_oa_slope
+        ) = fair_facs
+
+        # End
+
         logit_reals = _logit(real_labels, eps=self.eps)
         logit_fakes = _logit(fake_labels, eps=self.eps)
 
@@ -207,23 +226,22 @@ class DiscModeler(_Modeler):
         clust_dx_diff = clust_dx_diffs.mean()
         clust_dgz_diff = clust_dgz_diffs.mean()
 
+        # Handle overacting
+
+        if clust_dx_diff.item() <= 0:
+            # Overacting, apply slope
+            clust_dx_diff.mul_(clust_dx_oa_slope)
+
+        if clust_dgz_diff.item() <= 0:
+            # Overacting, apply slope
+            clust_dgz_diff.mul_(clust_dgz_oa_slope)
+
+        # End
+
         # Find the cluster losses on real and fake
         ldcr = 50 + 50 * _tanh(self.wmm_factor * clust_dx_diff)
         ldcf = 50 + 50 * _tanh(self.wmm_factor * clust_dgz_diff)
         # -
-
-        # Find dx_factor, dgz_factor, cluster_dx_factor, cluster_dgz_factor
-
-        if self.has_fairness:
-            config = self.config["fairness"]
-            fair_facs = _find_fairness_factors(config)
-        else:  # elif not self.has_fairness
-            fair_facs = _find_fairness_factors()
-        # end if
-
-        dx_fac, dgz_fac, clust_dx_fac, clust_dgz_fac = fair_facs
-
-        # End
 
         # Find the weighted sum of losses
         ld: _Tensor = \

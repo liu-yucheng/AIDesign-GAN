@@ -347,21 +347,46 @@ def find_fairness_factors(config=None):
 
     Returns:
         results: a tuple that contains the following items
-        dx_factor, : D(X) factor
-        dgz_factor, : D(G(Z)) factor
-        cluster_dx_factor: cluster D(X) factor
-        cluster_dgz_factor: cluster D(G(Z)) factor
+        dx_fac, : D(X) factor
+        dgz_fac, : D(G(Z)) factor
+        clust_dx_fac: cluster D(X) factor
+        clust_dgz_fac: cluster D(G(Z)) factor
+        clust_dx_oa_slope: cluster D(X) overact slope
+        clust_dgz_oa_slope: cluster D(G(Z)) overact slope
     """
     if config is not None:
-        dx_factor = float(config["dx_factor"])
-        dgz_factor = float(config["dgz_factor"])
-        cluster_dx_factor = float(config["cluster_dx_factor"])
-        cluster_dgz_factor = float(config["cluster_dgz_factor"])
+        dx_fac = float(config["dx_factor"])
+        dgz_fac = float(config["dgz_factor"])
+        clust_dx_fac = float(config["cluster_dx_factor"])
+        clust_dgz_fac = float(config["cluster_dgz_factor"])
+
+        clust_dx_oa_slope_key = "cluster_dx_overact_slope"
+
+        if clust_dx_oa_slope_key in config:
+            clust_dx_oa_slope = float(config[clust_dx_oa_slope_key])
+        else:
+            clust_dx_oa_slope = float(1)
+        # end if
+
+        clust_dgz_oa_slope_key = "cluster_dgz_overact_slope"
+
+        if clust_dgz_oa_slope_key in config:
+            clust_dgz_oa_slope = float(config[clust_dgz_oa_slope_key])
+        else:
+            clust_dgz_oa_slope = float(1)
+        # end if
     else:
-        dx_factor = 0.5
-        dgz_factor = 0.5
-        cluster_dx_factor = float(0)
-        cluster_dgz_factor = float(0)
+        dx_fac = 0.5
+        dgz_fac = 0.5
+        clust_dx_fac = float(0)
+        clust_dgz_fac = float(0)
+        clust_dx_oa_slope = float(1)
+        clust_dgz_oa_slope = float(1)
     # end if
 
-    return dx_factor, dgz_factor, cluster_dx_factor, cluster_dgz_factor
+    results = (
+        dx_fac, dgz_fac,
+        clust_dx_fac, clust_dgz_fac,
+        clust_dx_oa_slope, clust_dgz_oa_slope
+    )
+    return results

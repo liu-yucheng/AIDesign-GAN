@@ -344,6 +344,13 @@ class ModelersConfig(Config):
             cls._verify_float(fair, "cluster_dx_factor")
             cls._verify_float(fair, "cluster_dgz_factor")
 
+            if "cluster_dx_overact_slope" in fair:
+                cls._verify_float(fair, "cluster_dx_overact_slope")
+
+            if "cluster_dgz_overact_slope" in fair:
+                cls._verify_float(fair, "cluster_dgz_overact_slope")
+        # end if
+
     @classmethod
     def verify(cls, from_dict):
         from_dict = super().verify(from_dict)

@@ -180,32 +180,60 @@ class TrainResults(_Results):
         c: _TrainContext = self.find_context(context)
 
         df_config = c.mods.d.config["fairness"]
-        d_dx_factor = df_config["dx_factor"]
-        d_dgz_factor = df_config["dgz_factor"]
-        d_cluster_dx_factor = df_config["cluster_dx_factor"]
-        d_cluster_dgz_factor = df_config["cluster_dgz_factor"]
+        d_dx_fac = df_config["dx_factor"]
+        d_dgz_fac = df_config["dgz_factor"]
+        d_clust_dx_fac = df_config["cluster_dx_factor"]
+        d_clust_dgz_fac = df_config["cluster_dgz_factor"]
+
+        if "cluster_dx_overact_slope" in df_config:
+            d_clust_dx_oa_slope = df_config["cluster_dx_overact_slope"]
+        else:
+            d_clust_dx_oa_slope = float(1)
+        # end if
+
+        if "cluster_dgz_overact_slope" in df_config:
+            d_clust_dgz_oa_slope = df_config["cluster_dgz_overact_slope"]
+        else:
+            d_clust_dgz_oa_slope = float(1)
+        # end if
 
         gf_config = c.mods.g.config["fairness"]
-        g_dx_factor = gf_config["dx_factor"]
-        g_dgz_factor = gf_config["dgz_factor"]
-        g_cluster_dx_factor = gf_config["cluster_dx_factor"]
-        g_cluster_dgz_factor = gf_config["cluster_dgz_factor"]
+        g_dx_fac = gf_config["dx_factor"]
+        g_dgz_fac = gf_config["dgz_factor"]
+        g_clust_dx_fac = gf_config["cluster_dx_factor"]
+        g_clust_dgz_fac = gf_config["cluster_dgz_factor"]
+
+        if "cluster_dx_overact_slope" in gf_config:
+            g_clust_dx_oa_slope = gf_config["cluster_dx_overact_slope"]
+        else:
+            g_clust_dx_oa_slope = float(1)
+        # end if
+
+        if "cluster_dgz_overact_slope" in gf_config:
+            g_clust_dgz_oa_slope = gf_config["cluster_dgz_overact_slope"]
+        else:
+            g_clust_dgz_oa_slope = float(1)
+        # end if
 
         info = str(
             "- Fairness\n"
             "-- Discriminator\n"
             "D(X) factor: {:g}  D(G(Z)) factor: {:g}\n"
             "Cluster D(X) factor: {:g}  Cluster D(G(Z)) factor: {:g}\n"
+            "Cluster D(X) overact slope: {:g}  Cluster D(G(Z)) overact slope: {:g}\n"
             "-- Generator\n"
             "D(X) factor: {:g}  D(G(Z)) factor: {:g}\n"
             "Cluster D(X) factor: {:g}  Cluster D(G(Z)) factor: {:g}\n"
+            "Cluster D(X) overact slope: {:g}  Cluster D(G(Z)) overact slope: {:g}\n"
             "--\n"
             "-"
         ).format(
-            d_dx_factor, d_dgz_factor,
-            d_cluster_dx_factor, d_cluster_dgz_factor,
-            g_dx_factor, g_dgz_factor,
-            g_cluster_dx_factor, g_cluster_dgz_factor
+            d_dx_fac, d_dgz_fac,
+            d_clust_dx_fac, d_clust_dgz_fac,
+            d_clust_dx_oa_slope, d_clust_dgz_oa_slope,
+            g_dx_fac, g_dgz_fac,
+            g_clust_dx_fac, g_clust_dgz_fac,
+            g_clust_dx_oa_slope, g_clust_dgz_oa_slope
         )
 
         self.logln(info, debug_level)

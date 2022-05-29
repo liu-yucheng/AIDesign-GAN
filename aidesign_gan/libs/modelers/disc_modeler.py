@@ -19,6 +19,8 @@ from aidesign_gan.libs import structs
 from aidesign_gan.libs.modelers import _helpers
 from aidesign_gan.libs.modelers import modeler
 
+# Aliases
+
 _DiscStruct = structs.DiscStruct
 _find_fairness_factors = _helpers.find_fairness_factors
 _join = ospath.join
@@ -30,6 +32,8 @@ _paral_model = _helpers.paral_model
 _prep_batch_and_labels = _helpers.prep_batch_and_labels
 _tanh = torch.tanh
 _Tensor = torch.Tensor
+
+# End
 
 
 class DiscModeler(_Modeler):
@@ -46,7 +50,7 @@ class DiscModeler(_Modeler):
             gpu_count: Number of GPUs to use.
                 0 means no GPU available.
                 >= 1 means some GPUs available.
-            loss_func: a loss function
+            loss_func: a loss function used to find the classic losses
             train: Training mode flag.
                 Controls whether to setup the optimizer.
         """
@@ -165,9 +169,101 @@ class DiscModeler(_Modeler):
         loss_val = loss.item()
         return out_mean, loss_val
 
+    def _find_fair_losses(self, real_labels, fake_labels, dxs, dgzs):
+        """Finds the fairness losses.
+
+        For use in the train_fair and valid_fair methods.
+
+        Args:
+            real_labels: a batch of real labels
+            fake_labels: a batch of fake labels
+            dxs: a batch of D(X) results
+            dgzs: a batch of D(G(Z)) results
+
+        Returns:
+            results: A tuple that contains the following items.
+            (ldr, ldf, ldcr, ldcf, ld): The results items.
+                Appears as defined in the docstrings of train_fair and valid_fair methods.
+        """
+        real_labels: _Tensor = real_labels
+        fake_labels: _Tensor = fake_labels
+        dxs: _Tensor = dxs
+        dgzs: _Tensor = dgzs
+
+        # Find the classic losses on real and fake
+        ldr: _Tensor = self.loss_func(dxs, real_labels)
+        ldf: _Tensor = self.loss_func(dgzs, fake_labels)
+        # -
+
+        # Find dx_factor, dgz_factor,
+        #   cluster_dx_factor, cluster_dgz_factor,
+        #   cluster_dx_overact_slope, cluster_dgz_overact_slope
+
+        if self.has_fairness:
+            config = self.config["fairness"]
+            fair_facs = _find_fairness_factors(config)
+        else:  # elif not self.has_fairness
+            fair_facs = _find_fairness_factors()
+        # end if
+
+        (
+            dx_fac, dgz_fac,
+            clust_dx_fac, clust_dgz_fac,
+            clust_dx_oa_slope, clust_dgz_oa_slope
+        ) = fair_facs
+
+        # End
+
+        logit_reals = _logit(real_labels, eps=self.eps)
+        logit_fakes = _logit(fake_labels, eps=self.eps)
+
+        logit_dxs = _logit(dxs, eps=self.eps)
+        logit_dgzs = _logit(dgzs, eps=self.eps)
+
+        clust_dx_diffs = logit_reals.sub(logit_dxs)
+        clust_dgz_diffs = logit_dgzs.sub(logit_fakes)
+
+        clust_dx_diff = clust_dx_diffs.mean()
+        clust_dgz_diff = clust_dgz_diffs.mean()
+
+        # Handle overacting
+
+        if clust_dx_diff.item() <= 0:
+            # Overacting, apply slope
+            clust_dx_diff.mul_(clust_dx_oa_slope)
+
+        if clust_dgz_diff.item() <= 0:
+            # Overacting, apply slope
+            clust_dgz_diff.mul_(clust_dgz_oa_slope)
+
+        # End
+
+        # Find the cluster losses on real and fake
+        ldcr = 50 + 50 * _tanh(self.wmm_factor * clust_dx_diff)
+        ldcf = 50 + 50 * _tanh(self.wmm_factor * clust_dgz_diff)
+        # -
+
+        # Find the weighted sum of losses
+        ld: _Tensor = \
+            dx_fac * ldr + \
+            dgz_fac * ldf + \
+            clust_dx_fac * ldcr + \
+            clust_dgz_fac * ldcf
+
+        ld.clamp_(0, 100)
+
+        results = (
+            ldr, ldf,
+            ldcr, ldcf,
+            ld
+        )
+
+        return results
+
     def train_fair(self, g_model, real_data, real_label, fake_noises, fake_label):
         """Fairly trains the model with the given args.
 
+        For use in the Fair Predictive Alternating SGD algorithm by liu-yucheng.
         Set self.model to training mode.
         Set g_model to training mode.
         For the real batch:
@@ -204,29 +300,36 @@ class DiscModeler(_Modeler):
 
         Returns:
             results: A tuple that contains the following items.
-            dx, : Mean(D(X)).
+            dx_item, : Mean(D(X)).
                 The output mean of D on the real batch.
+                Converted to Python builtin float.
                 Definitely on the CPUs.
-            dgz, : Mean( D(G(Z)) ).
+            dgz_item, : Mean( D(G(Z)) ).
                 The output mean of D on the fake batch.
+                Converted to Python builtin float.
                 Definitely on the CPUs.
-            ldr, : Loss(D, X).
+            ldr_item, : Loss(D, X).
                 The loss of D on the real batch.
+                Converted to Python builtin float.
                 Definitely on the CPUs.
-            ldf, : Loss(D, G(Z)).
+            ldf_item, : Loss(D, G(Z)).
                 The loss of D on the fake batch.
+                Converted to Python builtin float.
                 Definitely on the CPUs.
-            ldcr, : Loss(D, Cluster, X).
-                = 50 + 50 * tanh(wmm_factor * -1 * Mean( logit(dxs) )).
-                tanh'ed Wasserstein 1 metric mean based on README reference [3].
+            ldcr_item, : Loss(D, Cluster, X).
+                = 50 + 50 * tanh(wmm_factor * Mean( logit(real_labels) - logit(dxs) )).
+                tanh'ed Wasserstein 1 metric mean based on module note reference [3].
+                Converted to Python builtin float.
                 Definitely on the CPUs.
-            ldcf, : Loss(D, Cluster, G(Z)).
-                = 50 + 50 * tanh(wmm_factor * Mean( logit(dgzs) )).
-                tanh'ed Wasserstein 1 metric mean based on README reference [3].
+            ldcf_item, : Loss(D, Cluster, G(Z)).
+                = 50 + 50 * tanh(wmm_factor * Mean( logit(dgzs) - logit(fake_labels) )).
+                tanh'ed Wasserstein 1 metric mean based on module note reference [3].
+                Converted to Python builtin float.
                 Definitely on the CPUs.
-            ld: Loss(D).
+            ld_item: Loss(D).
                 = dx_factor * ldr + dgz_factor * ldf + cluster_dx_factor * ldcr + cluster_dgz_factor * ldcf.
                 Clamped to range [0, 100].
+                Converted to Python builtin float.
                 Definitely on the CPUs.
 
         Raises:
@@ -243,12 +346,14 @@ class DiscModeler(_Modeler):
         self.model.train(True)
         g_model.train(True)
 
+        # Forward pass the real batch
         real_data, real_labels = _prep_batch_and_labels(real_data, real_label, self.device)
         dxs = self.model(real_data)
         dxs: _Tensor = dxs.view(-1)
         dxs = dxs.float()
-        ldr: _Tensor = self.loss_func(dxs, real_labels)
+        # -
 
+        # Forward pass the fake batch
         fake_noises = fake_noises.to(self.device)
         fake_batch: _Tensor = g_model(fake_noises)
         fake_batch = fake_batch.float()
@@ -256,30 +361,12 @@ class DiscModeler(_Modeler):
         dgzs = self.model(fake_batch)
         dgzs: _Tensor = dgzs.view(-1)
         dgzs = dgzs.float()
-        ldf: _Tensor = self.loss_func(dgzs, fake_labels)
+        # -
 
-        logit_dxs = _logit(dxs, eps=self.eps)
-        logit_dgzs = _logit(dgzs, eps=self.eps)
-        ldcr = 50 + 50 * _tanh(self.wmm_factor * -1 * logit_dxs.mean())
-        ldcf = 50 + 50 * _tanh(self.wmm_factor * logit_dgzs.mean())
-
-        if self.has_fairness:
-            config = self.config["fairness"]
-            fairness_factors = _find_fairness_factors(config)
-        else:  # elif not self.has_fairness
-            fairness_factors = _find_fairness_factors()
-        # end if
-
-        dx_factor, dgz_factor, cluster_dx_factor, cluster_dgz_factor = fairness_factors
-
-        ld: _Tensor = \
-            dx_factor * ldr + \
-            dgz_factor * ldf + \
-            cluster_dx_factor * ldcr + \
-            cluster_dgz_factor * ldcf
-
-        ld.clamp_(0, 100)
+        # Find and backward propagate the classic and cluster losses
+        ldr, ldf, ldcr, ldcf, ld = self._find_fair_losses(real_labels, fake_labels, dxs, dgzs)
         ld.backward()
+        # -
 
         self.model.train(model_training)
         g_model.train(g_model_training)
@@ -287,22 +374,22 @@ class DiscModeler(_Modeler):
         dx = dxs.mean()
         dgz = dgzs.mean()
 
-        dx = dx.item()
-        dgz = dgz.item()
-        ldr = ldr.item()
-        ldf = ldf.item()
-        ldcr = ldcr.item()
-        ldcf = ldcf.item()
-        ld = ld.item()
+        dx_item = dx.item()
+        dgz_item = dgz.item()
+        ldr_item = ldr.item()
+        ldf_item = ldf.item()
+        ldcr_item = ldcr.item()
+        ldcf_item = ldcf.item()
+        ld_item = ld.item()
 
-        result = (
-            dx, dgz,
-            ldr, ldf,
-            ldcr, ldcf,
-            ld
+        results = (
+            dx_item, dgz_item,
+            ldr_item, ldf_item,
+            ldcr_item, ldcf_item,
+            ld_item
         )
 
-        return result
+        return results
 
     def valid(self, data, label):
         """Validates the model with a batch of data and a target label.
@@ -349,6 +436,7 @@ class DiscModeler(_Modeler):
     def valid_fair(self, g_model, real_data, real_label, fake_noises, fake_label):
         """Fairly validates the model with the given args.
 
+        For use in the Fair Predictive Alternating SGD algorithm by liu-yucheng.
         Set self.model and g_model to evaluation mode.
         For the real batch:
             Forward pass the batch to self.model.
@@ -380,30 +468,37 @@ class DiscModeler(_Modeler):
                 Definitely on the CPUs.
 
         Returns:
-            result: A tuple that contains the following items.
-            dx, : Mean(D(X)).
-                The output mean of D on real.
+            results: A tuple that contains the following items.
+            dx_item, : Mean(D(X)).
+                The output mean of D on the real batch.
+                Converted to Python builtin float.
                 Definitely on the CPUs.
-            dgz, : Mean( D(G(Z)) ).
-                The output mean of D on fake.
+            dgz_item, : Mean( D(G(Z)) ).
+                The output mean of D on the fake batch.
+                Converted to Python builtin float.
                 Definitely on the CPUs.
-            ldr, : Loss(D, X).
-                The loss of D on real.
+            ldr_item, : Loss(D, X).
+                The loss of D on the real batch.
+                Converted to Python builtin float.
                 Definitely on the CPUs.
-            ldf, : Loss(D, G(Z)).
-                The loss of D on fake.
+            ldf_item, : Loss(D, G(Z)).
+                The loss of D on the fake batch.
+                Converted to Python builtin float.
                 Definitely on the CPUs.
-            ldcr, : Loss(D, Cluster, X).
-                = 50 + 50 * tanh(wmm_factor * -1 * Mean( logit(dxs) )).
-                tanh'ed Wasserstein 1 metric mean based on README reference [3].
+            ldcr_item, : Loss(D, Cluster, X).
+                = 50 + 50 * tanh(wmm_factor * Mean( logit(real_labels) - logit(dxs) )).
+                tanh'ed Wasserstein 1 metric mean based on module note reference [3].
+                Converted to Python builtin float.
                 Definitely on the CPUs.
-            ldcf, : Loss(D, Cluster, G(Z)).
-                = 50 + 50 * tanh(wmm_factor * Mean( logit(dgzs) )).
-                tanh'ed Wasserstein 1 metric mean based on README reference [3].
+            ldcf_item, : Loss(D, Cluster, G(Z)).
+                = 50 + 50 * tanh(wmm_factor * Mean( logit(dgzs) - logit(fake_labels) )).
+                tanh'ed Wasserstein 1 metric mean based on module note reference [3].
+                Converted to Python builtin float.
                 Definitely on the CPUs.
-            ld: Loss(D).
+            ld_item: Loss(D).
                 = dx_factor * ldr + dgz_factor * ldf + cluster_dx_factor * ldcr + cluster_dgz_factor * ldcf.
                 Clamped to range [0, 100].
+                Converted to Python builtin float.
                 Definitely on the CPUs.
         """
         g_model: _Module = g_model
@@ -414,6 +509,8 @@ class DiscModeler(_Modeler):
         self.model.train(False)
         g_model.train(False)
 
+        # Forward pass the real batch
+
         real_data, real_labels = _prep_batch_and_labels(real_data, real_label, self.device)
 
         with _no_grad():
@@ -421,13 +518,15 @@ class DiscModeler(_Modeler):
             dxs: _Tensor = dxs.detach().view(-1)
 
         dxs = dxs.float()
-        ldr: _Tensor = self.loss_func(dxs, real_labels)
 
         fake_noises = fake_noises.to(self.device)
 
         with _no_grad():
             fake_batch = g_model(fake_noises)
             fake_batch: _Tensor = fake_batch.detach()
+
+        # End
+        # Forward pass the fake batch
 
         fake_batch = fake_batch.float()
         fake_batch, fake_labels = _prep_batch_and_labels(fake_batch, fake_label, self.device)
@@ -437,29 +536,11 @@ class DiscModeler(_Modeler):
             dgzs: _Tensor = dgzs.detach().view(-1)
 
         dgzs = dgzs.float()
-        ldf: _Tensor = self.loss_func(dgzs, fake_labels)
 
-        logit_dxs = _logit(dxs, eps=self.eps)
-        logit_dgzs = _logit(dgzs, eps=self.eps)
-        ldcr = 50 + 50 * _tanh(self.wmm_factor * -1 * logit_dxs.mean())
-        ldcf = 50 + 50 * _tanh(self.wmm_factor * logit_dgzs.mean())
+        # End
 
-        if self.has_fairness:
-            config = self.config["fairness"]
-            fairness_factors = _find_fairness_factors(config)
-        else:  # elif not self.has_fairness
-            fairness_factors = _find_fairness_factors()
-        # end if
-
-        dx_factor, dgz_factor, cluster_dx_factor, cluster_dgz_factor = fairness_factors
-
-        ld: _Tensor = \
-            dx_factor * ldr + \
-            dgz_factor * ldf + \
-            cluster_dx_factor * ldcr + \
-            cluster_dgz_factor * ldcf
-
-        ld.clamp_(0, 100)
+        # Find the classic and cluster losses
+        ldr, ldf, ldcr, ldcf, ld = self._find_fair_losses(real_labels, fake_labels, dxs, dgzs)
 
         self.model.train(model_training)
         g_model.train(g_model_training)
@@ -467,22 +548,22 @@ class DiscModeler(_Modeler):
         dx = dxs.mean()
         dgz = dgzs.mean()
 
-        dx = dx.item()
-        dgz = dgz.item()
-        ldr = ldr.item()
-        ldf = ldf.item()
-        ldcr = ldcr.item()
-        ldcf = ldcf.item()
-        ld = ld.item()
+        dx_item = dx.item()
+        dgz_item = dgz.item()
+        ldr_item = ldr.item()
+        ldf_item = ldf.item()
+        ldcr_item = ldcr.item()
+        ldcf_item = ldcf.item()
+        ld_item = ld.item()
 
-        result = (
-            dx, dgz,
-            ldr, ldf,
-            ldcr, ldcf,
-            ld
+        results = (
+            dx_item, dgz_item,
+            ldr_item, ldf_item,
+            ldcr_item, ldcf_item,
+            ld_item
         )
 
-        return result
+        return results
 
     def test(self, data):
         """Tests/Uses the model with a batch of data.

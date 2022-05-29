@@ -5,6 +5,7 @@
 # First added by username: liu-yucheng
 # Last updated by username: liu-yucheng
 
+import torch
 import typing
 from os import path as ospath
 from torch import nn
@@ -12,6 +13,8 @@ from torch import optim
 
 from aidesign_gan.libs import optims as libs_optims
 from aidesign_gan.libs.modelers import _helpers
+
+# Aliases
 
 _Adam = optim.Adam
 _Callable = typing.Callable
@@ -27,6 +30,8 @@ _save_model = _helpers.save_model
 _save_optim = _helpers.save_optim
 _setup_pred_adam = _helpers.setup_pred_adam
 _Union = typing.Union
+
+# End
 
 
 class Modeler:
@@ -54,7 +59,7 @@ class Modeler:
         self.gpu_count = gpu_count
         """Number of GPUs to use, >= 1 if GPUs are available."""
         self.loss_func = loss_func
-        """Loss function."""
+        """Loss function used to find the classic losses."""
         self.model: _Union[_Module, None] = None
         """Model, a pytorch nn module, definitely runs on GPUs if they are available."""
         self.optim: _Union[_PredAdam, _Adam, None] = None
@@ -76,7 +81,10 @@ class Modeler:
         Used to time the w_metric_mean before feeding it to the tanh function.
         Makes the w_metric_mean value more sensible to the tanh function.
         Possible values:
-            When eps is 1e-5: 0.231
+            The target is to estimate the minimum wmm_factor for an given eps_value, so that:
+                tanh(tensor(wmm_factor) * logit(tensor(), eps=eps_value)) > tensor(0.9900)
+            When eps is 1e-5, this factor, rounded to its 3rd digit, is 0.231.
+                tanh(tensor(0.231) * logit(tensor(1), eps=1e-5)) == tensor(0.9902).
         """
 
         self._noise_func: _Union[_Callable, None] = None

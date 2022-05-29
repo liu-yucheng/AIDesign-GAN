@@ -195,18 +195,21 @@ class DiscModeler(_Modeler):
         ldf: _Tensor = self.loss_func(dgzs, fake_labels)
         # -
 
-        dx_diffs = real_labels.sub(dxs)
-        dgz_diffs = dgzs.sub(fake_labels)
+        logit_reals = _logit(real_labels, eps=self.eps)
+        logit_fakes = _logit(fake_labels, eps=self.eps)
 
-        logit_dx_diffs = _logit(dx_diffs, eps=self.eps)
-        logit_dgz_diffs = _logit(dgz_diffs, eps=self.eps)
+        logit_dxs = _logit(dxs, eps=self.eps)
+        logit_dgzs = _logit(dgzs, eps=self.eps)
 
-        logit_dx_diff = logit_dx_diffs.mean()
-        logit_dgz_diff = logit_dgz_diffs.mean()
+        clust_dx_diffs = logit_reals.sub(logit_dxs)
+        clust_dgz_diffs = logit_dgzs.sub(logit_fakes)
+
+        clust_dx_diff = clust_dx_diffs.mean()
+        clust_dgz_diff = clust_dgz_diffs.mean()
 
         # Find the cluster losses on real and fake
-        ldcr = 50 + 50 * _tanh(self.wmm_factor * logit_dx_diff)
-        ldcf = 50 + 50 * _tanh(self.wmm_factor * logit_dgz_diff)
+        ldcr = 50 + 50 * _tanh(self.wmm_factor * clust_dx_diff)
+        ldcf = 50 + 50 * _tanh(self.wmm_factor * clust_dgz_diff)
         # -
 
         # Find dx_factor, dgz_factor, cluster_dx_factor, cluster_dgz_factor
@@ -296,12 +299,12 @@ class DiscModeler(_Modeler):
                 Converted to Python builtin float.
                 Definitely on the CPUs.
             ldcr_item, : Loss(D, Cluster, X).
-                = 50 + 50 * tanh(wmm_factor * Mean( logit(real_labels - dxs) )).
+                = 50 + 50 * tanh(wmm_factor * Mean( logit(real_labels) - logit(dxs) )).
                 tanh'ed Wasserstein 1 metric mean based on module note reference [3].
                 Converted to Python builtin float.
                 Definitely on the CPUs.
             ldcf_item, : Loss(D, Cluster, G(Z)).
-                = 50 + 50 * tanh(wmm_factor * Mean( logit(dgzs - fake_labels) )).
+                = 50 + 50 * tanh(wmm_factor * Mean( logit(dgzs) - logit(fake_labels) )).
                 tanh'ed Wasserstein 1 metric mean based on module note reference [3].
                 Converted to Python builtin float.
                 Definitely on the CPUs.
@@ -465,12 +468,12 @@ class DiscModeler(_Modeler):
                 Converted to Python builtin float.
                 Definitely on the CPUs.
             ldcr_item, : Loss(D, Cluster, X).
-                = 50 + 50 * tanh(wmm_factor * Mean( logit(real_labels - dxs) )).
+                = 50 + 50 * tanh(wmm_factor * Mean( logit(real_labels) - logit(dxs) )).
                 tanh'ed Wasserstein 1 metric mean based on module note reference [3].
                 Converted to Python builtin float.
                 Definitely on the CPUs.
             ldcf_item, : Loss(D, Cluster, G(Z)).
-                = 50 + 50 * tanh(wmm_factor * Mean( logit(dgzs - fake_labels) )).
+                = 50 + 50 * tanh(wmm_factor * Mean( logit(dgzs) - logit(fake_labels) )).
                 tanh'ed Wasserstein 1 metric mean based on module note reference [3].
                 Converted to Python builtin float.
                 Definitely on the CPUs.

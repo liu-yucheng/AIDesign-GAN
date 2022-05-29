@@ -81,7 +81,10 @@ class Modeler:
         Used to time the w_metric_mean before feeding it to the tanh function.
         Makes the w_metric_mean value more sensible to the tanh function.
         Possible values:
-            When eps is 1e-5: 0.231
+            The target is to estimate the minimum wmm_factor for an given eps_value, so that:
+                tanh(tensor(wmm_factor) * logit(tensor(), eps=eps_value)) > tensor(0.9900)
+            When eps is 1e-5, this factor, rounded to its 3rd digit, is 0.231.
+                tanh(tensor(0.231) * logit(tensor(1), eps=1e-5)) == tensor(0.9902).
         """
 
         self._noise_func: _Union[_Callable, None] = None

@@ -5,13 +5,10 @@
 # First added by username: liu-yucheng
 # Last updated by username: liu-yucheng
 
-from torch import nn
-
 from aidesign_gan.libs import modelers
 from aidesign_gan.libs import utils
 from aidesign_gan.libs.contexts import context
 
-_BCELoss = nn.BCELoss
 _Context = context.Context
 _DotDict = utils.DotDict
 _GenModeler = modelers.GenModeler
@@ -117,8 +114,7 @@ class GenContext(_Context):
 
         # Setup self.g
         config = mconfig["generator"]
-        loss_func = _BCELoss()
-        self.g = _GenModeler(model_path, config, self.hw.device, self.hw.gpu_count, loss_func, train=False)
+        self.g = _GenModeler(model_path, config, self.hw.device, self.hw.gpu_count, train=False)
         self.g.load()
 
         # Setup self.images

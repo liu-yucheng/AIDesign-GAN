@@ -30,7 +30,6 @@ _Module = nn.Module
 _no_grad = torch.no_grad
 _paral_model = _helpers.paral_model
 _prep_batch_and_labels = _helpers.prep_batch_and_labels
-_tanh = torch.tanh
 _Tensor = torch.Tensor
 
 # End
@@ -39,7 +38,7 @@ _Tensor = torch.Tensor
 class DiscModeler(_Modeler):
     """Discriminator modeler."""
 
-    def __init__(self, model_path, config, device, gpu_count, loss_func, train=True):
+    def __init__(self, model_path, config, device, gpu_count, train=True):
         """Inits self with the given args.
 
         Args:
@@ -50,11 +49,10 @@ class DiscModeler(_Modeler):
             gpu_count: Number of GPUs to use.
                 0 means no GPU available.
                 >= 1 means some GPUs available.
-            loss_func: a loss function used to find the classic losses
             train: Training mode flag.
                 Controls whether to setup the optimizer.
         """
-        super().__init__(model_path, config, device, gpu_count, loss_func)
+        super().__init__(model_path, config, device, gpu_count)
 
         # Setup self.model
         struct_loc = _join(self.model_path, self.config["struct_name"])
@@ -107,7 +105,7 @@ class DiscModeler(_Modeler):
         output: _Tensor = output.view(-1)
         output = output.float()
 
-        loss: _Tensor = self.loss_func(output, labels)
+        loss: _Tensor = self.bce_loss(output, labels)
         loss.backward()
 
         self.model.train(model_training)
@@ -159,7 +157,7 @@ class DiscModeler(_Modeler):
         output: _Tensor = output.view(-1)
         output = output.float()
 
-        loss: _Tensor = self.loss_func(output, labels)
+        loss: _Tensor = self.bce_loss(output, labels)
         loss.backward()
         self.optim.step()
 
@@ -191,8 +189,8 @@ class DiscModeler(_Modeler):
         dgzs: _Tensor = dgzs
 
         # Find the classic losses on real and fake
-        ldr: _Tensor = self.loss_func(dxs, real_labels)
-        ldf: _Tensor = self.loss_func(dgzs, fake_labels)
+        ldr: _Tensor = self.bce_loss(dxs, real_labels)
+        ldf: _Tensor = self.bce_loss(dgzs, fake_labels)
         # -
 
         # Find dx_factor, dgz_factor,
@@ -239,8 +237,8 @@ class DiscModeler(_Modeler):
         # End
 
         # Find the cluster losses on real and fake
-        ldcr = 50 + 50 * _tanh(self.wmm_factor * clust_dx_diff)
-        ldcf = 50 + 50 * _tanh(self.wmm_factor * clust_dgz_diff)
+        ldcr = 50 + 50 * self.softsign(self.wmm_factor * clust_dx_diff)
+        ldcf = 50 + 50 * self.softsign(self.wmm_factor * clust_dgz_diff)
         # -
 
         # Find the weighted sum of losses
@@ -309,24 +307,27 @@ class DiscModeler(_Modeler):
                 Converted to Python builtin float.
                 Definitely on the CPUs.
             ldr_item, : Loss(D, X).
-                The loss of D on the real batch.
+                The classic loss of D on the real batch.
                 Converted to Python builtin float.
                 Definitely on the CPUs.
             ldf_item, : Loss(D, G(Z)).
-                The loss of D on the fake batch.
+                The classic loss of D on the fake batch.
                 Converted to Python builtin float.
                 Definitely on the CPUs.
             ldcr_item, : Loss(D, Cluster, X).
-                = 50 + 50 * tanh(wmm_factor * Mean( logit(real_labels) - logit(dxs) )).
-                tanh'ed Wasserstein 1 metric mean based on module note reference [3].
+                The cluster loss of D on the real batch.
+                = 50 + 50 * softsign(wmm_factor * Mean( logit(real_labels) - logit(dxs) )).
+                softsigned Wasserstein 1 metric mean based on module note reference [3].
                 Converted to Python builtin float.
                 Definitely on the CPUs.
             ldcf_item, : Loss(D, Cluster, G(Z)).
-                = 50 + 50 * tanh(wmm_factor * Mean( logit(dgzs) - logit(fake_labels) )).
-                tanh'ed Wasserstein 1 metric mean based on module note reference [3].
+                The cluster loss of D on the fake batch.
+                = 50 + 50 * softsign(wmm_factor * Mean( logit(dgzs) - logit(fake_labels) )).
+                softsigned Wasserstein 1 metric mean based on module note reference [3].
                 Converted to Python builtin float.
                 Definitely on the CPUs.
             ld_item: Loss(D).
+                The weighted sum loss of D.
                 = dx_factor * ldr + dgz_factor * ldf + cluster_dx_factor * ldcr + cluster_dgz_factor * ldcf.
                 Clamped to range [0, 100].
                 Converted to Python builtin float.
@@ -425,7 +426,7 @@ class DiscModeler(_Modeler):
 
         output = output.float()
 
-        loss: _Tensor = self.loss_func(output, labels)
+        loss: _Tensor = self.bce_loss(output, labels)
 
         self.model.train(model_training)
 
@@ -478,24 +479,27 @@ class DiscModeler(_Modeler):
                 Converted to Python builtin float.
                 Definitely on the CPUs.
             ldr_item, : Loss(D, X).
-                The loss of D on the real batch.
+                The classic loss of D on the real batch.
                 Converted to Python builtin float.
                 Definitely on the CPUs.
             ldf_item, : Loss(D, G(Z)).
-                The loss of D on the fake batch.
+                The classic loss of D on the fake batch.
                 Converted to Python builtin float.
                 Definitely on the CPUs.
             ldcr_item, : Loss(D, Cluster, X).
-                = 50 + 50 * tanh(wmm_factor * Mean( logit(real_labels) - logit(dxs) )).
-                tanh'ed Wasserstein 1 metric mean based on module note reference [3].
+                The cluster loss of D on the real batch.
+                = 50 + 50 * softsign(wmm_factor * Mean( logit(real_labels) - logit(dxs) )).
+                softsigned Wasserstein 1 metric mean based on module note reference [3].
                 Converted to Python builtin float.
                 Definitely on the CPUs.
             ldcf_item, : Loss(D, Cluster, G(Z)).
-                = 50 + 50 * tanh(wmm_factor * Mean( logit(dgzs) - logit(fake_labels) )).
-                tanh'ed Wasserstein 1 metric mean based on module note reference [3].
+                The cluster loss of D on the fake batch.
+                = 50 + 50 * softsign(wmm_factor * Mean( logit(dgzs) - logit(fake_labels) )).
+                softsigned Wasserstein 1 metric mean based on module note reference [3].
                 Converted to Python builtin float.
                 Definitely on the CPUs.
             ld_item: Loss(D).
+                The weighted sum loss of D.
                 = dx_factor * ldr + dgz_factor * ldf + cluster_dx_factor * ldcr + cluster_dgz_factor * ldcf.
                 Clamped to range [0, 100].
                 Converted to Python builtin float.

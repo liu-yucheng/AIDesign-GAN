@@ -5,7 +5,6 @@
 # First added by username: liu-yucheng
 # Last updated by username: liu-yucheng
 
-import torch
 import typing
 from os import path as ospath
 from torch import nn
@@ -17,6 +16,7 @@ from aidesign_gan.libs.modelers import _helpers
 # Aliases
 
 _Adam = optim.Adam
+_BCELoss = nn.BCELoss
 _Callable = typing.Callable
 _find_model_sizes = _helpers.find_model_sizes
 _find_params_init_func = _helpers.find_params_init_func
@@ -29,6 +29,7 @@ _PredAdam = libs_optims.PredAdam
 _save_model = _helpers.save_model
 _save_optim = _helpers.save_optim
 _setup_pred_adam = _helpers.setup_pred_adam
+_Softsign = nn.Softsign
 _Union = typing.Union
 
 # End
@@ -37,7 +38,7 @@ _Union = typing.Union
 class Modeler:
     """Modeler base class."""
 
-    def __init__(self, model_path, config, device, gpu_count, loss_func):
+    def __init__(self, model_path, config, device, gpu_count):
         """Inits self with the given args.
 
         Args:
@@ -48,7 +49,6 @@ class Modeler:
             gpu_count: Number of GPUs to use.
                 0 means no GPU available.
                 >= 1 means some GPUs available.
-            loss_func: a loss function
         """
         self.model_path = model_path
         """Model path."""
@@ -58,8 +58,28 @@ class Modeler:
         """Device to use, will be the GPUs if they are available."""
         self.gpu_count = gpu_count
         """Number of GPUs to use, >= 1 if GPUs are available."""
-        self.loss_func = loss_func
-        """Loss function used to find the classic losses."""
+
+        self.bce_loss = _BCELoss()
+        """Binary cross entropy loss function."""
+        self.softsign = _Softsign()
+        """Softsign function."""
+        self._noise_func: _Union[_Callable, None] = None
+        """Model noise function."""
+        self.eps = 1e-6
+        """Epsilon, a small dummy value used to avoid NaNs in computation.
+
+        Typically used to replace the result of 1 / inf.
+        """
+        self.wmm_factor = float(1)
+        """Wasserstein metric mean factor.
+
+        Used to time the w_metric_mean before feeding it to the softsign function.
+        Possible values:
+            When eps is 1e-6, the factor is 1.0.
+                softsign(tensor(1.0) * logit(tensor(0.0), eps=1e-6)) == tensor(-0.9325).
+                softsign(tensor(1.0) * logit(tensor(0.49), eps=1e-6)) == tensor(-0.0385).
+        """
+
         self.model: _Union[_Module, None] = None
         """Model, a pytorch nn module, definitely runs on GPUs if they are available."""
         self.optim: _Union[_PredAdam, _Adam, None] = None
@@ -70,25 +90,6 @@ class Modeler:
         """Training size of the model, 0 if the model is not initialized to the training mode."""
         self.has_fairness = None
         """Whether the modeler has a fairness config."""
-        self.eps = 1e-5
-        """Epsilon, a small dummy value used to avoid NaNs in computation.
-
-        Typically used to replace the result of 1 / inf.
-        """
-        self.wmm_factor = 0.231
-        """Wasserstein metric mean factor.
-
-        Used to time the w_metric_mean before feeding it to the tanh function.
-        Makes the w_metric_mean value more sensible to the tanh function.
-        Possible values:
-            The target is to estimate the minimum wmm_factor for an given eps_value, so that:
-                tanh(tensor(wmm_factor) * logit(tensor(), eps=eps_value)) > tensor(0.9900)
-            When eps is 1e-5, this factor, rounded to its 3rd digit, is 0.231.
-                tanh(tensor(0.231) * logit(tensor(1), eps=1e-5)) == tensor(0.9902).
-        """
-
-        self._noise_func: _Union[_Callable, None] = None
-        """Model noise function."""
 
     def _init_after_model_setup(self, train=True):
         """Inits self with the given args after self.model is setup.

@@ -5,14 +5,11 @@
 # First added by username: liu-yucheng
 # Last updated by username: liu-yucheng
 
-from torch import nn
-
 from aidesign_gan.libs import configs
 from aidesign_gan.libs import modelers
 from aidesign_gan.libs import utils
 from aidesign_gan.libs.contexts import context
 
-_BCELoss = nn.BCELoss
 _Context = context.Context
 _CoordsConfig = configs.CoordsConfig
 _DiscConfig = configs.DiscConfig
@@ -131,8 +128,7 @@ class ExportContext(_Context):
 
         # Setup self.g
         gmod = mconfig["generator"]
-        loss_func = _BCELoss()
-        self.g = _GenModeler(model_path, gmod, self.hw.device, self.hw.gpu_count, loss_func, train=False)
+        self.g = _GenModeler(model_path, gmod, self.hw.device, self.hw.gpu_count, train=False)
         self.g.load()
 
         # Setup self.images and self.grids

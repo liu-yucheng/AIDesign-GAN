@@ -10,7 +10,6 @@ import random
 import torch
 import typing
 
-from torch import nn
 from torch.utils import data
 from torchvision import datasets
 from torchvision import transforms
@@ -19,7 +18,6 @@ from aidesign_gan.libs import modelers
 from aidesign_gan.libs import utils
 from aidesign_gan.libs.contexts import context
 
-_BCELoss = nn.BCELoss
 _BICUBIC = transforms.InterpolationMode.BICUBIC
 _CenterCrop = transforms.CenterCrop
 _Compose = transforms.Compose
@@ -464,10 +462,9 @@ class TrainContext(_Context):
 
         disc_config = mconfig["discriminator"]
         gen_config = mconfig["generator"]
-        loss_func = _BCELoss()
 
-        disc = _DiscModeler(model_path, disc_config, self.hw.device, self.hw.gpu_count, loss_func)
-        gen = _GenModeler(model_path, gen_config, self.hw.device, self.hw.gpu_count, loss_func)
+        disc = _DiscModeler(model_path, disc_config, self.hw.device, self.hw.gpu_count)
+        gen = _GenModeler(model_path, gen_config, self.hw.device, self.hw.gpu_count)
 
         self.mods.d = disc
         self.mods.g = gen

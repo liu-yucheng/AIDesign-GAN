@@ -36,7 +36,7 @@ _torch_randn = torch.randn
 class GenModeler(_Modeler):
     """Generator modeler."""
 
-    def __init__(self, model_path, config, device, gpu_count, loss_func, train=True):
+    def __init__(self, model_path, config, device, gpu_count, train=True):
         """Inits self with the given args.
 
         Args:
@@ -47,11 +47,10 @@ class GenModeler(_Modeler):
             gpu_count: Number of GPUs to use.
                 0 means no GPU available.
                 >= 1 means some GPUs available.
-            loss_func: a loss function
             train: Training mode flag.
                 Controls whether to setup the optimizer.
         """
-        super().__init__(model_path, config, device, gpu_count, loss_func)
+        super().__init__(model_path, config, device, gpu_count)
 
         # Setup self.model
         struct_loc = _join(self.model_path, self.config["struct_name"])
@@ -138,7 +137,7 @@ class GenModeler(_Modeler):
         output: _Tensor = output.view(-1)
         output = output.float()
 
-        loss: _Tensor = self.loss_func(output, labels)
+        loss: _Tensor = self.bce_loss(output, labels)
         loss.backward()
 
         self.model.train(model_training)
@@ -206,7 +205,7 @@ class GenModeler(_Modeler):
         output: _Tensor = output.view(-1)
         output = output.float()
 
-        loss: _Tensor = self.loss_func(output, labels)
+        loss: _Tensor = self.bce_loss(output, labels)
         loss.backward()
         self.optim.step()
 
@@ -239,8 +238,8 @@ class GenModeler(_Modeler):
         dgzs2: _Tensor = dgzs2
 
         # Find the classic losses on real and fake
-        lgr: _Tensor = self.loss_func(dxs2, real_labels)
-        lgf: _Tensor = self.loss_func(dgzs2, fake_labels)
+        lgr: _Tensor = self.bce_loss(dxs2, real_labels)
+        lgf: _Tensor = self.bce_loss(dgzs2, fake_labels)
         # -
 
         # Find dx_factor, dgz_factor,
@@ -287,8 +286,8 @@ class GenModeler(_Modeler):
         # End
 
         # Find the cluster losses on real and fake
-        lgcr = 50 + 50 * _tanh(self.wmm_factor * clust_dx_diff2)
-        lgcf = 50 + 50 * _tanh(self.wmm_factor * clust_dgz_diff2)
+        lgcr = 50 + 50 * self.softsign(self.wmm_factor * clust_dx_diff2)
+        lgcf = 50 + 50 * self.softsign(self.wmm_factor * clust_dgz_diff2)
         # -
 
         # Find the weighted sum of losses
@@ -355,18 +354,20 @@ class GenModeler(_Modeler):
                 The mean output of D on the fake batch.
                 Definitely on the CPUs.
             lgr_item, : Loss(G, X).
-                The loss of G on the real batch.
+                The classic loss of G on the real batch.
                 Definitely on the CPUs.
             lgf_item, : Loss(G, G(Z)).
-                The loss of G on the fake batch.
+                The classic loss of G on the fake batch.
                 Definitely on the CPUs.
             lgcr_item, : Loss(G, Cluster, X).
-                = 50 + 50 * tanh(wmm_factor * Mean( logit(dxs2) - logit(real_labels)) )).
-                tanh'ed Wasserstein 1 metric mean based on module note reference [3].
+                The cluster loss of G on the real batch.
+                = 50 + 50 * softsign(wmm_factor * Mean( logit(dxs2) - logit(real_labels)) )).
+                softsigned Wasserstein 1 metric mean based on module note reference [3].
                 Definitely on the CPUs.
             lgcf_item, : Loss(G, Cluster, G(Z)).
-                = 50 + 50 * tanh(wmm_factor * Mean( logit(fake_labels) - logit(dgzs2)) )).
-                tanh'ed Wasserstein 1 metric mean based on module note reference [3].
+                The cluster loss of G on the fake batch.
+                = 50 + 50 * softsign(wmm_factor * Mean( logit(fake_labels) - logit(dgzs2)) )).
+                softsigned Wasserstein 1 metric mean based on module note reference [3].
                 Definitely on the CPUs.
             lg_item: Loss(G).
                 = dx_factor * lgr + dgz_factor * lgf + cluster_dx_factor * lgcr + cluster_dgz_factor * lgcf.
@@ -484,7 +485,7 @@ class GenModeler(_Modeler):
 
         output = output.float()
 
-        loss: _Tensor = self.loss_func(output, labels)
+        loss: _Tensor = self.bce_loss(output, labels)
 
         self.model.train(model_training)
         d_model.train(d_model_training)
@@ -536,18 +537,20 @@ class GenModeler(_Modeler):
                 The mean output of D on the fake batch.
                 Definitely on the CPUs.
             lgr_item, : Loss(G, X).
-                The loss of G on the real batch.
+                The classic loss of G on the real batch.
                 Definitely on the CPUs.
             lgf_item, : Loss(G, G(Z)).
-                The loss of G on the fake batch.
+                The classic loss of G on the fake batch.
                 Definitely on the CPUs.
             lgcr_item, : Loss(G, Cluster, X).
-                = 50 + 50 * tanh(wmm_factor * Mean( logit(dxs2) - logit(real_labels)) )).
-                tanh'ed Wasserstein 1 metric mean based on module note reference [3].
+                The cluster loss of G on the real batch.
+                = 50 + 50 * softsign(wmm_factor * Mean( logit(dxs2) - logit(real_labels)) )).
+                softsigned Wasserstein 1 metric mean based on module note reference [3].
                 Definitely on the CPUs.
             lgcf_item, : Loss(G, Cluster, G(Z)).
-                = 50 + 50 * tanh(wmm_factor * Mean( logit(fake_labels) - logit(dgzs2)) )).
-                tanh'ed Wasserstein 1 metric mean based on module note reference [3].
+                The cluster loss of G on the fake batch.
+                = 50 + 50 * softsign(wmm_factor * Mean( logit(fake_labels) - logit(dgzs2)) )).
+                softsigned Wasserstein 1 metric mean based on module note reference [3].
                 Definitely on the CPUs.
             lg_item: Loss(G).
                 = dx_factor * lgr + dgz_factor * lgf + cluster_dx_factor * lgcr + cluster_dgz_factor * lgcf.

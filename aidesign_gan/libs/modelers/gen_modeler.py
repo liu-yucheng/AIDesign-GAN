@@ -19,6 +19,8 @@ from aidesign_gan.libs import structs
 from aidesign_gan.libs.modelers import _helpers
 from aidesign_gan.libs.modelers import modeler
 
+# Aliases
+
 _find_fairness_factors = _helpers.find_fairness_factors
 _GenStruct = structs.GenStruct
 _join = ospath.join
@@ -30,6 +32,8 @@ _paral_model = _helpers.paral_model
 _prep_batch_and_labels = _helpers.prep_batch_and_labels
 _Tensor = torch.Tensor
 _torch_randn = torch.randn
+
+# End
 
 
 class GenModeler(_Modeler):

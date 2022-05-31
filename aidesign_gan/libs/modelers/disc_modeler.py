@@ -30,7 +30,6 @@ _Module = nn.Module
 _no_grad = torch.no_grad
 _paral_model = _helpers.paral_model
 _prep_batch_and_labels = _helpers.prep_batch_and_labels
-_tanh = torch.tanh
 _Tensor = torch.Tensor
 
 # End

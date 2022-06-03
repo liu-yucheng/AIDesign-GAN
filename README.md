@@ -99,22 +99,38 @@ $$
     \qquad + ClusterDXFactor(D) * ClusterLoss(D, X) ... \\
     \qquad + ClusterDGZFactor(D) * ClusterLoss(D, G(Z)) \\
   \\
+\end{array}
+$$
 
+$$
+\begin{array}{l}
   ClassicLoss(D, X) = BCELoss(D(X), RealLabel(D)) = - \log(D(X)) \\
   ClassicLoss(D, G(Z)) = BCELoss(D(G(Z)), FakeLabel(D)) = - \log(1 - D(G(Z))) \\
   \\
+\end{array}
+$$
 
-  ClusterLoss(D, X) = 50 + 25 * (Softsign(Logit(RealLabel(D), epsilon=\epsilon)) - Softsign(Logit(D(X), epsilon=\epsilon))) \\
-  ClusterLoss(D, (G(Z))) = 50 + 25 * (Softsign(Logit(D(G(Z)), epsilon=\epsilon)) - Softsign(Logit(FakeLabel(D), epsilon=\epsilon))) \\
+$$
+\begin{array}{l}
+  ClusterLoss(D, X) = 50 + 25 * (Softsign(Logit(RealLabel(D), Epsilon=\epsilon)) - Softsign(Logit(D(X), Epsilon=\epsilon))) \\
+  ClusterLoss(D, (G(Z))) = 50 + 25 * (Softsign(Logit(D(G(Z)), Epsilon=\epsilon)) - Softsign(Logit(FakeLabel(D), Epsilon=\epsilon))) \\
   \\
+\end{array}
+$$
 
+$$
+\begin{array}{l}
   RealLabel(D) \text{ and } FakeLabel(D) \text{ each } \in \mathbb{R}(0, 1) \\
   RealLabel(D) \text{ is tweakable, is usually close to 1, and serves as the target value of } D(X). \\
   FakeLabel(D) \text{ is tweakable, is usually close to 0, and serves as the target value of } D(G(Z)). \\
   \\
+\end{array}
+$$
 
-  \bar{*Factor}(D) \text{ each} \in \mathbb{R} \\
-  \text{The } \bar{*Factor}(D) \text{ values are tweakable and usually add up to } 1. \\
+$$
+\begin{array}{l}
+  \overline{*Factor}(D) \text{ each } \in \mathbb{R} \\
+  \text{The } \overline{*Factor}(D) \text{ values are tweakable and usually add up to } 1. \\
 \end{array}
 $$
 
@@ -127,22 +143,38 @@ $$
     \qquad + ClusterDXFactor(G) * ClusterLoss(G, X) ... \\
     \qquad + ClusterDGZFactor(G) * ClusterLoss(G, G(Z)) \\
   \\
+\end{array}
+$$
 
+$$
+\begin{array}{l}
   ClassicLoss(G, X) = BCELoss(D(X), RealLabel(G)) = - \log(1 - D(X)) \\
   ClassicLoss(G, G(Z)) = BCELoss(D(G(Z)), FakeLabel(G)) = - \log(D(G(Z))) \\
   \\
+\end{array}
+$$
 
-  ClusterLoss(G, X) = 50 + 25 * (Softsign(Logit(RealLabel(G), epsilon=\epsilon)) - Softsign(Logit(D(X), epsilon=\epsilon))) \\
-  ClusterLoss(G, (G(Z))) = 50 + 25 * (Softsign(Logit(D(G(Z)), epsilon=\epsilon)) - Softsign(Logit(FakeLabel(G), epsilon=\epsilon))) \\
+$$
+\begin{array}{l}
+  ClusterLoss(G, X) = 50 + 25 * (Softsign(Logit(RealLabel(G), Epsilon=\epsilon)) - Softsign(Logit(D(X), Epsilon=\epsilon))) \\
+  ClusterLoss(G, (G(Z))) = 50 + 25 * (Softsign(Logit(D(G(Z)), Epsilon=\epsilon)) - Softsign(Logit(FakeLabel(G), Epsilon=\epsilon))) \\
   \\
+\end{array}
+$$
 
+$$
+\begin{array}{l}
   RealLabel(G) \text{ and } FakeLabel(G) \text{ each } \in \mathbb{R}(0, 1) \\
   RealLabel(G) \text{ is tweakable, is usually close to 0, serves as the target label of } D(X) \text{ , and } \textbf{ is different from } RealLabel(D). \\
   FakeLabel(G) \text{ is tweakable, is usually close to 1, serves as the target label of } D(G(Z)) \text{ , and } \textbf{ is different from } FakeLabel(D). \\
   \\
+\end{array}
+$$
 
-  \bar{*Factor}(G) \text{ each} \in \mathbb{R} \\
-  \textbf{The } \bar{*Factor}(G) \text{ values are tweakable and usually add up to } 1. \\
+$$
+\begin{array}{l}
+  \overline{*Factor}(G) \text{ each } \in \mathbb{R} \\
+  \textbf{The } \overline{*Factor}(G) \text{ values are tweakable and usually add up to } 1. \\
 \end{array}
 $$
 
@@ -153,15 +185,27 @@ $$
   BCELoss(result, target) = - target * \log(result) - (1 - target) * \log(1 - result), \\
     \qquad \text{where } result, target \text{ each} \in \mathbb{R}(0, 1). \\
   \\
+\end{array}
+$$
 
+$$
+\begin{array}{l}
   Softsign(value) = \frac{value}{1 + |value|}, \\
     \qquad \text{where } value \in \mathbb{R}. \\
   \\
+\end{array}
+$$
 
+$$
+\begin{array}{l}
   Logit(value) = \log(\frac{value}{1 - value}), \\
     \qquad \text{where } value \in \mathbb{R}(0, 1). \\
   \\
+\end{array}
+$$
 
+$$
+\begin{array}{l}
   \log(value) = \ln(value), \\
     \qquad \text{where } value \in \mathbb{R}. \\
   \\
@@ -181,25 +225,55 @@ $$
   \text{Let the parameters immediately before the latest backpropagation in } D \text{ be } \theta(D, "Previous"). \\
   \text{Let the parameters immediately before the latest backpropagation in } G \text{ be } \theta(G, "Previous"). \\
   \\
+\end{array}
+$$
+
+$$
+\begin{array}{l}
   \text{Let the current parameters in } D \text{ be } \theta(D, "Current"). \\
   \text{Let the current parameters in } G \text{ be } \theta(G, "Current"). \\
   \\
+\end{array}
+$$
+
+$$
+\begin{array}{l}
   \text{Let the predictive parameters in } D \text{ be } \theta(D, "Prediction"). \\
   \text{Let the predictive parameters in } G \text{ be } \theta(G, "Prediction"). \\
   \\
+\end{array}
+$$
+
+$$
+\begin{array}{l}
   \text{Let the parameters immediately after the next backpropagation in } D \text{ be } \theta(D, "Next"). \\
   \text{Let the parameters immediately after the next backpropagation in } G \text{ be } \theta(G, "Next"). \\
   \\
+\end{array}
+$$
+
+$$
+\begin{array}{l}
   \theta(D, "Prediction") = \theta(D, "Current")
     + PredictionFactor(D) * (\theta(D, "Current") - \theta(D, "Previous")) \\
   \theta(G, "Prediction") = \theta(G, "Current")
     + PredictionFactor(G) * (\theta(G, "Current") - \theta(G, "Previous")) \\
   \\
+\end{array}
+$$
+
+$$
+\begin{array}{l}
   \theta(D, "Prediction") \text{ is a prediction of } \theta(D, "Next")
     \text{ and serves as the optimization target of } G \text{ in the next backpropagation.} \\
   \theta(G, "Prediction") \text{ is a prediction of } \theta(G, "Next")
     \text{ and serves as the optimization target of } D \text{ in the next backpropagation.} \\
   \\
+\end{array}
+$$
+
+$$
+\begin{array}{l}
   PredictionFactor(D) \text{ and } PredictionFactor(G) \text{ each } \in \mathbb{R}. \\
 \end{array}
 $$

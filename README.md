@@ -287,6 +287,7 @@ $$
 $$
 \begin{array}{l}
   PredictionFactor(D) \text{ and } PredictionFactor(G) \text{ each } \in \mathbb{R}. \\
+  PredictionFactor(D) \text{ and } PredictionFactor(G) \text{ are tweakable. }
 \end{array}
 $$
 

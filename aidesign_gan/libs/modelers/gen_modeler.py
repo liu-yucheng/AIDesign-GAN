@@ -266,39 +266,54 @@ class GenModeler(_Modeler):
 
         logit_reals = _logit(real_labels, eps=self.eps)
         logit_fakes = _logit(fake_labels, eps=self.eps)
-
         logit_dxs2 = _logit(dxs2, eps=self.eps)
         logit_dgzs2 = _logit(dgzs2, eps=self.eps)
 
-        clust_dx_diffs2 = logit_dxs2.sub(logit_reals)
-        clust_dgz_diffs2 = logit_fakes.sub(logit_dgzs2)
+        sl_reals: _Tensor = self.softsign(logit_reals)
+        sl_fakes: _Tensor = self.softsign(logit_fakes)
+        sl_dxs2: _Tensor = self.softsign(logit_dxs2)
+        sl_dgzs2: _Tensor = self.softsign(logit_dgzs2)
 
+        clust_dx_diffs2 = sl_dxs2.sub(sl_reals)
+        clust_dgz_diffs2 = sl_fakes.sub(sl_dgzs2)
         clust_dx_diff2 = clust_dx_diffs2.mean()
         clust_dgz_diff2 = clust_dgz_diffs2.mean()
 
         # Handle overacting
 
-        if clust_dx_diff2.item() <= 0:
-            # Overacting, apply slope
-            clust_dx_diff2.mul_(clust_dx_oa_slope)
+        real = real_labels.mean().item()
+        fake = fake_labels.mean().item()
+        dx2 = dxs2.mean().item()
+        dgz2 = dgzs2.mean().item()
 
-        if clust_dgz_diff2.item() <= 0:
-            # Overacting, apply slope
-            clust_dgz_diff2.mul_(clust_dgz_oa_slope)
+        if dx2 <= real:
+            clust_dx_slope = clust_dx_oa_slope
+        else:
+            clust_dx_slope = self.wmm_factor
+        # end if
+
+        if dgz2 >= fake:
+            clust_dgz_slope = clust_dgz_oa_slope
+        else:
+            clust_dgz_slope = self.wmm_factor
+        # end if
+
+        # End
+        # Find the cluster losses on real and fake
+
+        lgcr = 50 + 25 * clust_dx_slope * clust_dx_diff2
+        lgcf = 50 + 25 * clust_dgz_slope * clust_dgz_diff2
+        lgcr.clamp_(0, 100)
+        lgcf.clamp_(0, 100)
 
         # End
 
-        # Find the cluster losses on real and fake
-        lgcr = 50 + 50 * self.softsign(self.wmm_factor * clust_dx_diff2)
-        lgcf = 50 + 50 * self.softsign(self.wmm_factor * clust_dgz_diff2)
-        # -
-
         # Find the weighted sum of losses
         lg: _Tensor = \
-            dx_fac * lgr + \
-            dgz_fac * lgf + \
-            clust_dx_fac * lgcr + \
-            clust_dgz_fac * lgcf
+            dx_fac * lgr \
+            + dgz_fac * lgf \
+            + clust_dx_fac * lgcr \
+            + clust_dgz_fac * lgcf
 
         lg.clamp_(0, 100)
 
@@ -364,13 +379,19 @@ class GenModeler(_Modeler):
                 Definitely on the CPUs.
             lgcr_item, : Loss(G, Cluster, X).
                 The cluster loss of G on the real batch.
-                = 50 + 50 * softsign(wmm_factor * Mean( logit(dxs2) - logit(real_labels)) )).
-                softsigned Wasserstein 1 metric mean based on module note reference [3].
+                = 50 + 25 * (
+                    softsign(wmm_factor * Mean( logit(dxs2) )) - softsign(wmm_factor * Mean( logit(real_labels) ))
+                ).
+                Softsigned Wasserstein 1 metric mean based on module note reference [3].
+                Clamped to range [0, 100].
                 Definitely on the CPUs.
             lgcf_item, : Loss(G, Cluster, G(Z)).
                 The cluster loss of G on the fake batch.
-                = 50 + 50 * softsign(wmm_factor * Mean( logit(fake_labels) - logit(dgzs2)) )).
-                softsigned Wasserstein 1 metric mean based on module note reference [3].
+                = 50 + 25 * (
+                    softsign(wmm_factor * Mean( logit(fake_labels) )) - softsign(wmm_factor * Mean( logit(dgzs2) ))
+                ).
+                Softsigned Wasserstein 1 metric mean based on module note reference [3].
+                Clamped to range [0, 100].
                 Definitely on the CPUs.
             lg_item: Loss(G).
                 = dx_factor * lgr + dgz_factor * lgf + cluster_dx_factor * lgcr + cluster_dgz_factor * lgcf.
@@ -547,13 +568,19 @@ class GenModeler(_Modeler):
                 Definitely on the CPUs.
             lgcr_item, : Loss(G, Cluster, X).
                 The cluster loss of G on the real batch.
-                = 50 + 50 * softsign(wmm_factor * Mean( logit(dxs2) - logit(real_labels)) )).
-                softsigned Wasserstein 1 metric mean based on module note reference [3].
+                = 50 + 25 * (
+                    softsign(wmm_factor * Mean( logit(dxs2) )) - softsign(wmm_factor * Mean( logit(real_labels) ))
+                ).
+                Softsigned Wasserstein 1 metric mean based on module note reference [3].
+                Clamped to range [0, 100].
                 Definitely on the CPUs.
             lgcf_item, : Loss(G, Cluster, G(Z)).
                 The cluster loss of G on the fake batch.
-                = 50 + 50 * softsign(wmm_factor * Mean( logit(fake_labels) - logit(dgzs2)) )).
-                softsigned Wasserstein 1 metric mean based on module note reference [3].
+                = 50 + 25 * (
+                    softsign(wmm_factor * Mean( logit(fake_labels) )) - softsign(wmm_factor * Mean( logit(dgzs2) ))
+                ).
+                Softsigned Wasserstein 1 metric mean based on module note reference [3].
+                Clamped to range [0, 100].
                 Definitely on the CPUs.
             lg_item: Loss(G).
                 = dx_factor * lgr + dgz_factor * lgf + cluster_dx_factor * lgcr + cluster_dgz_factor * lgcf.

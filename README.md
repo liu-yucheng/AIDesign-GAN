@@ -81,6 +81,129 @@ welcome:
     How-to: gan welcome
 ```
 
+# `fair_pred_alt_algo` Experimental Algorithm
+
+## Fair Losses
+
+- Inspired by the classic loss function in [1]
+- Inspired by the Wasserstein metric loss function in [3]
+- Added my thoughts about fair adversarial modeling
+- Implemented the tweakable and extensible versions of the above elements in this app
+
+### Fair Losses Of Discriminator (In LaTeX Math Mode)
+
+$$
+\begin{array}{l}
+  FairLoss(D) = DXFactor(D) * ClassicLoss(D, X) ... \\
+    \qquad + DGZFactor(D) * ClassicLoss(D, G(Z)) ... \\
+    \qquad + ClusterDXFactor(D) * ClusterLoss(D, X) ... \\
+    \qquad + ClusterDGZFactor(D) * ClusterLoss(D, G(Z)) \\
+  \\
+
+  ClassicLoss(D, X) = BCELoss(D(X), RealLabel(D)) = - \log(D(X)) \\
+  ClassicLoss(D, G(Z)) = BCELoss(D(G(Z)), FakeLabel(D)) = - \log(1 - D(G(Z))) \\
+  \\
+
+  ClusterLoss(D, X) = 50 + 25 * (Softsign(Logit(RealLabel(D), epsilon=\epsilon)) - Softsign(Logit(D(X), epsilon=\epsilon))) \\
+  ClusterLoss(D, (G(Z))) = 50 + 25 * (Softsign(Logit(D(G(Z)), epsilon=\epsilon)) - Softsign(Logit(FakeLabel(D), epsilon=\epsilon))) \\
+  \\
+
+  RealLabel(D) \text{ and } FakeLabel(D) \text{ each } \in \mathbb{R}(0, 1) \\
+  RealLabel(D) \text{ is tweakable, is usually close to 1, and serves as the target value of } D(X). \\
+  FakeLabel(D) \text{ is tweakable, is usually close to 0, and serves as the target value of } D(G(Z)). \\
+  \\
+
+  \bar{*Factor}(D) \text{ each} \in \mathbb{R} \\
+  \text{The } \bar{*Factor}(D) \text{ values are tweakable and usually add up to } 1. \\
+\end{array}
+$$
+
+### Fair Losses Of Generator (In LaTeX Math Mode)
+
+$$
+\begin{array}{l}
+  FairLoss(G) = DXFactor(G) * ClassicLoss(G, X) ... \\
+    \qquad + DGZFactor(G) * ClassicLoss(G, G(Z)) ... \\
+    \qquad + ClusterDXFactor(G) * ClusterLoss(G, X) ... \\
+    \qquad + ClusterDGZFactor(G) * ClusterLoss(G, G(Z)) \\
+  \\
+
+  ClassicLoss(G, X) = BCELoss(D(X), RealLabel(G)) = - \log(1 - D(X)) \\
+  ClassicLoss(G, G(Z)) = BCELoss(D(G(Z)), FakeLabel(G)) = - \log(D(G(Z))) \\
+  \\
+
+  ClusterLoss(G, X) = 50 + 25 * (Softsign(Logit(RealLabel(G), epsilon=\epsilon)) - Softsign(Logit(D(X), epsilon=\epsilon))) \\
+  ClusterLoss(G, (G(Z))) = 50 + 25 * (Softsign(Logit(D(G(Z)), epsilon=\epsilon)) - Softsign(Logit(FakeLabel(G), epsilon=\epsilon))) \\
+  \\
+
+  RealLabel(G) \text{ and } FakeLabel(G) \text{ each } \in \mathbb{R}(0, 1) \\
+  RealLabel(G) \text{ is tweakable, is usually close to 0, serves as the target label of } D(X) \text{ , and } \textbf{ is different from } RealLabel(D). \\
+  FakeLabel(G) \text{ is tweakable, is usually close to 1, serves as the target label of } D(G(Z)) \text{ , and } \textbf{ is different from } FakeLabel(D). \\
+  \\
+
+  \bar{*Factor}(G) \text{ each} \in \mathbb{R} \\
+  \textbf{The } \bar{*Factor}(G) \text{ values are tweakable and usually add up to } 1. \\
+\end{array}
+$$
+
+### Help Functions In The Losses Above (In LaTeX Math Mode)
+
+$$
+\begin{array}{l}
+  BCELoss(result, target) = - target * \log(result) - (1 - target) * \log(1 - result), \\
+    \qquad \text{where } result, target \text{ each} \in \mathbb{R}(0, 1). \\
+  \\
+
+  Softsign(value) = \frac{value}{1 + |value|}, \\
+    \qquad \text{where } value \in \mathbb{R}. \\
+  \\
+
+  Logit(value) = \log(\frac{value}{1 - value}), \\
+    \qquad \text{where } value \in \mathbb{R}(0, 1). \\
+  \\
+
+  \log(value) = \ln(value), \\
+    \qquad \text{where } value \in \mathbb{R}. \\
+  \\
+\end{array}
+$$
+
+## Predictive Trainings
+
+- Inspired by the predictive training techniques in [2]
+- Extended the techniques by introducing non-trivial prediction factors to the prediction process
+- Implemented the tweakable and extensible versions of the above elements in this app
+
+### Prediction Concept Explanation (In LaTeX Math Mode)
+
+$$
+\begin{array}{l}
+  \text{Let the parameters immediately before the latest backpropagation in } D \text{ be } \theta(D, "Previous"). \\
+  \text{Let the parameters immediately before the latest backpropagation in } G \text{ be } \theta(G, "Previous"). \\
+  \\
+  \text{Let the current parameters in } D \text{ be } \theta(D, "Current"). \\
+  \text{Let the current parameters in } G \text{ be } \theta(G, "Current"). \\
+  \\
+  \text{Let the predictive parameters in } D \text{ be } \theta(D, "Prediction"). \\
+  \text{Let the predictive parameters in } G \text{ be } \theta(G, "Prediction"). \\
+  \\
+  \text{Let the parameters immediately after the next backpropagation in } D \text{ be } \theta(D, "Next"). \\
+  \text{Let the parameters immediately after the next backpropagation in } G \text{ be } \theta(G, "Next"). \\
+  \\
+  \theta(D, "Prediction") = \theta(D, "Current")
+    + PredictionFactor(D) * (\theta(D, "Current") - \theta(D, "Previous")) \\
+  \theta(G, "Prediction") = \theta(G, "Current")
+    + PredictionFactor(G) * (\theta(G, "Current") - \theta(G, "Previous")) \\
+  \\
+  \theta(D, "Prediction") \text{ is a prediction of } \theta(D, "Next")
+    \text{ and serves as the optimization target of } G \text{ in the next backpropagation.} \\
+  \theta(G, "Prediction") \text{ is a prediction of } \theta(G, "Next")
+    \text{ and serves as the optimization target of } D \text{ in the next backpropagation.} \\
+  \\
+  PredictionFactor(D) \text{ and } PredictionFactor(G) \text{ each } \in \mathbb{R}. \\
+\end{array}
+$$
+
 # Dependencies
 
 See `<this-repo>/requirements.txt`.
@@ -137,8 +260,10 @@ Other `README.*` files in this repository are listed below.
 **[7]** A. Radford, L. Metz, and S. Chintala. (Jan. 2016). Unsupervised Representation Learning with Deep Convolutional Generative Adversarial Networks. arXiv [Online]. Available: https://arxiv.org/abs/1511.06434
 
 # Miscellaneous
-## Developer's Notes :memo: And Warnings :warning:
-### Notes :memo:
+
+## Developer's Notes 📝 And Warnings ⚠️
+
+### Notes 📝
 
 This application is distributed under the **GNU GPL3 license**.
 
@@ -159,7 +284,7 @@ The outputs of this application do not have to be distributed under the GNU GPL3
 
 The non-subsequent works that uses the outputs of this application do not have to be distributed under the GNU GPL3 license.
 
-### Warnings :warning:
+### Warnings ⚠️
 
 Making a **closed-source** subsequent work (as defined above) of this application, and distribute it to the public is **unlawful**, no matter if such work makes a profit.
 
@@ -168,6 +293,7 @@ Doing the above may result in severe civil and criminal penalties.
 I reserve the rights, funds, time, and efforts to prosecute those who violate the license of this application to the maximum extent under applicable laws.
 
 ## Versions
+
 ### Versioning
 
 ```text
@@ -200,6 +326,7 @@ The version tags are on the main branch.
 ```
 
 ## Copyright
+
 ### Short Version
 
 ```text

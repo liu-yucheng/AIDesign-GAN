@@ -73,11 +73,11 @@ class Modeler:
         self.wmm_factor = float(1)
         """Wasserstein metric mean factor.
 
-        Used to time the w_metric_mean before feeding it to the softsign function.
+        Used to control the slopes of the cluster losses.
         Possible values:
             When eps is 1e-6, the factor is 1.0.
-                softsign(tensor(1.0) * logit(tensor(0.0), eps=1e-6)) == tensor(-0.9325).
-                softsign(tensor(1.0) * logit(tensor(0.49), eps=1e-6)) == tensor(-0.0385).
+                tensor(1.0) * softsign(logit(tensor(0.0), eps=1e-6)) == tensor(-0.9325).
+                tensor(1.0) * softsign(logit(tensor(0.49), eps=1e-6)) == tensor(-0.0385).
         """
 
         self.model: _Union[_Module, None] = None

@@ -112,8 +112,14 @@ $$
 
 $$
 \begin{array}{l}
-  ClusterLoss(D, X) = 50 + 25 * (Softsign(Logit(RealLabel(D), Epsilon=\epsilon)) - Softsign(Logit(D(X), Epsilon=\epsilon))) \\
-  ClusterLoss(D, (G(Z))) = 50 + 25 * (Softsign(Logit(D(G(Z)), Epsilon=\epsilon)) - Softsign(Logit(FakeLabel(D), Epsilon=\epsilon))) \\
+  ClusterLoss(D, X) = 50 + 25 * ( ... \\
+    \qquad Softsign(Logit(RealLabel(D), Epsilon=\epsilon)) ... \\
+    \qquad - Softsign(Logit(D(X), Epsilon=\epsilon)) ... \\
+  ) \\
+  ClusterLoss(D, (G(Z))) = 50 + 25 * ( ... \\
+    \qquad Softsign(Logit(D(G(Z)), Epsilon=\epsilon)) ... \\
+    \qquad - Softsign(Logit(FakeLabel(D), Epsilon=\epsilon)) ... \\
+  ) \\
   \\
 \end{array}
 $$
@@ -156,8 +162,14 @@ $$
 
 $$
 \begin{array}{l}
-  ClusterLoss(G, X) = 50 + 25 * (Softsign(Logit(RealLabel(G), Epsilon=\epsilon)) - Softsign(Logit(D(X), Epsilon=\epsilon))) \\
-  ClusterLoss(G, (G(Z))) = 50 + 25 * (Softsign(Logit(D(G(Z)), Epsilon=\epsilon)) - Softsign(Logit(FakeLabel(G), Epsilon=\epsilon))) \\
+  ClusterLoss(G, X) = 50 ... + 25 * ( ... \\
+    \qquad Softsign(Logit(RealLabel(G), Epsilon=\epsilon)) ... \\
+    \qquad - Softsign(Logit(D(X), Epsilon=\epsilon)) ... \\
+  ) \\
+  ClusterLoss(G, (G(Z))) = 50 + 25 * ( ... \\
+    \qquad Softsign(Logit(D(G(Z)), Epsilon=\epsilon)) ... \\
+    \qquad - Softsign(Logit(FakeLabel(G), Epsilon=\epsilon)) ... \\
+  ) \\
   \\
 \end{array}
 $$

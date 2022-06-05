@@ -127,8 +127,10 @@ $$
 $$
 \begin{array}{l}
   RealLabel(D) \text{ and } FakeLabel(D) \text{ each } \in \mathbb{R}(0, 1) \\
-  RealLabel(D) \text{ is tweakable, is usually close to 1, and serves as the target value of } D(X). \\
-  FakeLabel(D) \text{ is tweakable, is usually close to 0, and serves as the target value of } D(G(Z)). \\
+  RealLabel(D) \text{ is tweakable, ...} \\
+    \qquad \text{is usually close to 1, and serves as the target value of } D(X). \\
+  FakeLabel(D) \text{ is tweakable, ...} \\
+    \qquad \text{is usually close to 0, and serves as the target value of } D(G(Z)). \\
   \\
 \end{array}
 $$
@@ -177,8 +179,12 @@ $$
 $$
 \begin{array}{l}
   RealLabel(G) \text{ and } FakeLabel(G) \text{ each } \in \mathbb{R}(0, 1) \\
-  RealLabel(G) \text{ is tweakable, is usually close to 0, serves as the target label of } D(X) \text{ , and } \textbf{ is different from } RealLabel(D). \\
-  FakeLabel(G) \text{ is tweakable, is usually close to 1, serves as the target label of } D(G(Z)) \text{ , and } \textbf{ is different from } FakeLabel(D). \\
+  RealLabel(G) \text{ is tweakable, ...} \\
+    \qquad \text{is usually close to 0, serves as the target label of } D(X), ... \\
+    \qquad \text{and } \textbf{ is different from } RealLabel(D). \\
+  FakeLabel(G) \text{ is tweakable, ...} \\
+    \qquad \text{is usually close to 1, serves as the target label of } D(G(Z)), ... \\
+    \qquad \text{and } \textbf{ is different from } FakeLabel(D). \\
   \\
 \end{array}
 $$
@@ -234,51 +240,51 @@ $$
 
 $$
 \begin{array}{l}
-  \text{Let the parameters immediately before the latest backpropagation in } D \text{ be } \theta(D, "Previous"). \\
-  \text{Let the parameters immediately before the latest backpropagation in } G \text{ be } \theta(G, "Previous"). \\
+  \text{Let the parameters immediately before the latest backpropagation in } D \text{ be } \theta(D, Previous). \\
+  \text{Let the parameters immediately before the latest backpropagation in } G \text{ be } \theta(G, Previous). \\
   \\
 \end{array}
 $$
 
 $$
 \begin{array}{l}
-  \text{Let the current parameters in } D \text{ be } \theta(D, "Current"). \\
-  \text{Let the current parameters in } G \text{ be } \theta(G, "Current"). \\
+  \text{Let the current parameters in } D \text{ be } \theta(D, Current). \\
+  \text{Let the current parameters in } G \text{ be } \theta(G, Current). \\
   \\
 \end{array}
 $$
 
 $$
 \begin{array}{l}
-  \text{Let the predictive parameters in } D \text{ be } \theta(D, "Prediction"). \\
-  \text{Let the predictive parameters in } G \text{ be } \theta(G, "Prediction"). \\
+  \text{Let the predictive parameters in } D \text{ be } \theta(D, Prediction). \\
+  \text{Let the predictive parameters in } G \text{ be } \theta(G, Prediction). \\
   \\
 \end{array}
 $$
 
 $$
 \begin{array}{l}
-  \text{Let the parameters immediately after the next backpropagation in } D \text{ be } \theta(D, "Next"). \\
-  \text{Let the parameters immediately after the next backpropagation in } G \text{ be } \theta(G, "Next"). \\
+  \text{Let the parameters immediately after the next backpropagation in } D \text{ be } \theta(D, Next). \\
+  \text{Let the parameters immediately after the next backpropagation in } G \text{ be } \theta(G, Next). \\
   \\
 \end{array}
 $$
 
 $$
 \begin{array}{l}
-  \theta(D, "Prediction") = \theta(D, "Current")
-    + PredictionFactor(D) * (\theta(D, "Current") - \theta(D, "Previous")) \\
-  \theta(G, "Prediction") = \theta(G, "Current")
-    + PredictionFactor(G) * (\theta(G, "Current") - \theta(G, "Previous")) \\
+  \theta(D, Prediction) = \theta(D, Current)
+    + PredictionFactor(D) * (\theta(D, Current) - \theta(D, Previous)) \\
+  \theta(G, Prediction) = \theta(G, Current)
+    + PredictionFactor(G) * (\theta(G, Current) - \theta(G, Previous)) \\
   \\
 \end{array}
 $$
 
 $$
 \begin{array}{l}
-  \theta(D, "Prediction") \text{ is a prediction of } \theta(D, "Next")
+  \theta(D, Prediction) \text{ is a prediction of } \theta(D, Next)
     \text{ and serves as the optimization target of } G \text{ in the next backpropagation.} \\
-  \theta(G, "Prediction") \text{ is a prediction of } \theta(G, "Next")
+  \theta(G, Prediction) \text{ is a prediction of } \theta(G, Next)
     \text{ and serves as the optimization target of } D \text{ in the next backpropagation.} \\
   \\
 \end{array}

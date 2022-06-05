@@ -1,5 +1,6 @@
-# Default ignored file name pattern
-**/.*/
+# Handle patterns that start with a dot
+**/.*
+!**/.git*
 
 # Project specific ignored files
 **/.aidesign_gan_app_data/

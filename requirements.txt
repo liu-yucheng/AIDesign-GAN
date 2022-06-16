@@ -10,3 +10,5 @@ numpy
 torch
 torchvision
 torchaudio
+
+MonkeyType

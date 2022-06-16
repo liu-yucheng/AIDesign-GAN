@@ -33,6 +33,7 @@ _makedirs = os.makedirs
 _NoneType = type(None)
 _Path = pathlib.Path
 _PIPE = asyncio.subprocess.PIPE
+_relpath = ospath.relpath
 _remove = os.remove
 _rmtree = shutil.rmtree
 _run = asyncio.run
@@ -697,38 +698,58 @@ class TestGANTrain(_TestCmd):
         fail_msg = "{} is not a directory; {}".format(_model_path, format_incorrect_info)
         self.assertTrue(isdir, fail_msg)
 
-        dnames = ["Training-Results"]
-        fnames = [
+        dir_names = [
+            "Training-Results",
+            "model_saves"
+        ]
+
+        file_names = [
             "coords_config.json",
-            "discriminator_optim.pt",
-            "discriminator_state.pt",
             "discriminator_struct.py",
             "format_config.json",
-            "generator_optim.pt",
-            "generator_state.pt",
             "generator_struct.py",
             "log.txt",
             "modelers_config.json"
         ]
 
+        model_saves_file_names = [
+            "discriminator_optim.pt",
+            "discriminator_state.pt",
+            "generator_optim.pt",
+            "generator_state.pt"
+        ]
+
         contents = _listdir(_model_path)
 
-        for dname in dnames:
-            exists = dname in contents
-            fail_msg = "{} is not in {}; {}".format(dname, _model_path, format_incorrect_info)
+        for name in dir_names:
+            exists = name in contents
+            fail_msg = "{} is not in {}; {}".format(name, _model_path, format_incorrect_info)
             self.assertTrue(exists, fail_msg)
 
-            path = _join(_model_path, dname)
+            path = _join(_model_path, name)
             isdir = _isdir(path)
             fail_msg = "{} is not a directory; {}".format(path, format_incorrect_info)
             self.assertTrue(isdir, fail_msg)
 
-        for fname in fnames:
-            exists = fname in contents
-            fail_msg = "{} is not in {}; {}".format(fname, _model_path, format_incorrect_info)
+        for name in file_names:
+            exists = name in contents
+            fail_msg = "{} is not in {}; {}".format(name, _model_path, format_incorrect_info)
             self.assertTrue(exists, fail_msg)
 
-            loc = _join(_model_path, fname)
+            loc = _join(_model_path, name)
+            isfile = _isfile(loc)
+            fail_msg = "{} is not a file; {}".format(loc, format_incorrect_info)
+            self.assertTrue(isfile, fail_msg)
+
+        model_saves_path = _join(_model_path, "model_saves")
+        model_saves_contents = _listdir(model_saves_path)
+
+        for name in model_saves_file_names:
+            exists = name in model_saves_contents
+            fail_msg = "{} is not in {}; {}".format(name, model_saves_path, format_incorrect_info)
+            self.assertTrue(exists, fail_msg)
+
+            loc = _join(model_saves_path, name)
             isfile = _isfile(loc)
             fail_msg = "{} is not a file; {}".format(loc, format_incorrect_info)
             self.assertTrue(isfile, fail_msg)
@@ -813,38 +834,58 @@ class TestGANGenerate(_TestCmd):
         fail_msg = "{} is not a directory; {}".format(_model_path, format_incorrect_info)
         self.assertTrue(isdir, fail_msg)
 
-        dnames = ["Generation-Results"]
-        fnames = [
+        dir_names = [
+            "Generation-Results",
+            "model_saves"
+        ]
+
+        file_names = [
             "coords_config.json",
-            "discriminator_optim.pt",
-            "discriminator_state.pt",
             "discriminator_struct.py",
             "format_config.json",
-            "generator_optim.pt",
-            "generator_state.pt",
             "generator_struct.py",
             "log.txt",
             "modelers_config.json"
         ]
 
+        model_saves_file_names = [
+            "discriminator_optim.pt",
+            "discriminator_state.pt",
+            "generator_optim.pt",
+            "generator_state.pt"
+        ]
+
         contents = _listdir(_model_path)
 
-        for dname in dnames:
-            exists = dname in contents
-            fail_msg = "{} is not in {}; {}".format(dname, _model_path, format_incorrect_info)
+        for name in dir_names:
+            exists = name in contents
+            fail_msg = "{} is not in {}; {}".format(name, _model_path, format_incorrect_info)
             self.assertTrue(exists, fail_msg)
 
-            path = _join(_model_path, dname)
+            path = _join(_model_path, name)
             isdir = _isdir(path)
             fail_msg = "{} is not a directory; {}".format(path, format_incorrect_info)
             self.assertTrue(isdir, fail_msg)
 
-        for fname in fnames:
-            exists = fname in contents
-            fail_msg = "{} is not in {}; {}".format(fname, _model_path, format_incorrect_info)
+        for name in file_names:
+            exists = name in contents
+            fail_msg = "{} is not in {}; {}".format(name, _model_path, format_incorrect_info)
             self.assertTrue(exists, fail_msg)
 
-            loc = _join(_model_path, fname)
+            loc = _join(_model_path, name)
+            isfile = _isfile(loc)
+            fail_msg = "{} is not a file; {}".format(loc, format_incorrect_info)
+            self.assertTrue(isfile, fail_msg)
+
+        model_saves_path = _join(_model_path, "model_saves")
+        model_saves_contents = _listdir(model_saves_path)
+
+        for name in model_saves_file_names:
+            exists = name in model_saves_contents
+            fail_msg = "{} is not in {}; {}".format(name, model_saves_path, format_incorrect_info)
+            self.assertTrue(exists, fail_msg)
+
+            loc = _join(model_saves_path, name)
             isfile = _isfile(loc)
             fail_msg = "{} is not a file; {}".format(loc, format_incorrect_info)
             self.assertTrue(isfile, fail_msg)
@@ -932,25 +973,55 @@ class TestGANExport(_TestCmd):
         fail_msg = "{} is not a directory; {}".format(_export_path, format_incorrect_info)
         self.assertTrue(isdir, fail_msg)
 
-        fnames = [
+        dir_names = ["model_saves"]
+
+        file_names = [
             "discriminator_config.json",
-            "discriminator_state.pt",
             "discriminator_struct.py",
             "format_config.json",
             "generator_config.json",
             "generator_preview.jpg",
-            "generator_state.pt",
             "generator_struct.py",
+        ]
+
+        model_saves_file_names = [
+            "discriminator_state.onnx",
+            "discriminator_state_script.pt",
+            "generator_state.onnx",
+            "generator_state_script.pt"
         ]
 
         contents = _listdir(_export_path)
 
-        for fname in fnames:
-            exists = fname in contents
-            fail_msg = "{} is not in {}; {}".format(fname, _export_path, format_incorrect_info)
+        for name in dir_names:
+            exists = name in contents
+            fail_msg = "{} is not in {}; {}".format(name, _model_path, format_incorrect_info)
             self.assertTrue(exists, fail_msg)
 
-            loc = _join(_export_path, fname)
+            path = _join(_model_path, name)
+            isdir = _isdir(path)
+            fail_msg = "{} is not a directory; {}".format(path, format_incorrect_info)
+            self.assertTrue(isdir, fail_msg)
+
+        for name in file_names:
+            exists = name in contents
+            fail_msg = "{} is not in {}; {}".format(name, _export_path, format_incorrect_info)
+            self.assertTrue(exists, fail_msg)
+
+            loc = _join(_export_path, name)
+            isfile = _isfile(loc)
+            fail_msg = "{} is not a file; {}".format(loc, format_incorrect_info)
+            self.assertTrue(isfile, fail_msg)
+
+        model_saves_path = _join(_export_path, "model_saves")
+        model_saves_contents = _listdir(model_saves_path)
+
+        for name in model_saves_file_names:
+            exists = name in model_saves_contents
+            fail_msg = "{} is not in {}; {}".format(name, model_saves_path, format_incorrect_info)
+            self.assertTrue(exists, fail_msg)
+
+            loc = _join(model_saves_path, name)
             isfile = _isfile(loc)
             fail_msg = "{} is not a file; {}".format(loc, format_incorrect_info)
             self.assertTrue(isfile, fail_msg)

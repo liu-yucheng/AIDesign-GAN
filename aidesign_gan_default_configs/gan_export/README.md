@@ -39,6 +39,8 @@ Configuration item descriptions are listed below.
 
 - `image_resolution`. Input image resolution in pixels. Type `int`. Range [1, ).
 - `image_channel_count`. Input image channel count. Type `int`. Range [1, ).
+- - `label_resolution`. Output label resolution in pixels. Type `int`. Range [1, ).
+- `label_channel_count`. Output label channel count. Type `int`. Range [1, ).
 - `feature_map_count` Layer 0 (first layer) output feature map count. Type `int`. Range [1, ). Compatibility alias `feature_map_size`. Precedence `feature_map_count` > `feature_map_size`.
 - `struct_name`. Structure name. Type `str`.
 - `state_name`. Model state name. Type `str`.

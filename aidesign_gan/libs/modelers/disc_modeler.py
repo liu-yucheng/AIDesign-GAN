@@ -23,6 +23,7 @@ from aidesign_gan.libs.modelers import modeler
 
 _DiscStruct = structs.DiscStruct
 _find_fairness_factors = _helpers.find_fairness_factors
+_find_batch_means = _helpers.find_batch_means
 _join = ospath.join
 _logit = torch.logit
 _Modeler = modeler.Modeler
@@ -55,13 +56,28 @@ class DiscModeler(_Modeler):
         super().__init__(model_path, config, device, gpu_count)
 
         # Setup self.model
+
         struct_loc = _join(self.model_path, self.config["struct_name"])
         struct_def = _DiscStruct.load(struct_loc)
-
         exec(struct_def)
-
         self.model = self.model.to(self.device)
         self.model = _paral_model(self.model, self.device, self.gpu_count)
+
+        self.input_shape = [
+            1,
+            int(self.config["image_channel_count"]),
+            int(self.config["image_resolution"]),
+            int(self.config["image_resolution"])
+        ]
+
+        self.output_shape = [
+            1,
+            int(self.config["label_channel_count"]),
+            int(self.config["label_resolution"]),
+            int(self.config["label_resolution"])
+        ]
+
+        # End
 
         self._init_after_model_setup(train)
 
@@ -102,6 +118,7 @@ class DiscModeler(_Modeler):
 
         data, labels = _prep_batch_and_labels(data, label, self.device)
         output = self.model(data)
+        output = _find_batch_means(output)
         output: _Tensor = output.view(-1)
         output = output.float()
 
@@ -154,6 +171,7 @@ class DiscModeler(_Modeler):
 
         data, labels = _prep_batch_and_labels(data, label, self.device)
         output = self.model(data)
+        output = _find_batch_means(output)
         output: _Tensor = output.view(-1)
         output = output.float()
 
@@ -364,6 +382,7 @@ class DiscModeler(_Modeler):
         # Forward pass the real batch
         real_data, real_labels = _prep_batch_and_labels(real_data, real_label, self.device)
         dxs = self.model(real_data)
+        dxs = _find_batch_means(dxs)
         dxs: _Tensor = dxs.view(-1)
         dxs = dxs.float()
         # -
@@ -374,6 +393,7 @@ class DiscModeler(_Modeler):
         fake_batch = fake_batch.float()
         fake_batch, fake_labels = _prep_batch_and_labels(fake_batch, fake_label, self.device)
         dgzs = self.model(fake_batch)
+        dgzs = _find_batch_means(dgzs)
         dgzs: _Tensor = dgzs.view(-1)
         dgzs = dgzs.float()
         # -
@@ -436,7 +456,9 @@ class DiscModeler(_Modeler):
 
         with _no_grad():
             output = self.model(data)
+            output = _find_batch_means(output)
             output: _Tensor = output.detach().view(-1)
+        # end with
 
         output = output.float()
 
@@ -532,7 +554,9 @@ class DiscModeler(_Modeler):
 
         with _no_grad():
             dxs = self.model(real_data)
+            dxs = _find_batch_means(dxs)
             dxs: _Tensor = dxs.detach().view(-1)
+        # end with
 
         dxs = dxs.float()
 
@@ -550,7 +574,9 @@ class DiscModeler(_Modeler):
 
         with _no_grad():
             dgzs = self.model(fake_batch)
+            dgzs = _find_batch_means(dgzs)
             dgzs: _Tensor = dgzs.detach().view(-1)
+        # end with
 
         dgzs = dgzs.float()
 
@@ -607,6 +633,7 @@ class DiscModeler(_Modeler):
 
         with _no_grad():
             output = self.model(data)
+            output = _find_batch_means(output)
             output: _Tensor = output.detach().view(-1)
 
         output = output.float()

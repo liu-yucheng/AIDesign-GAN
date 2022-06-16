@@ -7,6 +7,8 @@ from torch import nn
 self = self
 ir = self.config["image_resolution"]
 ic = self.config["image_channel_count"]
+lr = self.config["label_resolution"]
+lc = self.config["label_channel_count"]
 fm = self.config["feature_map_count"]
 
 # NOTE:
@@ -42,7 +44,7 @@ self.model = nn.Sequential(
     _BatchNorm2d(int(7 * fm)),
     _LeakyReLU(0.2, True),
     # 5. output group
-    _Conv2d(int(7 * fm), 1, 3, 1, 1, bias=False),
-    _Upsample(1, mode="bicubic", align_corners=False),
+    _Conv2d(int(7 * fm), lc, 3, 1, 1, bias=False),
+    _Upsample(lr, mode="bicubic", align_corners=False),
     _Sigmoid()
 )

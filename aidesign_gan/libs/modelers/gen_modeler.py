@@ -22,6 +22,7 @@ from aidesign_gan.libs.modelers import modeler
 # Aliases
 
 _find_fairness_factors = _helpers.find_fairness_factors
+_find_batch_means = _helpers.find_batch_means
 _GenStruct = structs.GenStruct
 _join = ospath.join
 _logit = torch.logit
@@ -56,13 +57,28 @@ class GenModeler(_Modeler):
         super().__init__(model_path, config, device, gpu_count)
 
         # Setup self.model
+
         struct_loc = _join(self.model_path, self.config["struct_name"])
         struct_def = _GenStruct.load(struct_loc)
-
         exec(struct_def)
-
         self.model = self.model.to(self.device)
         self.model = _paral_model(self.model, self.device, self.gpu_count)
+
+        self.input_shape = [
+            1,
+            int(self.config["noise_channel_count"]),
+            int(self.config["noise_resolution"]),
+            int(self.config["noise_resolution"])
+        ]
+
+        self.output_shape = [
+            1,
+            int(self.config["image_channel_count"]),
+            int(self.config["image_resolution"]),
+            int(self.config["image_resolution"])
+        ]
+
+        # End
 
         self._init_after_model_setup(train)
 
@@ -137,6 +153,7 @@ class GenModeler(_Modeler):
 
         batch, labels = _prep_batch_and_labels(batch, label, self.device)
         output = d_model(batch)
+        output = _find_batch_means(output)
         output: _Tensor = output.view(-1)
         output = output.float()
 
@@ -205,6 +222,7 @@ class GenModeler(_Modeler):
 
         batch, labels = _prep_batch_and_labels(batch, label, self.device)
         output = d_model(batch)
+        output = _find_batch_means(output)
         output: _Tensor = output.view(-1)
         output = output.float()
 
@@ -415,6 +433,7 @@ class GenModeler(_Modeler):
         # Forward pass the real batch
         real_data, real_labels = _prep_batch_and_labels(real_data, real_label, self.device)
         dxs2 = d_model(real_data)
+        dxs2 = _find_batch_means(dxs2)
         dxs2: _Tensor = dxs2.view(-1)
         dxs2 = dxs2.float()
         # -
@@ -425,6 +444,7 @@ class GenModeler(_Modeler):
         fake_batch: _Tensor = fake_batch.float()
         fake_batch, fake_labels = _prep_batch_and_labels(fake_batch, fake_label, self.device)
         dgzs2 = d_model(fake_batch)
+        dgzs2 = _find_batch_means(dgzs2)
         dgzs2: _Tensor = dgzs2.view(-1)
         dgzs2 = dgzs2.float()
         # -
@@ -505,7 +525,9 @@ class GenModeler(_Modeler):
 
         with _no_grad():
             output = d_model(batch)
+            output = _find_batch_means(output)
             output: _Tensor = output.detach().view(-1)
+        # end with
 
         output = output.float()
 
@@ -601,7 +623,9 @@ class GenModeler(_Modeler):
 
         with _no_grad():
             dxs2 = d_model(real_data)
+            dxs2 = _find_batch_means(dxs2)
             dxs2: _Tensor = dxs2.detach().view(-1)
+        # end with
 
         dxs2 = dxs2.float()
 
@@ -619,7 +643,9 @@ class GenModeler(_Modeler):
 
         with _no_grad():
             dgzs2 = d_model(fake_batch)
+            dgzs2 = _find_batch_means(dgzs2)
             dgzs2: _Tensor = dgzs2.detach().view(-1)
+        # end with
 
         dgzs2 = dgzs2.float()
 
@@ -677,6 +703,7 @@ class GenModeler(_Modeler):
         with _no_grad():
             output = self.model(noises)
             output: _Tensor = output.detach()
+        # end with
 
         output = output.float()
 

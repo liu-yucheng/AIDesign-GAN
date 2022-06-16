@@ -77,7 +77,7 @@ class PredAdam(_Optimizer):
 
         for group in self.param_groups:
             for param in group["params"]:
-                param: _Tensor
+                param: _Tensor = param
 
                 if param.grad is None:
                     continue
@@ -97,7 +97,7 @@ class PredAdam(_Optimizer):
                     state["exp_avg_sq"] = _zeros_like(param, memory_format=torch.preserve_format)
 
                     if group["amsgrad"]:
-                        # Maintains max of all exp. moving avg. of sq. grad. values
+                        # Maintain the maximum of all exponential moving average of square gradient values
                         state["max_exp_avg_sq"] = _zeros_like(param, memory_format=torch.preserve_format)
 
                     # Add a restore point
@@ -124,9 +124,9 @@ class PredAdam(_Optimizer):
                 exp_avg_sq.mul_(beta2).addcmul_(grad, grad.conj(), value=1 - beta2)
 
                 if group["amsgrad"]:
-                    # Maintains the maximum of all 2nd moment running avg. till now
+                    # Maintain the maximum of all second moment running average until now
                     _torch_maximum(max_exp_avg_sq, exp_avg_sq, out=max_exp_avg_sq)
-                    # Use the max. for normalizing running avg. of gradient
+                    # Use the maximum for normalizing running average of gradient
                     denom = (max_exp_avg_sq.sqrt() / _sqrt(bias_correction2)).add_(group["eps"])
                 else:
                     denom = (exp_avg_sq.sqrt() / _sqrt(bias_correction2)).add_(group["eps"])
@@ -160,7 +160,7 @@ class PredAdam(_Optimizer):
 
         for group in self.param_groups:
             for param in group["params"]:
-                param: _Tensor
+                param: _Tensor = param
 
                 if param.grad is None:
                     continue
@@ -198,7 +198,7 @@ class PredAdam(_Optimizer):
 
         for group in self.param_groups:
             for param in group["params"]:
-                param: _Tensor
+                param: _Tensor = param
 
                 if param.grad is None:
                     continue

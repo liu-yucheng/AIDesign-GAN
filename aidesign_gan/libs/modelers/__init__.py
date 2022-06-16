@@ -16,10 +16,11 @@ DiscModeler = disc_modeler.DiscModeler
 GenModeler = gen_modeler.GenModeler
 Modeler = modeler.Modeler
 
-load_model = _helpers.load_model
-save_model = _helpers.save_model
-load_optim = _helpers.load_optim
-save_optim = _helpers.save_optim
+load_state_dict = _helpers.load_state_dict
+save_state_dict = _helpers.save_state_dict
+load_torch_script = _helpers.load_torch_script
+save_torch_script = _helpers.save_torch_script
+save_onnx = _helpers.save_onnx
 find_model_sizes = _helpers.find_model_sizes
 
 # End of shortcuts

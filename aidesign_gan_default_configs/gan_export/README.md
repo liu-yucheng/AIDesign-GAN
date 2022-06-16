@@ -43,7 +43,8 @@ Configuration item descriptions are listed below.
 - `label_channel_count`. Output label channel count. Type `int`. Range [1, ).
 - `feature_map_count` Layer 0 (first layer) output feature map count. Type `int`. Range [1, ). Compatibility alias `feature_map_size`. Precedence `feature_map_count` > `feature_map_size`.
 - `struct_name`. Structure name. Type `str`.
-- `state_name`. Model state name. Type `str`.
+- `state_script_name`. Model state TorchScript name. Type `str`.
+- `state_onnx_name`. Model state ONNX name. Type `str`.
 
 ## `discriminator_struct.py`
 
@@ -86,7 +87,8 @@ Configuration item descriptions are listed below.
 - `image_channel_count`. Output image channel count. Type `int`. Range [1, ).
 - `feature_map_count`. Layer -1 (last layer) input feature map count. Type `int`. Range [1, ). Compatibility alias `feature_map_size`. Precedence `feature_map_count` > `feature_map_size`.
 - `struct_name`. Structure name. Type `str`.
-- `state_name`. Model state name. Type `str`.
+- `state_script_name`. Model state TorchScript name. Type `str`.
+- `state_onnx_name`. Model state ONNX name. Type `str`.
 - `preview_name`. Model preview name. Type `str`.
 
 ## `generator_struct.py`

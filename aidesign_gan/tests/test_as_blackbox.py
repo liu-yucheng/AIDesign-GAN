@@ -33,7 +33,6 @@ _makedirs = os.makedirs
 _NoneType = type(None)
 _Path = pathlib.Path
 _PIPE = asyncio.subprocess.PIPE
-_relpath = ospath.relpath
 _remove = os.remove
 _rmtree = shutil.rmtree
 _run = asyncio.run

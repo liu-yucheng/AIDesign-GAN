@@ -415,7 +415,8 @@ class DiscConfig(Config):
             del from_dict[fm_size_key]
 
         cls._verify_str(from_dict, "struct_name")
-        cls._verify_str(from_dict, "state_name")
+        cls._verify_str(from_dict, "state_script_name")
+        cls._verify_str(from_dict, "state_onnx_name")
 
         result = from_dict
         return result
@@ -455,7 +456,8 @@ class GenConfig(Config):
             del from_dict[fm_size_key]
 
         cls._verify_str(from_dict, "struct_name")
-        cls._verify_str(from_dict, "state_name")
+        cls._verify_str(from_dict, "state_script_name")
+        cls._verify_str(from_dict, "state_onnx_name")
         cls._verify_str(from_dict, "preview_name")
 
         result = from_dict

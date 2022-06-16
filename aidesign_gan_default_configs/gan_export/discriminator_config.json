@@ -5,5 +5,6 @@
     "label_channel_count": 1,
     "feature_map_count": 64,
     "struct_name": "discriminator_struct.py",
-    "state_name": "discriminator_state.pt"
+    "state_script_name": "model_saves/discriminator_state_script.pt",
+    "state_onnx_name": "model_saves/discriminator_state.onnx"
 }

@@ -23,11 +23,14 @@ _copytree = shutil.copytree
 _ceil = math.ceil
 _Coord = coord.Coord
 _CoordsConfig = configs.CoordsConfig
+_DiscConfig = configs.DiscConfig
 _ExportContext = contexts.ExportContext
 _ExportResults = results.ExportResults
+_GenConfig = configs.GenConfig
 _join = ospath.join
 _make_grid = tv_utils.make_grid
 _ModelersConfig = configs.ModelersConfig
+_save_image = tv_utils.save_image
 _torch_cat = torch.cat
 
 
@@ -87,7 +90,7 @@ class ExportCoord(_Coord):
         self._results.log_hw()
 
         self._context.setup_the_rest()
-        self._results.log_g()
+        self._results.log_mods()
 
         self._context_ready = True
         self._results.logln("Coordinator prepared context")
@@ -122,46 +125,62 @@ class ExportCoord(_Coord):
         _copy(srcloc, dstloc)
         r.logln("Copied the model format config")
 
-    def _copy_structs_and_states(self):
+    def _copy_structs(self):
         """Copies discriminator and generator structs and states."""
         r = self._results
         _ = self._context
 
-        dmod = self._mconfig["discriminator"]
-        gmod = self._mconfig["generator"]
+        disc_mod = self._mconfig["discriminator"]
+        gen_mod = self._mconfig["generator"]
 
-        dstruct_name = dmod["struct_name"]
-        gstruct_name = gmod["struct_name"]
-        dstate_name = dmod["state_name"]
-        gstate_name = gmod["state_name"]
+        disc_name = disc_mod["struct_name"]
+        gen_name = gen_mod["struct_name"]
 
-        dstruct_src = _join(self._model_path, dstruct_name)
-        gstruct_src = _join(self._model_path, gstruct_name)
-        dstate_src = _join(self._model_path, dstate_name)
-        gstate_src = _join(self._model_path, gstate_name)
+        disc_src = _join(self._model_path, disc_name)
+        gen_src = _join(self._model_path, gen_name)
 
-        dstruct_dst = _join(self._export_path, dstruct_name)
-        gstruct_dst = _join(self._export_path, gstruct_name)
-        dstate_dst = _join(self._export_path, dstate_name)
-        gstate_dst = _join(self._export_path, gstate_name)
+        disc_dst = _join(self._export_path, disc_name)
+        gen_dst = _join(self._export_path, gen_name)
 
-        _copy(dstruct_src, dstruct_dst)
-        _copy(gstruct_src, gstruct_dst)
+        _copy(disc_src, disc_dst)
+        _copy(gen_src, gen_dst)
+
         r.logln("Copied discriminator and generator structs")
-        _copy(dstate_src, dstate_dst)
-        _copy(gstate_src, gstate_dst)
-        r.logln("Copied discriminator and generator states")
+
+    def _save_configs(self):
+        """Saves the discriminator and generator configs."""
+        r = self._results
+        c = self._context
+
+        disc_loc = _join(self._export_path, defaults.disc_config_name)
+        gen_loc = _join(self._export_path, defaults.gen_config_name)
+
+        _DiscConfig.save(c.configs.d, disc_loc)
+        _GenConfig.save(c.configs.g, gen_loc)
+
+        r.logln("Saved discriminator and generator configs")
+
+    def _export_models(self):
+        """Saves the discriminator and generator configs."""
+        r = self._results
+        c = self._context
+
+        export_path = _join(self._export_path, defaults.model_saves_name)
+        c.mods.d.export_model(export_path, defaults.disc_state_script_name, defaults.disc_state_onnx_name)
+        c.mods.g.export_model(export_path, defaults.gen_state_script_name, defaults.gen_state_onnx_name)
+
+        r.logln("Exported discriminator and generator models in TorchScript and ONNX formats")
 
     def _normalize_images(self):
         """Normalizes the images."""
         r = self._results
         c = self._context
 
-        images_to_save_len = len(c.images.to_save)
+        images_to_save_len = len(c.gen_images.to_save)
 
         for index in range(images_to_save_len):
-            orig = c.images.to_save[index]
-            c.images.to_save[index] = _make_grid(orig, normalize=True, value_range=(-0.75, 0.75))
+            orig = c.gen_images.to_save[index]
+            c.gen_images.to_save[index] = _make_grid(orig, normalize=True, value_range=(-0.75, 0.75))
 
         r.logln("Normalized images")
 
@@ -170,11 +189,25 @@ class ExportCoord(_Coord):
         r = self._results
         c = self._context
 
-        c.images.to_save = _make_grid(
-            c.images.to_save, nrow=_ceil(c.previews.image_count ** 0.5), padding=c.previews.padding
+        c.gen_images.to_save = _make_grid(
+            c.gen_images.to_save, nrow=_ceil(c.gen_previews.image_count ** 0.5), padding=c.gen_previews.padding
         )
 
         r.logln("Converted images to preview grids")
+
+    def _save_gen_previews(self):
+        """Saves the preview grids."""
+        r = self._results
+        c = self._context
+
+        name = "generator_preview.jpg"
+        loc = _join(self._export_path, name)
+
+        _save_image(c.gen_images.to_save, loc, "JPEG")
+
+        image_count = c.gen_previews.image_count
+        info = f"Saved the generator preview grid, which contains {image_count} images"
+        r.logln(info)
 
     def start(self):
         """Starts the exportation process."""
@@ -193,27 +226,25 @@ class ExportCoord(_Coord):
 
         self._copy_default_export()
         self._copy_format_config()
-        self._copy_structs_and_states()
+        self._copy_structs()
+        self._save_configs()
+        self._export_models()
 
-        # print(c.configs.d)  # Debug
-        # print(c.configs.g)  # Debug
-        r.save_configs()
-
-        c.images.to_save = []
+        c.gen_images.to_save = []
         c.batch_prog.index = 0
 
         while c.batch_prog.index < c.batch_prog.count:
             noises_batch = c.noises_batches[c.batch_prog.index]
-            image_batch = c.g.test(noises_batch)
-            c.images.to_save.append(image_batch)
+            image_batch = c.mods.g.test(noises_batch)
+            c.gen_images.to_save.append(image_batch)
             r.log_batch()
             c.batch_prog.index += 1
         # end while
 
-        c.images.to_save = _torch_cat(c.images.to_save)
+        c.gen_images.to_save = _torch_cat(c.gen_images.to_save)
         self._normalize_images()
         self._convert_images_to_previews()
-        r.save_previews()
+        self._save_gen_previews()
 
         info = str(
             "-\n"

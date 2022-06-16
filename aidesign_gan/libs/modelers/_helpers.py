@@ -8,9 +8,13 @@ Helper classes and functions.
 # First added by username: liu-yucheng
 # Last updated by username: liu-yucheng
 
+import os
 import torch
 import typing
+from os import path as ospath
+from torch import jit
 from torch import nn
+from torch import onnx
 from torch import optim
 from torch.nn import init as nn_init
 
@@ -20,73 +24,221 @@ _Adam = optim.Adam
 _BatchNorm = nn.BatchNorm2d
 _Conv = nn.Conv2d
 _DataParallel = nn.DataParallel
+_dirname = ospath.dirname
+_exists = ospath.exists
+_jit_load = jit.load
+_jit_save = jit.save
+_jit_script = jit.script
+_join = ospath.join
+_makedirs = os.makedirs
 _Module = nn.Module
 _normal_inplace = nn_init.normal_
+_onnx_export = onnx.export
 _Optimizer = optim.Optimizer
 _PredAdam = libs_optims.PredAdam
+_relpath = ospath.relpath
+_ScriptModule = torch.ScriptModule
 _Tensor = torch.Tensor
 _torch_device = torch.device
 _torch_full = torch.full
 _torch_load = torch.load
+_torch_randn = torch.randn
 _torch_save = torch.save
 _torch_zeros_like = torch.zeros_like
 _Union = typing.Union
 
 
-def load_model(loc, model):
-    """Loads the state dict from a location to a model.
+def load_state_dict(loc, obj, save_dev=None, run_dev=None, optim=False):
+    """Loads the state dict from a location to an object.
+
+    This function works as the following.
+    If not optim, moves the given object to the saving device.
+    Loads the object state dict from the location.
+    If not optim, moves the given object to the running device.
 
     Args:
         loc: a location
-        model: a model
+        obj: an object that implements the obj.load_state_dict method
+        save_dev: an optional saving device
+        run_dev: an optional running device
+        optim: an optional optim flag marking if the obj is an Optimizer
+
+    Raises:
+        ValueError: when optim is False, but either save_device or run_device is None
     """
     loc = str(loc)
-    model: _Module = model
+    obj: _Union[_Module, _Optimizer] = obj
+    save_dev: _torch_device = save_dev
+    run_dev: _torch_device = run_dev
+    optim = bool(optim)
 
-    model.load_state_dict(_torch_load(loc))
+    if optim is False:
+        if (save_dev is None) or (run_dev is None):
+            raise ValueError("Both save_dev and run_dev need to be non-None when optim is False")
+        # end if
+    # end if
+
+    if not optim:
+        obj.to(save_dev)
+
+    obj.load_state_dict(_torch_load(loc))
+
+    if not optim:
+        obj.to(run_dev)
+    # end if
 
 
-def save_model(model, loc):
-    """Saves the state dict from a model to a location.
+def save_state_dict(obj, loc, save_dev=None, run_dev=None, optim=False):
+    """Saves the state dict from an object to a location.
+
+    This function works as the following.
+    If not optim, moves the given object to the saving device.
+    Saves the object state dict to the location.
+    If not optim, moves the given object to the running device.
 
     Args:
-        model: a model
+        obj: an object that implements the obj.state_dict method
         loc: a location
+        save_dev: an optional saving device
+        run_dev: an optional running device
+        optim: an optional optim flag marking if the obj is an Optimizer
+
+    Raises:
+        ValueError: when optim is False, but either save_device or run_device is None
     """
-    model: _Module = model
+    obj: _Union[_Module, _Optimizer] = obj
     loc = str(loc)
+    save_dev: _torch_device = save_dev
+    run_dev: _torch_device = run_dev
+    optim = bool(optim)
+
+    if optim is False:
+        if (save_dev is None) or (run_dev is None):
+            raise ValueError("Both save_dev and run_dev need to be non-None when optim is False")
+        # end if
+    # end if
+
+    loc_parent = _dirname(loc)
+
+    if not _exists(loc_parent):
+        _makedirs(loc_parent)
+
+    if not optim:
+        obj.to(save_dev)
 
     file = open(loc, "w+")
-    _torch_save(model.state_dict(), loc)
+    _torch_save(obj.state_dict(), loc)
     file.close()
 
+    if not optim:
+        obj.to(run_dev)
+    # end if
 
-def load_optim(loc, optim):
-    """Loads the state dict from a location to an optimizer.
+
+def load_torch_script(loc, save_dev, run_dev):
+    """Loads the TorchScript from a location.
+
+    This function works as the following.
+    Loads the result from the location.
+    Moves the result to the saving device.
+    Moves the result to the running device.
+    Returns the result.
 
     Args:
         loc: a location
-        optim: an optimizer
+        save_dev: a saving device
+        run_dev: a running device
+
+    Returns:
+        result: a ScriptModule or ScriptFunction
     """
     loc = str(loc)
-    optim: _Optimizer = optim
+    save_dev: _torch_device = save_dev
+    run_dev: _torch_device = run_dev
 
-    optim.load_state_dict(_torch_load(loc))
+    result: _Union[_ScriptModule, _Module] = _jit_load(loc)
+    result.to(save_dev)
+    result.to(run_dev)
+    return result
 
 
-def save_optim(optim, loc):
-    """Saves the state dict from an optimizer to a location.
+def save_torch_script(obj, loc, input_shape, save_dev, run_dev):
+    """Saves the TorchScript compiled from an object to a location.
+
+    This function works as the following.
+    Moves the given object to the saving device.
+    Compiles the given object to JIT TorchScript.
+    Saves the compiled script to the location.
+    Moves the given object to the running device.
 
     Args:
-        optim: an optimizer
+        obj: an object that is TorchScript compilable
         loc: a location
+        input_shape: an input shape
+        save_dev: a saving device
+        run_dev: a running device
     """
-    optim: _Optimizer = optim
+    obj: _Module = obj
     loc = str(loc)
+    input_shape: list[int] = input_shape
+    save_dev: _torch_device = save_dev
+    run_dev: _torch_device = run_dev
 
+    loc_parent = _dirname(loc)
+
+    if not _exists(loc_parent):
+        _makedirs(loc_parent)
+
+    obj.to(save_dev)
+    dummy_input = _torch_randn(*input_shape, device=save_dev)
+    script_inputs = [(dummy_input, )]
+    script: _ScriptModule = _jit_script(obj=obj, example_inputs=script_inputs)
     file = open(loc, "w+")
-    _torch_save(optim.state_dict(), loc)
+    _jit_save(script, loc)
     file.close()
+    obj.to(run_dev)
+
+
+def save_onnx(obj, loc, input_shape, save_dev, run_dev):
+    """Saves an object in the ONNX format to a location.
+
+    This function works as the following.
+    Moves the given object to the saving device.
+    Compiles the given object to JIT TorchScript.
+    Exports the compiled script to ONNX and saves the exportation to the location.
+    Moves the given object to the running device.
+
+    Args:
+        obj: an object that is TorchScript and ONNX compilable
+        loc: a location
+        input_shape: an input shape
+        save_dev: a saving device
+        run_dev: a running device
+    """
+    obj: _Module = obj
+    loc = str(loc)
+    input_shape: list[int] = input_shape
+    save_dev: _torch_device = save_dev
+    run_dev: _torch_device = run_dev
+
+    loc_parent = _dirname(loc)
+
+    if not _exists(loc_parent):
+        _makedirs(loc_parent)
+
+    obj.to(save_dev)
+    dummy_input = _torch_randn(*input_shape, device=save_dev)
+    script_inputs = [(dummy_input, )]
+    script: _ScriptModule = _jit_script(obj=obj, example_inputs=script_inputs)
+    onnx_args = (dummy_input, )
+    file = open(loc, "w+")
+
+    # NOTE: 12 is the highest ONNX opset version that produces no information, warning, or error at compile time.
+    # NOTE: The above situations might change when we receive future PyTorch patches and updates.
+    _onnx_export(model=script, args=onnx_args, f=loc, opset_version=12)
+
+    file.close()
+    obj.to(run_dev)
 
 
 def find_model_sizes(model):
@@ -152,7 +304,7 @@ def setup_adam(model, config):
         adam: the Adam optimizer
     """
     model: _Module = model
-    config = dict(config)
+    config: dict = config
 
     params = model.parameters()
 
@@ -180,7 +332,7 @@ def setup_pred_adam(model, config):
         pred_adam: the predictive Adam optimizer
     """
     model: _Module = model
-    config = dict(config)
+    config: dict = config
 
     params = model.parameters()
 
@@ -225,7 +377,7 @@ def find_params_init_func(config=None):
     bnb_std = 0.0002
 
     if config is not None:
-        config = dict(config)
+        config: dict = config
 
         cw_mean = float(config["conv"]["weight_mean"])
         cw_std = float(config["conv"]["weight_std"])
@@ -275,7 +427,7 @@ def find_params_noising_func(config=None):
     bndb_std = 2e-6
 
     if config is not None:
-        config = dict(config)
+        config: dict = config
 
         cdw_mean = float(config["conv"]["delta_weight_mean"])
         cdw_std = float(config["conv"]["delta_weight_std"])
@@ -390,3 +542,47 @@ def find_fairness_factors(config=None):
         clust_dx_oa_slope, clust_dgz_oa_slope
     )
     return results
+
+
+def find_save_locs(model_path, config):
+    """Finds the model save locs.
+
+    Args:
+        model_path: a model path
+        config: a modelers subconfig
+
+    Returns:
+        results: a tuple of the following items
+        state_loc, : the state location
+        optim_loc, : the optimizer location
+    """
+    model_path = str(model_path)
+    config: dict = config
+
+    state_name = config["state_name"]
+    optim_name = config["optim_name"]
+
+    state_name = _relpath(state_name)
+    optim_name = _relpath(optim_name)
+
+    state_loc = _join(model_path, state_name)
+    optim_loc = _join(model_path, optim_name)
+
+    results = state_loc, optim_loc
+    return results
+
+
+def find_batch_means(batch):
+    """Finds the means for the elements in a batch.
+
+    Args:
+        batch: a batch
+
+    Returns
+        batch: the batch means
+    """
+    batch: _Tensor = batch
+    batch_dims = [index for index in range(len(batch.shape))]
+    reduce_dims = batch_dims[1:]
+    batch = batch.mean(dim=reduce_dims)
+    return batch

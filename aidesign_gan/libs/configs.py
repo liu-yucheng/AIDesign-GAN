@@ -356,6 +356,22 @@ class ModelersConfig(Config):
         from_dict = super().verify(from_dict)
 
         disc = from_dict["discriminator"]
+        label_res_key = "label_resolution"
+
+        if label_res_key in disc:
+            cls._verify_int_ge_1(disc, label_res_key)
+        else:
+            disc[label_res_key] = 1
+        # end if
+
+        label_ch_count_key = "label_channel_count"
+
+        if label_ch_count_key in disc:
+            cls._verify_int_ge_1(disc, label_ch_count_key)
+        else:
+            disc[label_ch_count_key] = 1
+        # end if
+
         cls._verify_modeler_commons(disc)
 
         gen = from_dict["generator"]

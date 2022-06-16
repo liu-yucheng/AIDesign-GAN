@@ -5,6 +5,8 @@
 # First added by username: liu-yucheng
 # Last updated by username: liu-yucheng
 
+import typing
+
 from aidesign_gan.libs import configs
 from aidesign_gan.libs import modelers
 from aidesign_gan.libs import utils
@@ -13,26 +15,36 @@ from aidesign_gan.libs.contexts import context
 _Context = context.Context
 _CoordsConfig = configs.CoordsConfig
 _DiscConfig = configs.DiscConfig
+_DiscModeler = modelers.DiscModeler
 _DotDict = utils.DotDict
 _GenConfig = configs.GenConfig
 _GenModeler = modelers.GenModeler
+_Union = typing.Union
 
 
 class ExportContext(_Context):
     """Exportation context."""
 
-    class Images(_DotDict):
-        """Images."""
+    class Mods(_DotDict):
+        """Modelers."""
+
+        d: _Union[_DiscModeler, None] = None
+        """Discriminator."""
+        g: _Union[_GenModeler, None] = None
+        """Generator."""
+
+    class GenImages(_DotDict):
+        """Generated images."""
 
         count = None
-        """Image count."""
+        """Count."""
         per_batch = None
-        """Image count of each batch."""
+        """Count of each batch."""
         to_save = None
-        """Images to save."""
+        """The generated images to save."""
 
-    class Previews(_DotDict):
-        """Preview grids."""
+    class GenPreviews(_DotDict):
+        """Generator preview grids."""
 
         image_count = None
         """Image count."""
@@ -47,32 +59,30 @@ class ExportContext(_Context):
         index = None
         """Current index."""
 
-    class Configs:
-        """Export configs."""
+    class Configs(_DotDict):
+        """Configs."""
 
-        def __init__(self):
-            """Inits self with the given args."""
-            self.d = None
-            """Discriminator config."""
-            self.g = None
-            """Generator config."""
+        d = None
+        """Discriminator."""
+        g = None
+        """Generator."""
 
     def __init__(self):
         """Inits self."""
         super().__init__()
 
-        self.g = None
-        """Generator modeler instance."""
-        self.images = type(self).Images()
-        """Images."""
-        self.previews = type(self).Previews()
-        """Preview grids."""
+        self.mods = type(self).Mods()
+        """Modelers."""
+        self.gen_images = type(self).GenImages()
+        """Generated images."""
+        self.gen_previews = type(self).GenPreviews()
+        """Generator preview grids."""
         self.noises_batches = None
         """Batches of noises."""
         self.batch_prog = type(self).BatchProg()
         """Batch progress."""
         self.configs = type(self).Configs()
-        """Export configs."""
+        """Configs."""
 
     def setup_rand(self, model_path=None, cconfig=None, mconfig=None):
         """Sets the random seeds with the given args.
@@ -126,12 +136,18 @@ class ExportContext(_Context):
         cconfig = self.find_cconfig(cconfig)
         mconfig = self.find_mconfig(mconfig)
 
-        # Setup self.g
-        gmod = mconfig["generator"]
-        self.g = _GenModeler(model_path, gmod, self.hw.device, self.hw.gpu_count, train=False)
-        self.g.load()
+        # Setup self.mods
 
-        # Setup self.images and self.grids
+        disc_mconfig = mconfig["discriminator"]
+        self.mods.d = _DiscModeler(model_path, disc_mconfig, self.hw.device, self.hw.gpu_count, train=False)
+        self.mods.d.load()
+
+        gen_mconfig = mconfig["generator"]
+        self.mods.g = _GenModeler(model_path, gen_mconfig, self.hw.device, self.hw.gpu_count, train=False)
+        self.mods.g.load()
+
+        # End
+        # Setup self.gen_images and self.gen_previews
 
         if "exportation" in cconfig:
             export = cconfig["exportation"]
@@ -140,23 +156,24 @@ class ExportContext(_Context):
             export = dc_config["exportation"]
         # end if
 
-        previews = export["preview_grids"]
+        gen_previews = export["preview_grids"]
 
-        self.images.count = previews["images_per_grid"]
-        self.images.per_batch = export["images_per_batch"]
-        self.images.to_save = []
+        self.gen_images.count = gen_previews["images_per_grid"]
+        self.gen_images.per_batch = export["images_per_batch"]
+        self.gen_images.to_save = []
 
-        self.previews.image_count = previews["images_per_grid"]
-        self.previews.padding = previews["padding"]
+        self.gen_previews.image_count = gen_previews["images_per_grid"]
+        self.gen_previews.padding = gen_previews["padding"]
 
+        # End
         # Setup self.noise_batches
 
-        noises_count_remain = self.images.count
+        noises_count_remain = self.gen_images.count
         noises_batches = []
 
         while noises_count_remain > 0:
-            noises_count = min(noises_count_remain, self.images.per_batch)
-            noises_batch = self.g.gen_noises(noises_count)
+            noises_count = min(noises_count_remain, self.gen_images.per_batch)
+            noises_batch = self.mods.g.gen_noises(noises_count)
             noises_batches.append(noises_batch)
             noises_count_remain -= noises_count
         # end while
@@ -169,18 +186,20 @@ class ExportContext(_Context):
 
         # Setup self.configs
 
-        dmod = mconfig["discriminator"]
-        gmod = mconfig["generator"]
+        disc_mconfig = mconfig["discriminator"]
+        gen_mconfig = mconfig["generator"]
 
-        dkeys = [
+        disc_keys = [
             "image_resolution",
             "image_channel_count",
+            "label_resolution",
+            "label_channel_count",
             "feature_map_size",
             "struct_name",
             "state_name"
         ]
 
-        gkeys = [
+        gen_keys = [
             "noise_resolution",
             "noise_channel_count",
             "image_resolution",
@@ -188,20 +207,20 @@ class ExportContext(_Context):
             "feature_map_size",
             "struct_name",
             "state_name",
-            # "preview_name"  # gmod does not have "preview_name"
+            # "preview_name"  # gen_mconfig does not have "preview_name"
         ]
 
-        dconfig = _DiscConfig.load_default()
-        gconfig = _GenConfig.load_default()
+        disc_config = _DiscConfig.load_default()
+        gen_config = _GenConfig.load_default()
 
-        for key in dkeys:
-            dconfig[key] = dmod[key]
+        for key in disc_keys:
+            disc_config[key] = disc_mconfig[key]
 
-        for key in gkeys:
-            gconfig[key] = gmod[key]
+        for key in gen_keys:
+            gen_config[key] = gen_mconfig[key]
 
-        dconfig = _DiscConfig.verify(dconfig)
-        gconfig = _GenConfig.verify(gconfig)
+        disc_config = _DiscConfig.verify(disc_config)
+        gen_config = _GenConfig.verify(gen_config)
 
-        self.configs.d = dconfig
-        self.configs.g = gconfig
+        self.configs.d = disc_config
+        self.configs.g = gen_config

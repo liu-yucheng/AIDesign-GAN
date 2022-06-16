@@ -12,8 +12,12 @@ Change only if you know what you are doing.
 import pathlib
 from os import path as ospath
 
+# Aliases
+
 _join = ospath.join
 _Path = pathlib.Path
+
+# End
 
 _libs_path = str(_Path(__file__).parent)
 _repo_path = str(_Path(_libs_path).parent.parent)

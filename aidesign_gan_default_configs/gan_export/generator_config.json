@@ -5,6 +5,7 @@
     "image_channel_count": 3,
     "feature_map_count": 64,
     "struct_name": "generator_struct.py",
-    "state_name": "generator_state.pt",
+    "state_script_name": "model_saves/generator_state_script.pt",
+    "state_onnx_name": "model_saves/generator_state.onnx",
     "preview_name": "generator_preview.jpg"
 }

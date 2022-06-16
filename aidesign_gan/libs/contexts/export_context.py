@@ -194,9 +194,9 @@ class ExportContext(_Context):
             "image_channel_count",
             "label_resolution",
             "label_channel_count",
-            "feature_map_size",
+            "feature_map_count",
             "struct_name",
-            "state_name"
+            # "state_name"
         ]
 
         gen_keys = [
@@ -204,10 +204,10 @@ class ExportContext(_Context):
             "noise_channel_count",
             "image_resolution",
             "image_channel_count",
-            "feature_map_size",
+            "feature_map_count",
             "struct_name",
-            "state_name",
-            # "preview_name"  # gen_mconfig does not have "preview_name"
+            # "state_name"
+            # "preview_name"
         ]
 
         disc_config = _DiscConfig.load_default()

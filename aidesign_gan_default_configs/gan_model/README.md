@@ -124,6 +124,8 @@ Configuration item descriptions are listed below.
 - `discriminator`. Discriminator modeler only configurations. Type `dict`.
   - `image_resolution`. Input image resolution in pixels. Type `int`. Range [1, ).
   - `image_channel_count`. Input image channel count. Type `int`. Range [1, ).
+  - `label_resolution`. Output label resolution in pixels. Type `int`. Range [1, ).
+  - `label_channel_count`. Output label channel count. Type `int`. Range [1, ).
   - `feature_map_count`. Layer 0 (first layer) output feature map count. Type `int`. Range [1, ). Compatibility alias `feature_map_size`. Precedence `feature_map_count` > `feature_map_size`.
 - `generator`. Generator modeler only configurations. Type `dict`.
   - `noise_resolution`. Input noise resolution in pixels. Type `int`. Range [1, ).

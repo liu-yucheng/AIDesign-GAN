@@ -13,7 +13,7 @@ import torch
 from matplotlib import lines
 from matplotlib import pyplot
 from os import path as ospath
-from torchvision import utils as vutils
+from torchvision import utils as tv_utils
 
 from aidesign_gan.libs import contexts
 from aidesign_gan.libs.results import results
@@ -22,7 +22,7 @@ _ceil = math.ceil
 _join = ospath.join
 _Line2D = lines.Line2D
 _makedirs = os.makedirs
-_make_grid = vutils.make_grid
+_make_grid = tv_utils.make_grid
 _now = datetime.datetime.now
 _np_transpose = numpy.transpose
 _plt_axis = pyplot.axis

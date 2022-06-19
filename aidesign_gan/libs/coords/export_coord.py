@@ -203,7 +203,7 @@ class ExportCoord(_Coord):
         name = "generator_preview.jpg"
         loc = _join(self._export_path, name)
 
-        _save_image(c.gen_images.to_save, loc, "JPEG")
+        _save_image(c.gen_images.to_save, loc, "JPEG", quality=95)
 
         image_count = c.gen_previews.image_count
         info = f"Saved the generator preview grid, which contains {image_count} images"

@@ -5,10 +5,10 @@
 # First added by username: liu-yucheng
 # Last updated by username: liu-yucheng
 
+import datetime
 import math
 import torch
 from os import path as ospath
-
 from torchvision import utils as tv_utils
 
 from aidesign_gan.libs import configs
@@ -25,6 +25,8 @@ _GenResults = results.GenResults
 _join = ospath.join
 _make_grid = tv_utils.make_grid
 _ModelersConfig = configs.ModelersConfig
+_now = datetime.datetime.now
+_save_image = tv_utils.save_image
 _torch_cat = torch.cat
 
 
@@ -45,8 +47,8 @@ class GenCoord(_Coord):
         """Prepares self.result."""
         super()._prep_results()
 
-        path = _join(self._model_path, "Generation-Results")
-        self._results = _GenResults(path, self._logs, self._debug_level)
+        self._results_path = _join(self._model_path, "Generation-Results")
+        self._results = _GenResults(self._results_path, self._logs, self._debug_level)
         self._results.ensure_folders()
         self._results_ready = True
 
@@ -135,6 +137,42 @@ class GenCoord(_Coord):
 
         r.logln("Converted images to grids")
 
+    def _save_gen_images(self):
+        """Saves the generated images."""
+        r = self._results
+        c = self._context
+
+        for index, image in enumerate(c.images.to_save):
+            if c.grids.enabled:
+                type_name = "Grid"
+            else:
+                type_name = "Image"
+            # end if
+
+            index_name = f"{index + 1}"
+            now = _now()
+
+            timestamp = str(
+                f"Time-{now.year:04}{now.month:02}{now.day:02}-{now.hour:02}{now.minute:02}{now.second:02}-"
+                f"{now.microsecond:06}"
+            )
+
+            ext_name = "jpg"
+            name = f"{type_name}-{index_name}-{timestamp}.{ext_name}"
+            loc = _join(self._results_path, name)
+            _save_image(image, loc, "JPEG", quality=95)
+        # end for
+
+        count = len(c.images.to_save)
+
+        if c.grids.enabled:
+            info = f"Generated {count} grids, each has {c.grids.size_each} images"
+        else:  # elif not c.grids.enabled:
+            info = f"Generated {count} images"
+        # end if
+
+        r.logln(info)
+
     def start(self):
         """Starts the generation process."""
         if not self._prepared:
@@ -166,7 +204,7 @@ class GenCoord(_Coord):
         if c.grids.enabled:
             self._convert_images_to_grids()
 
-        r.save_gen_images()
+        self._save_gen_images()
 
         info = str(
             "-\n"

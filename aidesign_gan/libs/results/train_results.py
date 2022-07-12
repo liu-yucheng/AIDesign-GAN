@@ -7,6 +7,7 @@
 
 import datetime
 import math
+import matplotlib
 import numpy
 import os
 import torch
@@ -59,6 +60,7 @@ class TrainResults(_Results):
 
         self._gen_images_path = _join(self._path, "Generated-Images")
         """Generated images path."""
+        matplotlib.use("agg")  # Let matplotlib use the agg non-interactive backend
 
     def ensure_folders(self, debug_level=0):
         """Ensures the result folders.

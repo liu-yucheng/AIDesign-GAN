@@ -7,7 +7,6 @@
 
 import os
 import typing
-from unittest import result
 
 from aidesign_gan.libs import contexts
 from aidesign_gan.libs import utils

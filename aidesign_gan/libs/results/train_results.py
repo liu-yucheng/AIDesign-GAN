@@ -24,6 +24,7 @@ _join = ospath.join
 _Line2D = lines.Line2D
 _makedirs = os.makedirs
 _make_grid = tv_utils.make_grid
+_matplotlib_use = matplotlib.use
 _now = datetime.datetime.now
 _np_transpose = numpy.transpose
 _plt_axis = pyplot.axis
@@ -60,7 +61,7 @@ class TrainResults(_Results):
 
         self._gen_images_path = _join(self._path, "Generated-Images")
         """Generated images path."""
-        matplotlib.use("agg")  # Let matplotlib use the agg non-interactive backend
+        _matplotlib_use("agg")  # Let matplotlib use the agg non-interactive backend
 
     def ensure_folders(self, debug_level=0):
         """Ensures the result folders.

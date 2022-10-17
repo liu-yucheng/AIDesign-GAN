@@ -368,24 +368,54 @@ def find_params_init_func(config=None):
     Returns:
         result_func: the resulting parameters initialization function
     """
+    wm_key = "weight_mean"
+    ws_key = "weight_std"
+    bm_key = "bias_mean"
+    bs_key = "bias_std"
+
     cw_mean = float(0)
     cw_std = 0.02
+    cb_mean = float(0)
+    cb_std = 0.0002
 
     bnw_mean = float(1)
     bnw_std = 0.02
     bnb_mean = float(0)
     bnb_std = 0.0002
 
+    ow_mean = float(0)
+    ow_std = 0.02
+    ob_mean = float(0)
+    ob_std = 0.0002
+
     if config is not None:
         config: dict = config
+        conv = config["conv"]
 
-        cw_mean = float(config["conv"]["weight_mean"])
-        cw_std = float(config["conv"]["weight_std"])
+        cw_mean = float(conv[wm_key])
+        cw_std = float(conv[ws_key])
 
-        bnw_mean = float(config["batch_norm"]["weight_mean"])
-        bnw_std = float(config["batch_norm"]["weight_std"])
-        bnb_mean = float(config["batch_norm"]["bias_mean"])
-        bnb_std = float(config["batch_norm"]["bias_std"])
+        if bm_key in conv:
+            cb_mean = float(conv[bm_key])
+
+        if bs_key in conv:
+            cb_std = float(conv[bs_key])
+
+        bn = config["batch_norm"]
+
+        bnw_mean = float(bn[wm_key])
+        bnw_std = float(bn[ws_key])
+        bnb_mean = float(bn[bm_key])
+        bnb_std = float(bn[bs_key])
+
+        if "others" in config:
+            others = config["others"]
+
+            ow_mean = float(others[wm_key])
+            ow_std = float(others[ws_key])
+            ob_mean = float(others[bm_key])
+            ob_std = float(others[bs_key])
+        # end if
     # end if
 
     def result_func(model):
@@ -400,9 +430,21 @@ def find_params_init_func(config=None):
 
         if class_name.find("Conv") != -1:
             _normal_inplace(model.weight.data, cw_mean, cw_std)
+
+            if model.bias is not None:
+                _normal_inplace(model.bias.data, cb_mean, cb_std)
+            # end if
         elif class_name.find("BatchNorm") != -1:
             _normal_inplace(model.weight.data, bnw_mean, bnw_std)
             _normal_inplace(model.bias.data, bnb_mean, bnb_std)
+        else:
+            if hasattr(model, "weight") and model.weight is not None:
+                _normal_inplace(model.weight.data, ow_mean, ow_std)
+            # end if
+
+            if hasattr(model, "bias") and model.bias is not None:
+                _normal_inplace(model.bias.data, ob_mean, ob_std)
+            # end if
         # end if
     # end def
 
@@ -418,24 +460,54 @@ def find_params_noising_func(config=None):
     Returns:
         result_func: the resulting parameters noising function
     """
+    dwm_key = "delta_weight_mean"
+    dws_key = "delta_weight_std"
+    dbm_key = "delta_bias_mean"
+    dbs_key = "delta_bias_std"
+
     cdw_mean = float(0)
     cdw_std = 0.0002
+    cdb_mean = float(0)
+    cdb_std = 2e-6
 
     bndw_mean = float(0)
     bndw_std = 0.0002
     bndb_mean = float(0)
     bndb_std = 2e-6
 
+    odw_mean = float(0)
+    odw_std = 0.0002
+    odb_mean = float(0)
+    odb_std = 2e-6
+
     if config is not None:
         config: dict = config
+        conv = config["conv"]
 
-        cdw_mean = float(config["conv"]["delta_weight_mean"])
-        cdw_std = float(config["conv"]["delta_weight_std"])
+        cdw_mean = float(conv[dwm_key])
+        cdw_std = float(conv[dws_key])
 
-        bndw_mean = float(config["batch_norm"]["delta_weight_mean"])
-        bndw_std = float(config["batch_norm"]["delta_weight_std"])
-        bndb_mean = float(config["batch_norm"]["delta_bias_mean"])
-        bndb_std = float(config["batch_norm"]["delta_bias_std"])
+        if dbm_key in conv:
+            cdb_mean = float(conv[dbm_key])
+
+        if dbs_key in conv:
+            cdb_std = float(conv[dbs_key])
+
+        bn = config["batch_norm"]
+
+        bndw_mean = float(bn[dwm_key])
+        bndw_std = float(bn[dws_key])
+        bndb_mean = float(bn[dbm_key])
+        bndb_std = float(bn[dbs_key])
+
+        if "others" in config:
+            others = config["others"]
+
+            odw_mean = float(others[dwm_key])
+            odw_std = float(others[dws_key])
+            odb_mean = float(others[dbm_key])
+            odb_std = float(others[dbs_key])
+        # end if
     # end if
 
     def result_func(model):
@@ -452,6 +524,12 @@ def find_params_noising_func(config=None):
             dws = _torch_zeros_like(model.weight.data)
             _normal_inplace(dws, cdw_mean, cdw_std)
             model.weight.data.add_(dws)
+
+            if model.bias is not None:
+                dbs = _torch_zeros_like(model.bias.data)
+                _normal_inplace(dbs, cdb_mean, cdb_std)
+                model.bias.data.add_(dbs)
+            # end if
         elif class_name.find("BatchNorm") != -1:
             dws = _torch_zeros_like(model.weight.data)
             _normal_inplace(dws, bndw_mean, bndw_std)
@@ -460,6 +538,18 @@ def find_params_noising_func(config=None):
             dbs = _torch_zeros_like(model.bias.data)
             _normal_inplace(dbs, bndb_mean, bndb_std)
             model.bias.data.add_(dbs)
+        else:
+            if hasattr(model, "weight") and model.weight is not None:
+                dws = _torch_zeros_like(model.weight.data)
+                _normal_inplace(dws, odw_mean, odw_std)
+                model.weight.data.add_(dws)
+            # end if
+
+            if hasattr(model, "bias") and model.bias is not None:
+                dbs = _torch_zeros_like(model.bias.data)
+                _normal_inplace(dbs, odb_mean, odb_std)
+                model.bias.data.add_(dbs)
+            # end if
         # end if
     # end def
 

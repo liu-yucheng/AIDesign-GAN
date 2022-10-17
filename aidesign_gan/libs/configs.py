@@ -311,31 +311,72 @@ class ModelersConfig(Config):
         if "pred_factor" in optim:
             cls._verify_float(optim, "pred_factor")
 
+        wm_key = "weight_mean"
+        ws_key = "weight_std"
+        bm_key = "bias_mean"
+        bs_key = "bias_std"
+
         if "params_init" in from_dict:
             params = from_dict["params_init"]
 
             conv = params["conv"]
-            cls._verify_float(conv, "weight_mean")
-            cls._verify_float_ge_0(conv, "weight_std")
+            cls._verify_float(conv, wm_key)
+            cls._verify_float_ge_0(conv, ws_key)
+
+            if bm_key in conv:
+                cls._verify_float(conv, bm_key)
+
+            if bs_key in conv:
+                cls._verify_float_ge_0(conv, bs_key)
 
             bn = params["batch_norm"]
-            cls._verify_float(bn, "weight_mean")
-            cls._verify_float_ge_0(bn, "weight_std")
-            cls._verify_float(bn, "bias_mean")
-            cls._verify_float_ge_0(bn, "bias_std")
+            cls._verify_float(bn, wm_key)
+            cls._verify_float_ge_0(bn, ws_key)
+            cls._verify_float(bn, bm_key)
+            cls._verify_float_ge_0(bn, bs_key)
+
+            if "others" in params:
+                others = params["others"]
+                cls._verify_float(others, wm_key)
+                cls._verify_float_ge_0(others, ws_key)
+                cls._verify_float(others, bm_key)
+                cls._verify_float_ge_0(others, bs_key)
+            # end if
+        # end if
+
+        dwm_key = "delta_weight_mean"
+        dws_key = "delta_weight_std"
+        dbm_key = "delta_bias_mean"
+        dbs_key = "delta_bias_std"
 
         if "params_noising" in from_dict:
             noise = from_dict["params_noising"]
 
             conv = noise["conv"]
-            cls._verify_float(conv, "delta_weight_mean")
-            cls._verify_float_ge_0(conv, "delta_weight_std")
+            cls._verify_float(conv, dwm_key)
+            cls._verify_float_ge_0(conv, dws_key)
+
+            if dbm_key in conv:
+                cls._verify_float(conv, dbm_key)
+
+            if dbs_key in conv:
+                cls._verify_float_ge_0(conv, dbs_key)
 
             bn = noise["batch_norm"]
-            cls._verify_float(bn, "delta_weight_mean")
-            cls._verify_float_ge_0(bn, "delta_weight_std")
-            cls._verify_float(bn, "delta_bias_mean")
-            cls._verify_float_ge_0(bn, "delta_bias_std")
+            cls._verify_float(bn, dwm_key)
+            cls._verify_float_ge_0(bn, dws_key)
+            cls._verify_float(bn, dbm_key)
+            cls._verify_float_ge_0(bn, dbs_key)
+
+            if "others" in noise:
+                others = noise["others"]
+
+                cls._verify_float(others, dwm_key)
+                cls._verify_float_ge_0(others, dws_key)
+                cls._verify_float(others, dbm_key)
+                cls._verify_float_ge_0(others, dbs_key)
+            # end if
+        # end if
 
         if "fairness" in from_dict:
             fair = from_dict["fairness"]
@@ -349,6 +390,7 @@ class ModelersConfig(Config):
 
             if "cluster_dgz_overact_slope" in fair:
                 cls._verify_float(fair, "cluster_dgz_overact_slope")
+            # end if
         # end if
 
     @classmethod

@@ -6,7 +6,7 @@
 matplotlib
 numpy
 
---extra-index-url https://download.pytorch.org/whl/cu113
+--extra-index-url https://download.pytorch.org/whl/cu117
 torch
 torchvision
 torchaudio

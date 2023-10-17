@@ -1,6 +1,6 @@
 """Exportation coordinator."""
 
-# Copyright 2022 Yucheng Liu. GNU GPL3 license.
+# Copyright 2022-2023 Yucheng Liu. GNU GPL3 license.
 # GNU GPL3 license copy: https://www.gnu.org/licenses/gpl-3.0.txt
 # First added by username: liu-yucheng
 # Last updated by username: liu-yucheng
@@ -203,7 +203,9 @@ class ExportCoord(_Coord):
         name = "generator_preview.jpg"
         loc = _join(self._export_path, name)
 
-        _save_image(c.gen_images.to_save, loc, "JPEG", quality=95)
+        # The "quality" parameter is no longer supported by PyTorch 2.1.
+        # _save_image(c.gen_images.to_save, loc, "JPEG", quality=95)
+        _save_image(c.gen_images.to_save, loc, "JPEG")
 
         image_count = c.gen_previews.image_count
         info = f"Saved the generator preview grid, which contains {image_count} images"

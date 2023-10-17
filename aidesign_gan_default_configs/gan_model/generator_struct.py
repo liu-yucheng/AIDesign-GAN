@@ -2,6 +2,7 @@
 # CNN (Convolutional Neural Network)
 # Resize transposed convolution
 
+import torch
 from torch import nn
 
 self = self
@@ -22,6 +23,7 @@ _Upsample = nn.Upsample
 _ReLU = nn.ReLU
 _BatchNorm2d = nn.BatchNorm2d
 _Tanh = nn.Tanh
+_compile = torch.compile
 
 self.model = nn.Sequential(
     # Layer group 1. input group
@@ -49,3 +51,6 @@ self.model = nn.Sequential(
     _ConvTranspose2d(fm, ic, 5, 1, 2, bias=False),
     _Tanh()
 )
+
+# Currently, torch.compile does not support Windows because OpenAI's triton does not support Windows.
+# self.model = _compile(self.model)

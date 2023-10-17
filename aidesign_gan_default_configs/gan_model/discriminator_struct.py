@@ -2,6 +2,7 @@
 # CNN (Convolutional Neural Network)
 # Resize convolution
 
+import torch
 from torch import nn
 
 self = self
@@ -22,6 +23,7 @@ _Upsample = nn.Upsample
 _LeakyReLU = nn.LeakyReLU
 _BatchNorm2d = nn.BatchNorm2d
 _Sigmoid = nn.Sigmoid
+_compile = torch.compile
 
 self.model = nn.Sequential(
     # Layer group 1. input group
@@ -48,3 +50,6 @@ self.model = nn.Sequential(
     _Upsample(lr, mode="bicubic", align_corners=False),
     _Sigmoid()
 )
+
+# Currently, torch.compile does not support Windows because OpenAI's triton does not support Windows.
+# self.model = _compile(self.model)

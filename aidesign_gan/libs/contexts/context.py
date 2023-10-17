@@ -1,6 +1,6 @@
 """Context."""
 
-# Copyright 2022 Yucheng Liu. GNU GPL3 license.
+# Copyright 2022-2023 Yucheng Liu. GNU GPL3 license.
 # GNU GPL3 license copy: https://www.gnu.org/licenses/gpl-3.0.txt
 # First added by username: liu-yucheng
 # Last updated by username: liu-yucheng
@@ -25,6 +25,7 @@ _torch_seed = torch.manual_seed
 _torch_cuda_is_available = torch.cuda.is_available
 _torch_cuda_seed_all = torch.cuda.manual_seed_all
 _torch_set_default_dtype = torch.set_default_dtype
+_torch_set_default_device = torch.set_default_device
 _torch_set_default_tensor_type = torch.set_default_tensor_type
 _Union = typing.Union
 
@@ -72,9 +73,12 @@ class Context:
         self.hw = type(self).Hw()
         """Hardware."""
 
-        # Explicitly set torch default dtype to float32 and default tensor type to FloatTensor
+        # Explicitly set torch default dtype to float32.
         _torch_set_default_dtype(_float32)
-        _torch_set_default_tensor_type(_FloatTensor)
+
+        # Explicitly set torch default tensor type to FloatTensor.
+        # UserWarning: torch.set_default_tensor_type() is deprecated as of PyTorch 2.1.
+        # _torch_set_default_tensor_type(_FloatTensor)
 
     def find_model_path(self, model_path_arg):
         """Finds the model path to use.
@@ -265,6 +269,10 @@ class Context:
         # end if
 
         device = _torch_device(device_name)
+
+        # Keep the default device "cpu."
+        # Explicitly set torch default device to the detected device.
+        # _torch_set_default_device(device)
 
         self.hw.device = device
         self.hw.gpu_count = gpu_count

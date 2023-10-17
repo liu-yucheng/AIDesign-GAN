@@ -1,6 +1,6 @@
 """Generation coordinator."""
 
-# Copyright 2022 Yucheng Liu. GNU GPL3 license.
+# Copyright 2022-2023 Yucheng Liu. GNU GPL3 license.
 # GNU GPL3 license copy: https://www.gnu.org/licenses/gpl-3.0.txt
 # First added by username: liu-yucheng
 # Last updated by username: liu-yucheng
@@ -160,7 +160,10 @@ class GenCoord(_Coord):
             ext_name = "jpg"
             name = f"{type_name}-{index_name}-{timestamp}.{ext_name}"
             loc = _join(self._results_path, name)
-            _save_image(image, loc, "JPEG", quality=95)
+
+            # The "quality" parameter is no longer supported by PyTorch 2.1.
+            # _save_image(image, loc, "JPEG", quality=95)
+            _save_image(image, loc, "JPEG")
         # end for
 
         count = len(c.images.to_save)
